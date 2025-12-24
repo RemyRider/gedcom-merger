@@ -111,4 +111,6 @@ Pour toute question ou problème :
 
 ---
 
+## ✅ Test déploiement automatique
+
 **Fusionneur GEDCOM v1.8.6** - Nettoyez votre arbre généalogique avec intelligence ! 🌳

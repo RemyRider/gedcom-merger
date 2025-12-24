@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle } from 'lucide-react';
+import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText } from 'lucide-react';
 
 const GedcomDuplicateMerger = () => {
   const [file, setFile] = useState(null);
@@ -16,8 +16,89 @@ const GedcomDuplicateMerger = () => {
   const [clusters, setClusters] = useState([]);
   const [progress, setProgress] = useState(0);
   const [expandedClusters, setExpandedClusters] = useState(new Set());
+  
+  // NOUVEAUX ÉTATS pour fonctionnalités manquantes
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [activeTab, setActiveTab] = useState('clusters'); // 'clusters' ou 'pairs'
+  const [clusterScoreFilter, setClusterScoreFilter] = useState(80);
+  const [selectedClusters, setSelectedClusters] = useState(new Set());
 
-  const VERSION = '1.8.6';
+  const VERSION = '1.8.7';
+
+  // CHANGELOG complet
+  const CHANGELOG = [
+    {
+      version: '1.8.7',
+      date: '24 décembre 2025',
+      tag: 'ACTUELLE',
+      color: 'green',
+      title: 'Restauration fonctionnalités v1.4.0',
+      items: [
+        'Restauration bouton Changelog/Nouveautés avec modal complète',
+        'Restauration système d\'onglets Clusters/Doublons simples',
+        'Ajout scoring moyen des clusters avec jauges visuelles',
+        'Ajout filtre pourcentage minimum pour clusters',
+        'Ajout sélection automatique clusters ≥95%',
+        'Correction de toutes les régressions identifiées'
+      ]
+    },
+    {
+      version: '1.8.6',
+      date: '16 décembre 2025',
+      tag: null,
+      color: 'blue',
+      title: 'Corrections GEDCOM et génération HEAD/TRLR',
+      items: [
+        'Correction gestion balises CONT/CONC multi-lignes',
+        'Génération automatique en-tête HEAD complet',
+        'Génération automatique balise TRLR de fin',
+        'Amélioration compatibilité avec logiciels généalogie',
+        'Correction bugs mineurs interface'
+      ]
+    },
+    {
+      version: '1.4.0',
+      date: '5 décembre 2025',
+      tag: null,
+      color: 'indigo',
+      title: 'Organisation interface et contrôle intégrité',
+      items: [
+        'Système d\'onglets séparant Clusters et Doublons simples',
+        'Scoring moyen des clusters avec jauges colorées',
+        'Auto-sélection clusters haute confiance (≥95%)',
+        'Filtre pourcentage pour masquer clusters sous seuil',
+        'Contrôle d\'intégrité GEDCOM après fusion'
+      ]
+    },
+    {
+      version: '1.3.0',
+      date: '3 décembre 2025',
+      tag: null,
+      color: 'blue',
+      title: 'Prévisualisation et changelog intégré',
+      items: [
+        'Prévisualisation complète des fusions avec modal',
+        'Calcul automatique qualité des données',
+        'Fusion intelligente avec enrichissement automatique',
+        'Changelog intégré dans l\'interface',
+        'Détection automatique des clusters'
+      ]
+    },
+    {
+      version: '1.0.0',
+      date: '1 décembre 2025',
+      tag: 'INITIALE',
+      color: 'gray',
+      title: 'Version initiale',
+      items: [
+        'Parseur GEDCOM complet',
+        'Détection intelligente avec Soundex français',
+        'Système de scoring hybride 9 critères',
+        'Fusion sécurisée sans perte de données',
+        'Interface React moderne et responsive'
+      ]
+    }
+  ];
 
   const parseGedcom = (content) => {
     const lines = content.split('\n');
@@ -140,18 +221,14 @@ const GedcomDuplicateMerger = () => {
   const calculateSimilarity = (person1, person2) => {
     const details = [];
     
-    // Nouveau système hybride : Score de correspondance / Score maximum possible
-    // Si seulement le nom est renseigné et qu'il correspond → 100%
-    // Si nom + naissance renseignés et correspondent → 100%
-    
-    let matchScore = 0;  // Points obtenus sur les champs qui correspondent
-    let maxPossibleScore = 0;  // Points maximum possible selon les champs disponibles
+    let matchScore = 0;
+    let maxPossibleScore = 0;
     
     const name1 = person1.names[0]?.toLowerCase() || '';
     const name2 = person2.names[0]?.toLowerCase() || '';
     
     // 1. NOMS (pondération: 30)
-    if (name1 || name2) {  // Au moins un nom renseigné
+    if (name1 || name2) {
       maxPossibleScore += 30;
       
       if (name1 && name2) {
@@ -204,7 +281,7 @@ const GedcomDuplicateMerger = () => {
       }
     }
 
-    // 3. SEXE (pondération: 15) - Critère éliminatoire si différent
+    // 3. SEXE (pondération: 15) - Critère éliminatoire
     if (person1.sex || person2.sex) {
       maxPossibleScore += 15;
       
@@ -214,7 +291,7 @@ const GedcomDuplicateMerger = () => {
           details.push('✓ Même sexe (+15/15)');
         } else {
           details.push('✗ Sexes différents (ÉLIMINATOIRE)');
-          return { score: 0, details };  // Éliminatoire
+          return { score: 0, details };
         }
       }
     }
@@ -237,7 +314,7 @@ const GedcomDuplicateMerger = () => {
       }
     }
 
-    // 5. FRATRIE (pondération: 15) - Seulement si parents pas déjà comparés
+    // 5. FRATRIE (pondération: 15)
     const parentsCompared = (person1.parents.length > 0 && person2.parents.length > 0);
     if (!parentsCompared && (person1.familyAsChild || person2.familyAsChild)) {
       maxPossibleScore += 15;
@@ -311,13 +388,10 @@ const GedcomDuplicateMerger = () => {
       }
     }
 
-    // Calcul du score final en pourcentage
-    // Score = (points obtenus / points max possibles) × 100
     const finalScore = maxPossibleScore > 0 
       ? Math.round((matchScore / maxPossibleScore) * 100) 
       : 0;
     
-    // Ajouter un résumé en début de détails
     details.unshift(`📊 Score: ${matchScore}/${maxPossibleScore} points`);
     
     return { score: finalScore, details };
@@ -326,7 +400,6 @@ const GedcomDuplicateMerger = () => {
   const findDuplicates = (people) => {
     const result = [];
     
-    // Optimisation 1: Index phonétique multi-critères
     const buildIndex = () => {
       const phoneticIndex = new Map();
       const yearIndex = new Map();
@@ -338,19 +411,16 @@ const GedcomDuplicateMerger = () => {
         const firstName = parts[0] || '';
         const lastName = parts[parts.length - 1] || '';
         
-        // Index phonétique (prénom + nom)
         const key = `${soundex(firstName)}-${soundex(lastName)}`;
         if (!phoneticIndex.has(key)) phoneticIndex.set(key, []);
         phoneticIndex.get(key).push(person);
         
-        // Index par année de naissance
         const year = person.birth?.match(/\d{4}/)?.[0];
         if (year) {
           if (!yearIndex.has(year)) yearIndex.set(year, []);
           yearIndex.get(year).push(person);
         }
         
-        // Index par parents
         if (person.parents.length > 0) {
           const parentKey = person.parents.sort().join('-');
           if (!parentIndex.has(parentKey)) parentIndex.set(parentKey, []);
@@ -367,10 +437,8 @@ const GedcomDuplicateMerger = () => {
     let skipped = 0;
     
     people.forEach((person1, i) => {
-      // Collecter les candidats via tous les index
       const candidates = new Set();
       
-      // Candidats phonétiques
       const fullName1 = person1.names[0] || '';
       const parts1 = fullName1.toLowerCase().split(' ');
       const firstName1 = parts1[0] || '';
@@ -381,7 +449,6 @@ const GedcomDuplicateMerger = () => {
         if (p.id !== person1.id) candidates.add(p);
       });
       
-      // Candidats par année de naissance (±2 ans)
       const year1 = person1.birth?.match(/\d{4}/)?.[0];
       if (year1) {
         const y = parseInt(year1);
@@ -393,14 +460,12 @@ const GedcomDuplicateMerger = () => {
         });
       }
       
-      // Candidats par parents communs
       if (person1.parents.length > 0) {
         const parentKey1 = person1.parents.sort().join('-');
         (parentIndex.get(parentKey1) || []).forEach(p => {
           if (p.id !== person1.id) candidates.add(p);
         });
         
-        // Aussi ceux avec un parent en commun
         person1.parents.forEach(parent => {
           people.forEach(p => {
             if (p.id !== person1.id && p.parents.includes(parent)) {
@@ -410,7 +475,6 @@ const GedcomDuplicateMerger = () => {
         });
       }
       
-      // Comparer uniquement avec les candidats
       candidates.forEach(person2 => {
         const pairKey = person1.id < person2.id 
           ? `${person1.id}-${person2.id}` 
@@ -421,15 +485,12 @@ const GedcomDuplicateMerger = () => {
         
         totalComparisons++;
         
-        // Filtre ultra-rapide avant calcul complet
         const quickCheck = () => {
-          // Si sexes différents, skip immédiatement
           if (person1.sex && person2.sex && person1.sex !== person2.sex) {
             skipped++;
             return false;
           }
           
-          // Si années de naissance trop éloignées, skip
           const y1 = person1.birth?.match(/\d{4}/)?.[0];
           const y2 = person2.birth?.match(/\d{4}/)?.[0];
           if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 5) {
@@ -454,7 +515,6 @@ const GedcomDuplicateMerger = () => {
         }
       });
       
-      // Mise à jour progression
       if (i % 100 === 0) {
         const pct = Math.round((i / people.length) * 100);
         setProgress(30 + pct * 0.65);
@@ -466,7 +526,6 @@ const GedcomDuplicateMerger = () => {
     
     const sorted = result.sort((a, b) => b.similarity - a.similarity);
     
-    // Détecter les clusters APRÈS avoir trié
     detectClusters(sorted, people);
     
     return sorted;
@@ -477,7 +536,6 @@ const GedcomDuplicateMerger = () => {
     const visited = new Set();
     const foundClusters = [];
     
-    // Construire le graphe des connexions
     duplicates.forEach(dup => {
       const id1 = dup.person1.id;
       const id2 = dup.person2.id;
@@ -489,7 +547,6 @@ const GedcomDuplicateMerger = () => {
       graph.get(id2).add(id1);
     });
     
-    // Parcours en profondeur pour trouver les clusters
     const dfs = (nodeId, cluster) => {
       if (visited.has(nodeId)) return;
       visited.add(nodeId);
@@ -499,7 +556,6 @@ const GedcomDuplicateMerger = () => {
       neighbors.forEach(neighbor => dfs(neighbor, cluster));
     };
     
-    // Identifier tous les clusters de taille > 2
     graph.forEach((_, nodeId) => {
       if (!visited.has(nodeId)) {
         const cluster = new Set();
@@ -511,10 +567,20 @@ const GedcomDuplicateMerger = () => {
             .filter(p => p != null);
           
           if (clusterPeople.length > 2) {
+            // NOUVEAU: Calculer le score moyen du cluster
+            const clusterPairs = duplicates.filter(d => 
+              clusterIds.includes(d.person1.id) && clusterIds.includes(d.person2.id)
+            );
+            const avgScore = clusterPairs.length > 0
+              ? Math.round(clusterPairs.reduce((sum, p) => sum + p.similarity, 0) / clusterPairs.length)
+              : 0;
+            
             foundClusters.push({
               ids: clusterIds,
               size: clusterPeople.length,
-              people: clusterPeople
+              people: clusterPeople,
+              avgScore: avgScore, // NOUVEAU
+              pairs: clusterPairs // NOUVEAU
             });
           }
         }
@@ -525,10 +591,30 @@ const GedcomDuplicateMerger = () => {
     setClusters(foundClusters);
   };
 
+  // NOUVELLE FONCTION: Calculer le score moyen d'un cluster
+  const getClusterAverageScore = (cluster) => {
+    return cluster.avgScore || 0;
+  };
+
+  // NOUVELLE FONCTION: Filtrer les clusters par score
+  const getFilteredClusters = () => {
+    return clusters.filter(cluster => getClusterAverageScore(cluster) >= clusterScoreFilter);
+  };
+
+  // NOUVELLE FONCTION: Sélection auto clusters ≥95%
+  const autoSelectHighConfidenceClusters = () => {
+    const newSelected = new Set();
+    clusters.forEach((cluster, idx) => {
+      if (getClusterAverageScore(cluster) >= 95) {
+        newSelected.add(idx);
+      }
+    });
+    setSelectedClusters(newSelected);
+  };
+
   const selectCluster = (clusterIds) => {
     const newSelected = new Set(selectedPairs);
     
-    // Trouver toutes les paires qui connectent ce cluster
     duplicates.forEach(dup => {
       if (clusterIds.includes(dup.person1.id) && clusterIds.includes(dup.person2.id)) {
         newSelected.add(dup.id);
@@ -764,6 +850,9 @@ const GedcomDuplicateMerger = () => {
     setSearchTerm('');
     setFilterScore(80);
     setProgress(0);
+    setActiveTab('clusters');
+    setClusterScoreFilter(80);
+    setSelectedClusters(new Set());
   };
 
   return (
@@ -777,6 +866,15 @@ const GedcomDuplicateMerger = () => {
                 <div>
                   <div className="flex items-center gap-3">
                     <h1 className="text-3xl font-bold">Fusionneur GEDCOM v{VERSION}</h1>
+                    {/* RESTAURÉ: Bouton Nouveautés */}
+                    <button
+                      onClick={() => setShowChangelog(true)}
+                      className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm"
+                      title="Voir les nouveautés"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Nouveautés
+                    </button>
                   </div>
                   <p className="text-indigo-100 mt-2">Nettoyez votre arbre généalogique</p>
                 </div>
@@ -828,49 +926,155 @@ const GedcomDuplicateMerger = () => {
 
                 {duplicates.length > 0 && (
                   <>
-                    {/* Clusters détectés */}
-                    {clusters.length > 0 && (
-                      <div className="mb-6 bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
-                        <h3 className="font-semibold text-orange-900 mb-3 flex items-center gap-2">
-                          <Users className="w-5 h-5" />
-                          🔗 {clusters.length} cluster(s) de doublons détecté(s)
-                        </h3>
-                        <p className="text-sm text-orange-700 mb-3">
-                          Des groupes de {clusters.reduce((sum, c) => sum + c.size, 0)} personnes connectées ont été identifiés (triplets, quadruplets...).
-                        </p>
-                        <div className="space-y-3">
-                          {clusters.map((cluster, idx) => (
-                            <div key={idx} className="bg-white border-2 border-orange-300 rounded-lg overflow-hidden">
-                              <div className="p-4">
-                                <div className="flex items-start justify-between gap-4 mb-3">
+                    {/* RESTAURÉ: Système d'onglets */}
+                    {(clusters.length > 0 || duplicates.length > 0) && (
+                      <div className="mb-6 bg-white border-2 border-gray-200 rounded-lg overflow-hidden">
+                        <nav className="flex border-b">
+                          <button
+                            onClick={() => setActiveTab('clusters')}
+                            className={`flex-1 px-6 py-3 text-base font-medium transition-colors ${
+                              activeTab === 'clusters'
+                                ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              <Users className="w-5 h-5" />
+                              Clusters ({clusters.length})
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('pairs')}
+                            className={`flex-1 px-6 py-3 text-base font-medium transition-colors ${
+                              activeTab === 'pairs'
+                                ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              <AlertCircle className="w-5 h-5" />
+                              Doublons simples ({getFilteredDuplicates().length})
+                            </div>
+                          </button>
+                        </nav>
+                      </div>
+                    )}
+
+                    {/* ONGLET CLUSTERS */}
+                    {activeTab === 'clusters' && clusters.length > 0 && (
+                      <div>
+                        {/* RESTAURÉ: Filtres et contrôles clusters */}
+                        <div className="mb-6 bg-white border-2 border-gray-200 rounded-lg p-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Score moyen minimum: {clusterScoreFilter}%
+                            </label>
+                            <input
+                              type="range"
+                              min="80"
+                              max="100"
+                              value={clusterScoreFilter}
+                              onChange={(e) => setClusterScoreFilter(parseInt(e.target.value))}
+                              className="w-full"
+                            />
+                            <p className="text-sm text-gray-600 mt-3">
+                              {getFilteredClusters().length} cluster(s) affiché(s)
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mb-6 flex gap-4 flex-wrap">
+                          <button
+                            onClick={autoSelectHighConfidenceClusters}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
+                          >
+                            Sélectionner ≥95%
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedClusters(new Set());
+                              setSelectedPairs(new Set());
+                            }}
+                            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
+                          >
+                            Désélectionner tout
+                          </button>
+                          <span className="text-sm text-gray-600 py-2">
+                            {selectedClusters.size} cluster(s) sélectionné(s)
+                          </span>
+                        </div>
+
+                        {/* Liste des clusters avec scoring */}
+                        <div className="space-y-4">
+                          {getFilteredClusters().map((cluster, idx) => {
+                            const originalIdx = clusters.indexOf(cluster);
+                            const avgScore = getClusterAverageScore(cluster);
+                            const scoreColor = avgScore >= 95 ? 'green' : avgScore >= 90 ? 'yellow' : 'orange';
+                            
+                            return (
+                              <div
+                                key={idx}
+                                className={`border-2 rounded-lg p-6 ${
+                                  selectedClusters.has(originalIdx)
+                                    ? 'border-indigo-500 bg-indigo-50'
+                                    : 'border-orange-300 bg-orange-50'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-4 mb-4">
                                   <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedClusters.has(originalIdx)}
+                                        onChange={() => {
+                                          const newSelected = new Set(selectedClusters);
+                                          if (newSelected.has(originalIdx)) {
+                                            newSelected.delete(originalIdx);
+                                          } else {
+                                            newSelected.add(originalIdx);
+                                            selectCluster(cluster.ids);
+                                          }
+                                          setSelectedClusters(newSelected);
+                                        }}
+                                        className="w-5 h-5"
+                                      />
                                       <span className="font-bold text-orange-900">
-                                        Cluster {idx + 1}
+                                        Cluster {originalIdx + 1}
                                       </span>
                                       <span className="bg-orange-200 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">
                                         {cluster.size} personnes
                                       </span>
+                                      {/* RESTAURÉ: Score moyen avec jauge visuelle */}
+                                      <div className="flex items-center gap-2">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                          scoreColor === 'green' ? 'bg-green-100 text-green-800' :
+                                          scoreColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-orange-100 text-orange-800'
+                                        }`}>
+                                          Score moyen: {avgScore}%
+                                        </span>
+                                      </div>
                                     </div>
-                                    <p className="text-xs text-gray-600 mb-2">
-                                      Toutes ces personnes sont liées entre elles par des correspondances
-                                    </p>
                                   </div>
                                   <button
-                                    onClick={() => selectCluster(cluster.ids)}
-                                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2"
+                                    onClick={() => {
+                                      selectCluster(cluster.ids);
+                                      const newSelected = new Set(selectedClusters);
+                                      newSelected.add(originalIdx);
+                                      setSelectedClusters(newSelected);
+                                    }}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                                   >
-                                    <CheckCircle className="w-4 h-4" />
-                                    Sélectionner tout
+                                    <CheckCircle className="w-4 h-4 inline mr-1" />
+                                    Sélectionner
                                   </button>
                                 </div>
 
-                                {/* Aperçu compact */}
                                 <div className="bg-orange-50 rounded-lg p-3 mb-2">
                                   <div className="text-sm text-gray-700 space-y-1">
                                     {cluster.people.slice(0, 3).map((p, i) => (
                                       <div key={i} className="flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-orange-400 rounded-full flex-shrink-0"></span>
+                                        <span className="w-2 h-2 bg-orange-400 rounded-full"></span>
                                         <span className="font-medium">{p.names[0] || 'Sans nom'}</span>
                                         {p.birth && <span className="text-gray-500 text-xs">({p.birth})</span>}
                                         <span className="text-xs text-gray-400 font-mono">{p.id}</span>
@@ -884,220 +1088,147 @@ const GedcomDuplicateMerger = () => {
                                   </div>
                                 </div>
 
-                                {/* Bouton voir détails */}
                                 <button
-                                  onClick={() => toggleClusterExpand(idx)}
+                                  onClick={() => toggleClusterExpand(originalIdx)}
                                   className="w-full text-center text-sm text-orange-700 hover:text-orange-900 font-medium py-2 hover:bg-orange-50 rounded transition-colors"
                                 >
-                                  {expandedClusters.has(idx) ? '▲ Masquer les détails' : '▼ Voir tous les membres du cluster'}
+                                  {expandedClusters.has(originalIdx) ? '▲ Masquer les détails' : '▼ Voir tous les membres'}
                                 </button>
-                              </div>
 
-                              {/* Détails expandables */}
-                              {expandedClusters.has(idx) && (
-                                <div className="border-t-2 border-orange-200 bg-gray-50 p-4">
-                                  <h5 className="font-semibold text-gray-700 mb-3">📊 Résumé du cluster :</h5>
-                                  
-                                  {/* Tableau des noms */}
-                                  <div className="bg-white border border-gray-300 rounded-lg overflow-hidden mb-3">
-                                    <table className="w-full text-sm">
-                                      <thead className="bg-orange-100">
-                                        <tr>
-                                          <th className="px-3 py-2 text-left font-semibold text-gray-700">#</th>
-                                          <th className="px-3 py-2 text-left font-semibold text-gray-700">Nom complet</th>
-                                          <th className="px-3 py-2 text-left font-semibold text-gray-700">Naissance</th>
-                                          <th className="px-3 py-2 text-left font-semibold text-gray-700">Décès</th>
-                                          <th className="px-3 py-2 text-left font-semibold text-gray-700">ID</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-gray-200">
-                                        {cluster.people.map((person, personIdx) => (
-                                          <tr key={personIdx} className="hover:bg-orange-50">
-                                            <td className="px-3 py-2">
-                                              <span className="bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                                                {personIdx + 1}
-                                              </span>
-                                            </td>
-                                            <td className="px-3 py-2 font-medium text-gray-900">
-                                              {person.names[0] || 'Sans nom'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-600">
-                                              {person.birth || '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-600">
-                                              {person.death || '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-xs text-gray-500 font-mono">
-                                              {person.id}
-                                            </td>
+                                {expandedClusters.has(originalIdx) && (
+                                  <div className="border-t-2 border-orange-200 bg-gray-50 p-4 mt-3">
+                                    <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
+                                      <table className="w-full text-sm">
+                                        <thead className="bg-orange-100">
+                                          <tr>
+                                            <th className="px-3 py-2 text-left">#</th>
+                                            <th className="px-3 py-2 text-left">Nom</th>
+                                            <th className="px-3 py-2 text-left">Naissance</th>
+                                            <th className="px-3 py-2 text-left">ID</th>
                                           </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                          {cluster.people.map((person, pIdx) => (
+                                            <tr key={pIdx} className="hover:bg-orange-50">
+                                              <td className="px-3 py-2">{pIdx + 1}</td>
+                                              <td className="px-3 py-2 font-medium">{person.names[0] || 'Sans nom'}</td>
+                                              <td className="px-3 py-2">{person.birth || '-'}</td>
+                                              <td className="px-3 py-2 font-mono text-xs">{person.id}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
                                   </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
-                                  {/* Statistiques condensées */}
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                                    <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-gray-500">Personnes</div>
-                                      <div className="text-lg font-bold text-orange-600">{cluster.size}</div>
-                                    </div>
-                                    <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-gray-500">Avec naissance</div>
-                                      <div className="text-lg font-bold text-blue-600">
-                                        {cluster.people.filter(p => p.birth).length}
-                                      </div>
-                                    </div>
-                                    <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-gray-500">Avec décès</div>
-                                      <div className="text-lg font-bold text-purple-600">
-                                        {cluster.people.filter(p => p.death).length}
-                                      </div>
-                                    </div>
-                                    <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-gray-500">Avec parents</div>
-                                      <div className="text-lg font-bold text-green-600">
-                                        {cluster.people.filter(p => p.parents.length > 0).length}
-                                      </div>
-                                    </div>
+                    {/* ONGLET DOUBLONS SIMPLES */}
+                    {activeTab === 'pairs' && (
+                      <div>
+                        <div className="mb-6 bg-white border-2 border-gray-200 rounded-lg p-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Rechercher</label>
+                              <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Nom ou ID"
+                                className="w-full px-4 py-2 border rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Score min: {filterScore}%</label>
+                              <input
+                                type="range"
+                                min="80"
+                                max="100"
+                                value={filterScore}
+                                onChange={(e) => setFilterScore(parseInt(e.target.value))}
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-3">{getFilteredDuplicates().length} résultat(s)</p>
+                        </div>
+
+                        <div className="mb-6 flex gap-4 flex-wrap">
+                          <button
+                            onClick={selectHighConfidence}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
+                          >
+                            Sélectionner ≥95%
+                          </button>
+                          <button
+                            onClick={() => setSelectedPairs(new Set())}
+                            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
+                          >
+                            Désélectionner tout
+                          </button>
+                          <span className="text-sm text-gray-600 py-2">{selectedPairs.size} sélectionné(s)</span>
+                        </div>
+
+                        <div className="space-y-4">
+                          {getFilteredDuplicates().map((pair) => (
+                            <div
+                              key={pair.id}
+                              className={`border-2 rounded-lg p-6 cursor-pointer ${
+                                selectedPairs.has(pair.id) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
+                              }`}
+                              onClick={() => togglePairSelection(pair.id)}
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                  <input type="checkbox" checked={selectedPairs.has(pair.id)} onChange={() => {}} className="w-5 h-5" />
+                                  <span className="font-semibold">Similarité: {pair.similarity}%</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openPreview(pair);
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                                  >
+                                    👁️ Prévisualiser
+                                  </button>
+                                  <div className={`px-4 py-2 rounded-full text-sm font-medium ${
+                                    pair.similarity >= 95 ? 'bg-red-100 text-red-800' :
+                                    pair.similarity >= 90 ? 'bg-orange-100 text-orange-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {pair.similarity >= 95 ? 'Très probable' : 
+                                     pair.similarity >= 90 ? 'Probable' : 'Possible'}
                                   </div>
                                 </div>
-                              )}
+                              </div>
+                              <div className="grid md:grid-cols-2 gap-6">
+                                <div className="bg-white p-4 rounded border">
+                                  <h4 className="font-semibold mb-2">Personne 1</h4>
+                                  <p className="text-sm"><strong>Nom:</strong> {pair.person1.names[0]}</p>
+                                  <p className="text-sm"><strong>Naissance:</strong> {pair.person1.birth || 'N/A'}</p>
+                                  {pair.person1.birthPlace && <p className="text-sm"><strong>Lieu:</strong> {pair.person1.birthPlace}</p>}
+                                  <p className="text-sm text-gray-500 mt-2">ID: {pair.person1.id}</p>
+                                </div>
+                                <div className="bg-white p-4 rounded border">
+                                  <h4 className="font-semibold mb-2">Personne 2</h4>
+                                  <p className="text-sm"><strong>Nom:</strong> {pair.person2.names[0]}</p>
+                                  <p className="text-sm"><strong>Naissance:</strong> {pair.person2.birth || 'N/A'}</p>
+                                  {pair.person2.birthPlace && <p className="text-sm"><strong>Lieu:</strong> {pair.person2.birthPlace}</p>}
+                                  <p className="text-sm text-gray-500 mt-2">ID: {pair.person2.id}</p>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-
-                    <div className="mb-6 bg-white border-2 border-gray-200 rounded-lg p-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Rechercher</label>
-                          <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Nom ou ID"
-                            className="w-full px-4 py-2 border rounded-lg"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Score min: {filterScore}%</label>
-                          <input
-                            type="range"
-                            min="80"
-                            max="100"
-                            value={filterScore}
-                            onChange={(e) => setFilterScore(parseInt(e.target.value))}
-                            className="w-full"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-3">{getFilteredDuplicates().length} résultat(s)</p>
-                    </div>
-
-                    <div className="mb-6 flex gap-4 flex-wrap">
-                      <button
-                        onClick={selectHighConfidence}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
-                      >
-                        Sélectionner ≥95%
-                      </button>
-                      <button
-                        onClick={() => setSelectedPairs(new Set())}
-                        className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium"
-                      >
-                        Désélectionner tout
-                      </button>
-                      <span className="text-sm text-gray-600 py-2">{selectedPairs.size} sélectionné(s)</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {getFilteredDuplicates().map((pair) => (
-                        <div
-                          key={pair.id}
-                          className={`border-2 rounded-lg p-6 cursor-pointer ${
-                            selectedPairs.has(pair.id) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
-                          }`}
-                          onClick={() => togglePairSelection(pair.id)}
-                        >
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <input type="checkbox" checked={selectedPairs.has(pair.id)} onChange={() => {}} className="w-5 h-5" />
-                              <span className="font-semibold">Similarité: {pair.similarity}%</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openPreview(pair);
-                                }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                              >
-                                👁️ Prévisualiser
-                              </button>
-                              <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                                pair.similarity >= 95 ? 'bg-red-100 text-red-800' :
-                                pair.similarity >= 90 ? 'bg-orange-100 text-orange-800' :
-                                'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {pair.similarity >= 95 ? 'Très probable' : 
-                                 pair.similarity >= 90 ? 'Probable' : 'Possible'}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-6">
-                            <div className="bg-white p-4 rounded border">
-                              <h4 className="font-semibold mb-2">Personne 1</h4>
-                              <p className="text-sm"><strong>Nom:</strong> {pair.person1.names[0]}</p>
-                              <p className="text-sm"><strong>Naissance:</strong> {pair.person1.birth || 'N/A'}</p>
-                              {pair.person1.birthPlace && <p className="text-sm"><strong>Lieu:</strong> {pair.person1.birthPlace}</p>}
-                              <p className="text-sm"><strong>Décès:</strong> {pair.person1.death || 'N/A'}</p>
-                              <p className="text-sm"><strong>Sexe:</strong> {pair.person1.sex || 'N/A'}</p>
-                              <p className="text-sm"><strong>Parents:</strong> {
-                                pair.person1.parents.length > 0
-                                  ? pair.person1.parents.map(pid => {
-                                      const p = individuals.find(x => x.id === pid);
-                                      return p?.names[0] || pid;
-                                    }).join(', ')
-                                  : 'N/A'
-                              }</p>
-                              <p className="text-sm text-gray-500 mt-2">ID: {pair.person1.id}</p>
-                            </div>
-                            <div className="bg-white p-4 rounded border">
-                              <h4 className="font-semibold mb-2">Personne 2</h4>
-                              <p className="text-sm"><strong>Nom:</strong> {pair.person2.names[0]}</p>
-                              <p className="text-sm"><strong>Naissance:</strong> {pair.person2.birth || 'N/A'}</p>
-                              {pair.person2.birthPlace && <p className="text-sm"><strong>Lieu:</strong> {pair.person2.birthPlace}</p>}
-                              <p className="text-sm"><strong>Décès:</strong> {pair.person2.death || 'N/A'}</p>
-                              <p className="text-sm"><strong>Sexe:</strong> {pair.person2.sex || 'N/A'}</p>
-                              <p className="text-sm"><strong>Parents:</strong> {
-                                pair.person2.parents.length > 0
-                                  ? pair.person2.parents.map(pid => {
-                                      const p = individuals.find(x => x.id === pid);
-                                      return p?.names[0] || pid;
-                                    }).join(', ')
-                                  : 'N/A'
-                              }</p>
-                              <p className="text-sm text-gray-500 mt-2">ID: {pair.person2.id}</p>
-                            </div>
-                          </div>
-                          
-                          {pair.details && pair.details.length > 0 && (
-                            <div className="mt-4 pt-4 border-t">
-                              <p className="text-xs font-medium text-gray-600 mb-2">🎯 Critères de correspondance:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {pair.details.map((detail, idx) => (
-                                  <span key={idx} className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
-                                    {detail}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
 
                     {selectedPairs.size > 0 && (
                       <div className="fixed bottom-8 right-8">
@@ -1107,7 +1238,6 @@ const GedcomDuplicateMerger = () => {
                         >
                           <CheckCircle className="w-6 h-6" />
                           Fusionner {(() => {
-                            // Calculer le nombre de personnes uniques sélectionnées
                             const uniqueIds = new Set();
                             selectedPairs.forEach(pairId => {
                               const pair = duplicates.find(d => d.id === pairId);
@@ -1176,6 +1306,83 @@ const GedcomDuplicateMerger = () => {
               </div>
             )}
 
+            {/* RESTAURÉ: Modal Changelog complet */}
+            {showChangelog && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowChangelog(false)}>
+                <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-6 sticky top-0 z-10">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold flex items-center gap-2">
+                          <Sparkles className="w-6 h-6" />
+                          Historique des versions
+                        </h2>
+                        <p className="text-blue-100 text-sm mt-1">Découvrez les nouveautés et améliorations</p>
+                      </div>
+                      <button
+                        onClick={() => setShowChangelog(false)}
+                        className="bg-white/20 hover:bg-white/30 w-10 h-10 rounded-full flex items-center justify-center transition-colors text-2xl"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    {CHANGELOG.map((release, idx) => {
+                      const borderColor = release.color === 'green' ? 'border-green-500' :
+                                         release.color === 'blue' ? 'border-blue-500' :
+                                         release.color === 'indigo' ? 'border-indigo-500' :
+                                         'border-gray-400';
+                      const bgColor = release.color === 'green' ? 'bg-green-50' :
+                                      release.color === 'blue' ? 'bg-blue-50' :
+                                      release.color === 'indigo' ? 'bg-indigo-50' :
+                                      'bg-gray-50';
+                      const textColor = release.color === 'green' ? 'text-green-900' :
+                                        release.color === 'blue' ? 'text-blue-900' :
+                                        release.color === 'indigo' ? 'text-indigo-900' :
+                                        'text-gray-900';
+                      
+                      return (
+                        <div key={release.version} className={`border-2 ${borderColor} rounded-lg p-6 ${bgColor}`}>
+                          <div className="flex items-center gap-3 mb-4">
+                            {release.tag && (
+                              <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                release.tag === 'ACTUELLE' ? 'bg-green-500 text-white' :
+                                release.tag === 'INITIALE' ? 'bg-gray-500 text-white' :
+                                'bg-blue-500 text-white'
+                              }`}>
+                                {release.tag}
+                              </span>
+                            )}
+                            <h3 className={`text-xl font-bold ${textColor}`}>Version {release.version}</h3>
+                            <span className="text-sm text-gray-600">{release.date}</span>
+                          </div>
+                          <div className="space-y-3 text-sm">
+                            <p className={`font-semibold ${textColor}`}>{release.title}</p>
+                            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+                              {release.items.map((item, itemIdx) => (
+                                <li key={itemIdx}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="border-t p-6 bg-gray-50 sticky bottom-0">
+                    <button
+                      onClick={() => setShowChangelog(false)}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Modal de prévisualisation */}
             {previewPair && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setPreviewPair(null)}>
@@ -1200,7 +1407,6 @@ const GedcomDuplicateMerger = () => {
                   </div>
 
                   <div className="p-6 space-y-6">
-                    {/* Alerte de choix automatique */}
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                       <div className="flex items-start gap-3">
                         <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -1209,68 +1415,42 @@ const GedcomDuplicateMerger = () => {
                             L'ID <span className="font-mono bg-blue-100 px-2 py-0.5 rounded">{previewPair.keepPerson.id}</span> sera conservé 
                             (score qualité: {previewPair.quality1 >= previewPair.quality2 ? previewPair.quality1 : previewPair.quality2} points)
                           </p>
-                          <p className="text-xs text-blue-700 mt-1">
-                            Les données manquantes seront automatiquement complétées avec celles de l'autre personne
-                          </p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Comparaison Avant */}
                     <div>
                       <h3 className="font-bold text-lg text-gray-800 mb-3">📊 Avant fusion</h3>
                       <div className="grid md:grid-cols-2 gap-4">
-                        {/* Personne conservée */}
                         <div className="border-2 border-green-500 rounded-lg bg-green-50 p-4">
                           <div className="flex items-center gap-2 mb-3">
                             <CheckCircle className="w-5 h-5 text-green-600" />
                             <h4 className="font-bold text-green-900">Conservé</h4>
-                            <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
-                              Qualité: {previewPair.quality1 >= previewPair.quality2 ? previewPair.quality1 : previewPair.quality2}
-                            </span>
                           </div>
                           <div className="space-y-2 text-sm">
-                            <p><strong>ID:</strong> {previewPair.keepPerson.id}</p>
                             <p><strong>Nom:</strong> {previewPair.keepPerson.names[0] || 'N/A'}</p>
                             <p><strong>Naissance:</strong> {previewPair.keepPerson.birth || 'N/A'}</p>
-                            {previewPair.keepPerson.birthPlace && <p><strong>Lieu:</strong> {previewPair.keepPerson.birthPlace}</p>}
                             <p><strong>Décès:</strong> {previewPair.keepPerson.death || 'N/A'}</p>
-                            {previewPair.keepPerson.deathPlace && <p><strong>Lieu:</strong> {previewPair.keepPerson.deathPlace}</p>}
-                            {previewPair.keepPerson.occupation && <p><strong>Profession:</strong> {previewPair.keepPerson.occupation}</p>}
                           </div>
                         </div>
-
-                        {/* Personne supprimée */}
                         <div className="border-2 border-red-500 rounded-lg bg-red-50 p-4">
                           <div className="flex items-center gap-2 mb-3">
                             <Trash2 className="w-5 h-5 text-red-600" />
                             <h4 className="font-bold text-red-900">Supprimé</h4>
-                            <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded">
-                              Qualité: {previewPair.quality1 < previewPair.quality2 ? previewPair.quality1 : previewPair.quality2}
-                            </span>
                           </div>
                           <div className="space-y-2 text-sm">
-                            <p><strong>ID:</strong> {previewPair.removePerson.id}</p>
                             <p><strong>Nom:</strong> {previewPair.removePerson.names[0] || 'N/A'}</p>
                             <p><strong>Naissance:</strong> {previewPair.removePerson.birth || 'N/A'}</p>
-                            {previewPair.removePerson.birthPlace && <p><strong>Lieu:</strong> {previewPair.removePerson.birthPlace}</p>}
                             <p><strong>Décès:</strong> {previewPair.removePerson.death || 'N/A'}</p>
-                            {previewPair.removePerson.deathPlace && <p><strong>Lieu:</strong> {previewPair.removePerson.deathPlace}</p>}
-                            {previewPair.removePerson.occupation && <p><strong>Profession:</strong> {previewPair.removePerson.occupation}</p>}
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Résultat Après */}
                     <div>
                       <h3 className="font-bold text-lg text-gray-800 mb-3">✨ Après fusion (résultat enrichi)</h3>
                       <div className="border-2 border-indigo-500 rounded-lg bg-indigo-50 p-6">
                         <div className="space-y-3">
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 w-32">ID:</span>
-                            <span className="font-mono">{previewPair.merged.id}</span>
-                          </div>
                           <div className="flex items-start gap-2">
                             <span className="font-semibold text-gray-700 w-32">Nom(s):</span>
                             <div className="flex-1">
@@ -1282,66 +1462,14 @@ const GedcomDuplicateMerger = () => {
                               ))}
                             </div>
                           </div>
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 w-32">Naissance:</span>
-                            <div className="flex items-center gap-2">
-                              <span>{previewPair.merged.birth || 'N/A'}</span>
-                              {!previewPair.keepPerson.birth && previewPair.removePerson.birth && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ajouté</span>
-                              )}
-                            </div>
-                          </div>
-                          {previewPair.merged.birthPlace && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-semibold text-gray-700 w-32">Lieu naissance:</span>
-                              <div className="flex items-center gap-2">
-                                <span>{previewPair.merged.birthPlace}</span>
-                                {!previewPair.keepPerson.birthPlace && previewPair.removePerson.birthPlace && (
-                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ajouté</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-gray-700 w-32">Décès:</span>
-                            <div className="flex items-center gap-2">
-                              <span>{previewPair.merged.death || 'N/A'}</span>
-                              {!previewPair.keepPerson.death && previewPair.removePerson.death && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ajouté</span>
-                              )}
-                            </div>
-                          </div>
-                          {previewPair.merged.deathPlace && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-semibold text-gray-700 w-32">Lieu décès:</span>
-                              <div className="flex items-center gap-2">
-                                <span>{previewPair.merged.deathPlace}</span>
-                                {!previewPair.keepPerson.deathPlace && previewPair.removePerson.deathPlace && (
-                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ajouté</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          {previewPair.merged.occupation && (
-                            <div className="flex items-start gap-2">
-                              <span className="font-semibold text-gray-700 w-32">Profession:</span>
-                              <div className="flex items-center gap-2">
-                                <span>{previewPair.merged.occupation}</span>
-                                {!previewPair.keepPerson.occupation && previewPair.removePerson.occupation && (
-                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Ajouté</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                       <button
                         onClick={() => setPreviewPair(null)}
-                        className="px-6 py-2 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                        className="px-6 py-2 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50"
                       >
                         Fermer
                       </button>
@@ -1350,14 +1478,14 @@ const GedcomDuplicateMerger = () => {
                           togglePairSelection(previewPair.original.id);
                           setPreviewPair(null);
                         }}
-                        className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                        className={`px-6 py-2 rounded-lg font-medium flex items-center gap-2 ${
                           selectedPairs.has(previewPair.original.id)
                             ? 'bg-red-600 hover:bg-red-700 text-white'
                             : 'bg-green-600 hover:bg-green-700 text-white'
                         }`}
                       >
                         <CheckCircle className="w-5 h-5" />
-                        {selectedPairs.has(previewPair.original.id) ? 'Désélectionner' : 'Sélectionner pour fusion'}
+                        {selectedPairs.has(previewPair.original.id) ? 'Désélectionner' : 'Sélectionner'}
                       </button>
                     </div>
                   </div>

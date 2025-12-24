@@ -1,116 +1,68 @@
-# 🌳 Fusionneur GEDCOM v1.8.6
+# Fusionneur de Doublons GEDCOM v1.8.7
 
-## Application professionnelle de fusion intelligente des doublons GEDCOM
+Application web React pour détecter et fusionner intelligemment les doublons dans vos fichiers GEDCOM.
 
-Application React responsive et performante pour nettoyer votre arbre généalogique en détectant et fusionnant intelligemment les doublons dans vos fichiers GEDCOM.
+## 🎯 Nouveautés de la v1.8.7
 
-## ✨ Fonctionnalités principales
+**Cette version restaure toutes les fonctionnalités manquantes identifiées comme régressions :**
 
-### Détection intelligente des doublons
-- **Scoring hybride relatif** avec 9 critères pondérés
-- **Soundex phonétique** adapté aux noms français
-- **Triple indexation** pour des performances optimales (99%+ de réduction)
-- Détection automatique des **clusters** (3+ personnes interconnectées)
+- ✅ **Bouton Changelog/Nouveautés** : Accessible depuis le header avec modal complète
+- ✅ **Système d'onglets** : Navigation claire entre Clusters et Doublons simples
+- ✅ **Scoring des clusters** : Affichage du score moyen avec jauges visuelles colorées
+- ✅ **Filtre pourcentage clusters** : Slider pour filtrer par score minimum
+- ✅ **Sélection auto ≥95%** : Bouton pour sélectionner automatiquement les clusters haute confiance
 
-### Prévisualisation complète
-- Visualisation avant/après fusion
-- Calcul automatique de la qualité des données
-- Enrichissement automatique des informations manquantes
-- Badges visuels pour les données ajoutées
+## 🚀 Fonctionnalités principales
 
-### Interface professionnelle
-- Design responsive (mobile, tablette, desktop)
-- Recherche et filtrage avancés
-- Sélection groupée par cluster
-- Progression détaillée de l'analyse
+### Détection intelligente
+- Parser GEDCOM complet (INDI, FAM, relations)
+- Algorithme Soundex adapté au français
+- 9 critères de similarité pondérés
+- Triple indexation pour performances optimales (99% réduction comparaisons)
+- Détection automatique des clusters (groupes de 3+ personnes)
 
-## 🚀 Démarrage rapide
+### Organisation par onglets
+- **Onglet Clusters** : Groupes de personnes interconnectées avec score moyen
+- **Onglet Doublons simples** : Paires de doublons classiques
 
-### Installation
+### Interface intuitive
+- Prévisualisation complète avant fusion
+- Filtres par score et recherche nom/ID
+- Sélection rapide haute confiance (≥95%)
+- Compteurs et statistiques en temps réel
+
+### Fusion sécurisée
+- Enrichissement automatique sans perte de données
+- Export GEDCOM nettoyé
+- Statistiques avant/après
+
+## 📦 Installation
 
 ```bash
 npm install
-```
-
-### Développement
-
-```bash
 npm run dev
 ```
 
-L'application sera accessible sur `http://localhost:5173`
+## 🌐 Déploiement Netlify
 
-### Production
+1. Glissez-déposez le dossier sur https://app.netlify.com/drop
+2. Ou connectez votre repo GitHub pour déploiement continu
 
-```bash
-npm run build
-```
+## 🔒 Sécurité
 
-Les fichiers optimisés seront dans le dossier `dist/`
+- Traitement 100% côté client (aucun serveur)
+- Aucune donnée envoyée
+- Protection XSS automatique (React)
+- Headers sécurité configurés (Netlify)
 
-## 📊 Critères de détection
+## 📝 Technologies
 
-| Critère | Pondération | Description |
-|---------|-------------|-------------|
-| Noms | 30 pts | Comparaison exacte et phonétique (Soundex) |
-| Date de naissance | 25 pts | Exacte ou année proche (±2 ans) |
-| Sexe | 15 pts | **Éliminatoire** si différent |
-| Parents | 20 pts | 1 ou 2 parents communs |
-| Fratrie | 15 pts | Même famille d'origine |
-| Lieu de naissance | 10 pts | Comparaison exacte |
-| Conjoints | 8 pts | Conjoints en commun |
-| Date de décès | 15 pts | Comparaison exacte |
-| Profession | 5 pts | Comparaison exacte |
-
-**Total**: 143 points max - Score calculé en % selon les données disponibles
-
-## 🔒 Sécurité et confidentialité
-
-- ✅ Traitement **100% local** dans votre navigateur
-- ✅ Aucune donnée envoyée vers un serveur externe
-- ✅ Fichier original **jamais modifié**
-- ✅ Nouveau fichier généré pour chaque export
-- ✅ Headers de sécurité Netlify configurés
-
-## 📦 Technologies
-
-- **React 18.3** - Framework UI moderne
-- **Vite 5.4** - Build tool ultra-rapide
-- **Tailwind CSS 3.4** - Styles responsives
-- **Lucide React** - Icônes professionnelles
-- **esbuild** - Minification optimale
-
-## 🎯 Performance
-
-- **Triple indexation** : Phonétique + Année + Parents
-- **Réduction > 99%** des comparaisons nécessaires
-- **Analyse rapide** de fichiers avec milliers d'individus
-- **Build optimisé** : Code splitting, cache immutable
-
-## 📝 Version 1.8.6
-
-Cette version apporte toutes les fonctionnalités avancées :
-
-- ✨ Système de prévisualisation des fusions
-- 🔗 Détection automatique des clusters
-- 📊 Calcul de qualité des données
-- 🎨 Interface enrichie avec badges visuels
-- ⚡ Optimisations de performance
-- 🔧 Configuration Netlify complète
+- React 18.3.1
+- Vite 5.4.2
+- Tailwind CSS 3.4
+- Lucide React (icônes)
+- esbuild (minification)
 
 ## 📄 Licence
 
-Application développée pour un usage personnel en généalogie.
-
-## 🙋 Support
-
-Pour toute question ou problème :
-1. Consultez la documentation complète
-2. Vérifiez le CHANGELOG.md
-3. Consultez les logs de build Netlify
-
----
-
-## ✅ Test déploiement automatique
-
-**Fusionneur GEDCOM v1.8.6** - Nettoyez votre arbre généalogique avec intelligence ! 🌳
+Projet personnel - Tous droits réservés

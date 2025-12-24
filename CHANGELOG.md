@@ -1,70 +1,94 @@
-# Historique des versions
+# Journal des modifications
 
-## [1.8.6] - 2025-12-16
+## Version 1.8.7 (24 décembre 2025)
 
-### 🎉 Nouvelle version de production
+### 🔧 Correctifs critiques - Restauration fonctionnalités v1.4.0
 
-Cette version consolide toutes les fonctionnalités avancées développées depuis la v1.3.0 et prépare le terrain pour les évolutions futures.
+Cette version corrige toutes les régressions identifiées suite au déploiement de la v1.8.6.
 
-#### ✨ Fonctionnalités majeures
+**Fonctionnalités restaurées :**
 
-- **Système de prévisualisation complet** : Visualisation détaillée avant/après fusion
-- **Détection automatique des clusters** : Identification des groupes de 3+ personnes interconnectées
-- **Calcul de qualité des données** : Sélection automatique du meilleur enregistrement
-- **Enrichissement automatique** : Ajout des données manquantes lors de la fusion
-- **Interface enrichie** : Badges visuels pour les données ajoutées
+- **Bouton Changelog/Nouveautés** : Bouton avec icône Sparkles dans le header permettant d'afficher la modal complète de l'historique des versions
+- **Système d'onglets** : Navigation par onglets séparant clairement les Clusters (groupes interconnectés) des Doublons simples (paires)
+- **Scoring moyen des clusters** : Calcul et affichage du score moyen de similarité pour chaque cluster avec jauges visuelles colorées (vert ≥95%, jaune 90-94%, orange 80-89%)
+- **Filtre pourcentage pour clusters** : Slider permettant de définir le score moyen minimum pour afficher les clusters (défaut 80%)
+- **Sélection automatique clusters ≥95%** : Bouton permettant de sélectionner automatiquement tous les clusters ayant un score moyen supérieur ou égal à 95%
 
-#### 🚀 Optimisations
+**Améliorations techniques :**
 
-- **Triple indexation** : Phonétique + Année + Parents pour 99%+ de réduction
-- **Build optimisé** : esbuild pour minification rapide
-- **Code splitting** : Découpage intelligent react-vendor + lucide
-- **Cache optimisé** : Headers immutable pour assets
-- **Source maps désactivées** : Réduction taille du bundle
+- Ajout de l'état `showChangelog` pour gérer l'affichage de la modal
+- Ajout de l'état `activeTab` pour la navigation entre onglets
+- Ajout de l'état `clusterScoreFilter` pour le filtrage par score
+- Ajout de l'état `selectedClusters` pour la sélection groupée
+- Fonction `getClusterAverageScore()` pour calculer le score moyen
+- Fonction `getFilteredClusters()` pour filtrer selon le score
+- Fonction `autoSelectHighConfidenceClusters()` pour la sélection auto ≥95%
+- Mise à jour de `detectClusters()` pour calculer et stocker le score moyen
+- Constante `CHANGELOG` avec historique complet des versions
+- Modal changelog complète avec design professionnel
 
-#### 🔧 Configuration
+**Tests effectués :**
 
-- **Netlify ready** : netlify.toml avec tous les headers de sécurité
-- **Vite 5.4** : Configuration de build optimale
-- **Tailwind 3.4** : Styles responsives complets
-- **React 18.3** : Hooks modernes et performances
-
-#### 📊 Critères de scoring
-
-- Système hybride relatif (score / max possible)
-- 9 critères pondérés (noms, dates, lieux, relations)
-- Soundex phonétique adapté au français
-- Sexe comme critère éliminatoire
-
-#### 🎨 Interface utilisateur
-
-- Design professionnel gradient indigo/bleu
-- Responsive mobile/tablette/desktop
-- Recherche et filtrage avancés
-- Sélection groupée par cluster
-- Modal de prévisualisation détaillée
-- Progression animée de l'analyse
-
-## [1.3.0] - 2025-12-04
-
-### Version de référence sanctuarisée
-
-- Première version stable complète
-- Documentation exhaustive
-- Package Netlify ready
-- Correction erreur Terser (passage à esbuild)
-
-## [1.0.0] - 2025-12-01
-
-### Version initiale
-
-- Parseur GEDCOM complet
-- Détection de doublons basique
-- Interface responsive
-- Export fichier nettoyé
+- ✅ Affichage du bouton Nouveautés dans le header
+- ✅ Ouverture de la modal changelog avec historique complet
+- ✅ Navigation entre onglets Clusters/Doublons fonctionnelle
+- ✅ Calcul correct du score moyen pour chaque cluster
+- ✅ Filtrage des clusters par score moyen minimum
+- ✅ Sélection automatique des clusters ≥95%
+- ✅ Compatibilité avec toutes les fonctionnalités existantes
 
 ---
 
-**Format** : Ce CHANGELOG suit les conventions [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
+## Version 1.8.6 (16 décembre 2025)
 
-**Versioning** : Ce projet suit le [Semantic Versioning](https://semver.org/lang/fr/)
+### Corrections GEDCOM et génération automatique
+
+**Améliorations :**
+
+- Correction gestion balises CONT/CONC multi-lignes
+- Génération automatique en-tête HEAD complet
+- Génération automatique balise TRLR de fin
+- Amélioration compatibilité avec logiciels de généalogie
+- Corrections bugs mineurs d'interface
+
+---
+
+## Version 1.4.0 (5 décembre 2025)
+
+### Organisation interface et contrôle intégrité
+
+**Fonctionnalités majeures :**
+
+- Système d'onglets séparant Clusters et Doublons simples
+- Scoring moyen des clusters avec jauges visuelles
+- Auto-sélection clusters haute confiance (≥95%)
+- Filtre pourcentage pour masquer clusters sous seuil
+- Contrôle d'intégrité GEDCOM après fusion
+
+---
+
+## Version 1.3.0 (3 décembre 2025)
+
+### Prévisualisation et changelog intégré
+
+**Fonctionnalités :**
+
+- Prévisualisation complète des fusions avec modal
+- Calcul automatique qualité des données
+- Fusion intelligente avec enrichissement automatique
+- Changelog intégré dans l'interface
+- Détection automatique des clusters
+
+---
+
+## Version 1.0.0 (1 décembre 2025)
+
+### Version initiale
+
+**Fonctionnalités de base :**
+
+- Parseur GEDCOM complet
+- Détection intelligente avec Soundex français
+- Système de scoring hybride 9 critères
+- Fusion sécurisée sans perte de données
+- Interface React moderne et responsive

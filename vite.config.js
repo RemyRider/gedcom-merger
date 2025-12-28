@@ -5,12 +5,12 @@ export default defineConfig({
   plugins: [react()],
   build: {
     minify: 'esbuild',
-    sourcemap: false,
+    target: 'es2015',
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          icons: ['lucide-react']
+          'react-vendor': ['react', 'react-dom'],
+          'lucide': ['lucide-react']
         }
       }
     }

@@ -1,68 +1,131 @@
-# Fusionneur de Doublons GEDCOM v1.8.7
+# 🌳 Fusionneur de Doublons GEDCOM v1.9.0
 
-Application web React pour détecter et fusionner intelligemment les doublons dans vos fichiers GEDCOM.
+Application web React pour détecter et fusionner intelligemment les doublons dans vos fichiers GEDCOM, avec détection des individus isolés et suggestions IA.
 
-## 🎯 Nouveautés de la v1.8.7
+## 🚀 Démo
 
-**Cette version restaure toutes les fonctionnalités manquantes identifiées comme régressions :**
+**Production** : https://gedcom-merger.netlify.app  
+**Développement** : https://dev--gedcom-merger.netlify.app
 
-- ✅ **Bouton Changelog/Nouveautés** : Accessible depuis le header avec modal complète
-- ✅ **Système d'onglets** : Navigation claire entre Clusters et Doublons simples
-- ✅ **Scoring des clusters** : Affichage du score moyen avec jauges visuelles colorées
-- ✅ **Filtre pourcentage clusters** : Slider pour filtrer par score minimum
-- ✅ **Sélection auto ≥95%** : Bouton pour sélectionner automatiquement les clusters haute confiance
+## ✨ Fonctionnalités
 
-## 🚀 Fonctionnalités principales
-
-### Détection intelligente
+### 🔍 Détection intelligente des doublons
 - Parser GEDCOM complet (INDI, FAM, relations)
 - Algorithme Soundex adapté au français
+- Dictionnaire de 40 variantes de prénoms français
 - 9 critères de similarité pondérés
-- Triple indexation pour performances optimales (99% réduction comparaisons)
-- Détection automatique des clusters (groupes de 3+ personnes)
+- Triple indexation pour performances optimales
+- Détection automatique des clusters (3+ personnes)
 
-### Organisation par onglets
-- **Onglet Clusters** : Groupes de personnes interconnectées avec score moyen
-- **Onglet Doublons simples** : Paires de doublons classiques
+### 👥 4 onglets d'analyse
 
-### Interface intuitive
-- Prévisualisation complète avant fusion
-- Filtres par score et recherche nom/ID
-- Sélection rapide haute confiance (≥95%)
-- Compteurs et statistiques en temps réel
+| Onglet | Description |
+|--------|-------------|
+| **Clusters** | Groupes de 3+ personnes interconnectées avec score moyen |
+| **Doublons** | Paires de doublons classiques avec prévisualisation |
+| **Isolés** | Individus sans parents ni enfants (nettoyage) |
+| **Suggestions IA** | Analyse patterns avec score de confiance |
 
-### Fusion sécurisée
-- Enrichissement automatique sans perte de données
-- Export GEDCOM nettoyé
-- Statistiques avant/après
+### 🧹 Gestion des individus isolés
+- Détection automatique des personnes sans famille
+- Distinction : totalement isolés vs avec conjoints
+- Sélection en masse (tout / totalement isolés / désélectionner)
+- Suppression sécurisée avec confirmation
 
-## 📦 Installation
+### 🤖 Suggestions intelligentes (IA)
+- Analyse des patterns nom + période temporelle
+- Score de confiance 60-95%
+- Prise en compte : lieux communs, parents communs
+- Guide pour les cas complexes
+
+### 📍 Normalisation des lieux
+- Retrait automatique des codes INSEE
+- Exemple : "38142 Mizoen" → "Mizoen"
+- Conservation des noms historiques
+
+### 🛡️ Contrôles d'intégrité
+- Détection des dates incohérentes
+- Alerte parents trop jeunes/vieux
+- Individus sans nom
+
+### 💾 Export sécurisé
+- Génération automatique HEAD/TRLR si manquants
+- Gestion correcte des balises CONT/CONC
+- Fichier compatible avec tous les logiciels
+
+## 🛠️ Technologies
+
+- React 18.3.1
+- Vite 5.4.2 (build avec esbuild)
+- Tailwind CSS 3.4
+- Lucide React (icônes)
+
+## 📦 Installation locale
 
 ```bash
+# Cloner le repo
+git clone https://github.com/RemyRider/gedcom-merger.git
+cd gedcom-merger
+
+# Installer les dépendances
 npm install
+
+# Lancer en développement
 npm run dev
+
+# Build pour production
+npm run build
 ```
 
 ## 🌐 Déploiement Netlify
 
-1. Glissez-déposez le dossier sur https://app.netlify.com/drop
-2. Ou connectez votre repo GitHub pour déploiement continu
+### Option 1 : Drag & Drop
+1. Glissez le dossier `dist/` sur https://app.netlify.com/drop
 
-## 🔒 Sécurité
+### Option 2 : Déploiement continu
+1. Connectez votre repo GitHub à Netlify
+2. Build command : `npm install && npm run build`
+3. Publish directory : `dist`
 
-- Traitement 100% côté client (aucun serveur)
-- Aucune donnée envoyée
-- Protection XSS automatique (React)
-- Headers sécurité configurés (Netlify)
+## 🔒 Sécurité & Confidentialité
 
-## 📝 Technologies
+- ✅ Traitement 100% côté client
+- ✅ Aucune donnée envoyée à un serveur
+- ✅ Headers de sécurité configurés
+- ✅ Protection XSS automatique (React)
 
-- React 18.3.1
-- Vite 5.4.2
-- Tailwind CSS 3.4
-- Lucide React (icônes)
-- esbuild (minification)
+## 📊 Workflow Git recommandé
+
+```bash
+# Développement sur branche dev
+git checkout dev
+# ... modifications ...
+git add .
+git commit -m "v1.9.x - description"
+git push origin dev
+
+# Test sur https://dev--gedcom-merger.netlify.app
+
+# Si OK, passage en production
+git checkout main
+git merge dev
+git push origin main
+
+# Déploiement auto sur https://gedcom-merger.netlify.app
+```
 
 ## 📄 Licence
 
 Projet personnel - Tous droits réservés
+
+## 👤 Auteur
+
+Développé par Rémiol - Business Analyst & Développeur
+
+## 🐛 Bugs / Suggestions
+
+Ouvrez une issue sur GitHub ou contactez-moi directement.
+
+---
+
+**⭐ Si ce projet vous aide, n'hésitez pas à lui donner une étoile !**

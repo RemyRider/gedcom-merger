@@ -32,14 +32,15 @@ const GedcomDuplicateMerger = () => {
       date: '24 décembre 2025',
       tag: 'ACTUELLE',
       color: 'green',
-      title: 'Restauration fonctionnalités v1.4.0',
+      title: 'Version complète avec toutes les corrections',
       items: [
         'Restauration bouton Changelog/Nouveautés avec modal complète',
         'Restauration système d\'onglets Clusters/Doublons simples',
         'Ajout scoring moyen des clusters avec jauges visuelles',
         'Ajout filtre pourcentage minimum pour clusters',
         'Ajout sélection automatique clusters ≥95%',
-        'Correction de toutes les régressions identifiées'
+        'CORRECTION CRITIQUE: Gestion balises CONT/CONC multi-lignes',
+        'CORRECTION CRITIQUE: Génération automatique HEAD/TRLR'
       ]
     },
     {
@@ -107,9 +108,34 @@ const GedcomDuplicateMerger = () => {
     let currentPerson = null;
     let currentFamily = null;
     let currentEvent = null;
+    let lastFieldType = null;
 
     lines.forEach(line => {
       const trimmed = line.trim();
+      
+      // CORRECTION v1.8.6: Gestion CONT/CONC
+      if (currentPerson && (trimmed.startsWith('2 CONT ') || trimmed.startsWith('2 CONC '))) {
+        const isCont = trimmed.startsWith('2 CONT ');
+        const value = trimmed.split(isCont ? '2 CONT ' : '2 CONC ')[1] || '';
+        const separator = isCont ? '\n' : '';
+        
+        if (lastFieldType === 'NAME' && currentPerson.names.length > 0) {
+          currentPerson.names[currentPerson.names.length - 1] += separator + value;
+        } else if (lastFieldType === 'BIRT_DATE') {
+          currentPerson.birth += separator + value;
+        } else if (lastFieldType === 'BIRT_PLAC') {
+          currentPerson.birthPlace += separator + value;
+        } else if (lastFieldType === 'DEAT_DATE') {
+          currentPerson.death += separator + value;
+        } else if (lastFieldType === 'DEAT_PLAC') {
+          currentPerson.deathPlace += separator + value;
+        } else if (lastFieldType === 'OCCU') {
+          currentPerson.occupation += separator + value;
+        } else if (lastFieldType === 'RELI') {
+          currentPerson.religion += separator + value;
+        }
+        return;
+      }
       
       if (trimmed.startsWith('0') && trimmed.includes('INDI')) {
         if (currentPerson) people.push(currentPerson);
@@ -121,6 +147,7 @@ const GedcomDuplicateMerger = () => {
           familiesAsSpouse: [], occupation: '', religion: ''
         };
         currentEvent = null;
+        lastFieldType = null;
       } 
       else if (trimmed.startsWith('0') && trimmed.includes('FAM')) {
         const match = trimmed.match(/@([^@]+)@/);
@@ -133,25 +160,43 @@ const GedcomDuplicateMerger = () => {
       else if (currentPerson) {
         if (trimmed.includes('NAME')) {
           const name = trimmed.split('NAME')[1]?.trim();
-          if (name) currentPerson.names.push(name);
+          if (name) {
+            currentPerson.names.push(name);
+            lastFieldType = 'NAME';
+          }
         } else if (trimmed.includes('SEX')) {
           currentPerson.sex = trimmed.split('SEX')[1]?.trim() || '';
+          lastFieldType = 'SEX';
         } else if (trimmed.startsWith('1 BIRT')) {
           currentEvent = 'birth';
+          lastFieldType = null;
         } else if (trimmed.startsWith('1 DEAT')) {
           currentEvent = 'death';
+          lastFieldType = null;
         } else if (trimmed.startsWith('1 OCCU')) {
           currentPerson.occupation = trimmed.split('OCCU')[1]?.trim() || '';
+          lastFieldType = 'OCCU';
         } else if (trimmed.startsWith('1 RELI')) {
           currentPerson.religion = trimmed.split('RELI')[1]?.trim() || '';
+          lastFieldType = 'RELI';
         } else if (currentEvent && trimmed.includes('DATE')) {
           const date = trimmed.split('DATE')[1]?.trim() || '';
-          if (currentEvent === 'birth') currentPerson.birth = date;
-          else if (currentEvent === 'death') currentPerson.death = date;
+          if (currentEvent === 'birth') {
+            currentPerson.birth = date;
+            lastFieldType = 'BIRT_DATE';
+          } else if (currentEvent === 'death') {
+            currentPerson.death = date;
+            lastFieldType = 'DEAT_DATE';
+          }
         } else if (currentEvent && trimmed.includes('PLAC')) {
           const place = trimmed.split('PLAC')[1]?.trim() || '';
-          if (currentEvent === 'birth') currentPerson.birthPlace = place;
-          else if (currentEvent === 'death') currentPerson.deathPlace = place;
+          if (currentEvent === 'birth') {
+            currentPerson.birthPlace = place;
+            lastFieldType = 'BIRT_PLAC';
+          } else if (currentEvent === 'death') {
+            currentPerson.deathPlace = place;
+            lastFieldType = 'DEAT_PLAC';
+          }
         } else if (trimmed.includes('FAMC')) {
           const match = trimmed.match(/@([^@]+)@/);
           if (match) currentPerson.familyAsChild = match[1];
@@ -804,10 +849,45 @@ const GedcomDuplicateMerger = () => {
     const lines = originalGedcom.split('\n');
     const outputLines = [];
     let skip = false;
+    let hasHead = false;
+    let hasTrlr = false;
+
+    // CORRECTION v1.8.6: Vérifier présence HEAD/TRLR
+    if (lines.length > 0 && lines[0].trim().startsWith('0 HEAD')) {
+      hasHead = true;
+    }
+    if (lines.length > 0) {
+      const lastNonEmpty = lines.filter(l => l.trim()).pop();
+      if (lastNonEmpty && lastNonEmpty.trim().startsWith('0 TRLR')) {
+        hasTrlr = true;
+      }
+    }
+
+    // CORRECTION v1.8.6: Générer HEAD si manquant
+    if (!hasHead) {
+      outputLines.push('0 HEAD');
+      outputLines.push('1 SOUR GedcomMerger');
+      outputLines.push(`2 VERS ${VERSION}`);
+      outputLines.push('2 NAME Fusionneur de Doublons GEDCOM');
+      outputLines.push('1 GEDC');
+      outputLines.push('2 VERS 5.5.1');
+      outputLines.push('2 FORM LINEAGE-LINKED');
+      outputLines.push('1 CHAR UTF-8');
+      const now = new Date();
+      const dateStr = `${now.getDate()} ${['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][now.getMonth()]} ${now.getFullYear()}`;
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      outputLines.push(`1 DATE ${dateStr}`);
+      outputLines.push(`2 TIME ${timeStr}`);
+    }
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const trimmed = line.trim();
+
+      // CORRECTION v1.8.6: Skip TRLR (on l'ajoutera à la fin)
+      if (trimmed.startsWith('0 TRLR')) {
+        continue;
+      }
 
       if (trimmed.startsWith('0 ')) {
         skip = false;
@@ -829,6 +909,9 @@ const GedcomDuplicateMerger = () => {
 
       outputLines.push(processedLine);
     }
+
+    // CORRECTION v1.8.6: Toujours ajouter TRLR à la fin
+    outputLines.push('0 TRLR');
 
     const blob = new Blob([outputLines.join('\n')], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);

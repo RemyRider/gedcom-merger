@@ -2,53 +2,90 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## Conventions
+
+- 🎉 Nouvelle version majeure
+- ✨ Nouvelle fonctionnalité
+- 🔧 Amélioration
+- 🐛 Correction de bug
+- ⚠️ Changement important
+- 💔 Breaking change
+
+---
+
+## [1.9.2] - 28 décembre 2025
+
+### 🎉 CORRECTION MAJEURE : Algorithme anti-faux-positifs
+
+Cette version corrige une régression critique introduite depuis la v1.8.7 qui causait de nombreux faux positifs.
+
+**Problème identifié** :
+Le système de scoring hybride relatif donnait des scores élevés (parfois 100%) même quand seuls le nom et le sexe correspondaient, sans autre critère confirmant la correspondance.
+
+**Solution implémentée** :
+
+#### Nouvelle règle métier stricte
+
+```
+POUR ÊTRE CONSIDÉRÉ DOUBLON, IL FAUT :
+├─ Nom/prénom identiques (NÉCESSAIRE mais PAS SUFFISANT)
+├─ Sexe compatible (NÉCESSAIRE si renseigné, ÉLIMINATOIRE si différent)
+└─ AU MOINS 1 critère SUFFISANT parmi :
+   ├─ Date/année de naissance
+   ├─ Lieu de naissance
+   ├─ Parents communs (1 ou 2)
+   ├─ Conjoints communs
+   ├─ Même fratrie
+   ├─ Date de décès
+   └─ Profession identique
+```
+
+#### Exemples concrets
+
+| Cas | Nom | Sexe | Autre critère | Verdict v1.9.2 |
+|-----|-----|------|---------------|----------------|
+| A | Jean MARTIN | M | *(rien)* | ❌ **REJETÉ** |
+| B | Jean MARTIN | M | Né 1950 | ✅ **DOUBLON** |
+| C | Jean MARTIN | M | Même parents | ✅ **DOUBLON** |
+| D | Jean MARTIN | M vs F | Né 1950 | ❌ **ÉLIMINÉ** (sexe différent) |
+
+### ✨ Améliorations techniques
+
+- Tracking des critères suffisants dans `calculateSimilarity()`
+- Nouveau champ `sufficientCriteria` dans les résultats de comparaison
+- Affichage des critères validants dans l'interface
+- Rejet précoce des paires sans critère suffisant
+- Comptage des rejets dans les logs de performance
+
+### 🔧 Fonctionnalités préservées
+
+- 4 onglets : Clusters, Doublons, Isolés, Suggestions IA
+- Détection des individus isolés (sans parents ET sans enfants)
+- Suggestions IA basées sur patterns nom/période
+- Normalisation automatique des lieux (codes INSEE)
+- Contrôles d'intégrité avancés
+- Gestion CONT/CONC multi-lignes
+- Génération automatique HEAD/TRLR
+
+---
+
+## [1.9.1] - 28 décembre 2025
+
+### 🐛 Correction du traitement fichier
+
+- Correction du bug de la v1.9.0 où le traitement du fichier ne fonctionnait pas
+- Restauration complète de l'onglet "Isolés"
+- Restauration complète de l'onglet "Suggestions IA"
+
 ---
 
 ## [1.9.0] - 28 décembre 2025
 
-### ✨ Nouvelles fonctionnalités
+### ⚠️ VERSION PROBLÉMATIQUE
 
-**Onglet Isolés restauré**
-- Détection des individus sans parents ET sans enfants
-- Distinction entre "totalement isolés" (sans conjoints) et "avec conjoints"
-- Bouton "Tout sélectionner" pour sélection en masse
-- Bouton "Totalement isolés" pour cibler les cas critiques
-- Bouton "Désélectionner tout" pour reset
-- Suppression avec confirmation et contrôle d'impact
-- Compteurs en temps réel (totalement isolés / avec conjoints)
-
-**Onglet Suggestions IA restauré**
-- Analyse des patterns pour détecter groupes suspects
-- Détection des personnes avec même nom dans la même période (25 ans)
-- Score de confiance calculé (60-95%)
-- Facteurs bonus : lieu de naissance commun, parents communs
-- Facteurs malus : groupe trop grand (>5 personnes)
-- Explication du raisonnement pour chaque suggestion
-
-**Normalisation automatique des lieux**
-- Retrait des codes INSEE : "38142 Mizoen" → "Mizoen"
-- Application automatique lors du parsing GEDCOM
-- Conservation des noms historiques des communes
-
-**Contrôles d'intégrité avancés**
-- Détection personnes sans nom
-- Détection dates incohérentes (naissance > décès)
-- Détection parents trop jeunes (<15 ans) ou trop vieux (>80 ans)
-- Catégorisation : erreurs critiques / avertissements
-- Affichage des alertes dans l'interface
-
-**Dictionnaire variantes prénoms français**
-- 40 prénoms français avec leurs variantes historiques
-- Exemples : Catherine/Katherine, Jean/Jehan, Marie/Maria
-- Amélioration de 15-20% du taux de détection
-- Intégration avec l'algorithme Soundex
-
-### 🔧 Améliorations
-
-- Interface à 4 onglets : Clusters, Doublons, Isolés, Suggestions IA
-- Statistiques enrichies : 5 compteurs au lieu de 3
-- Navigation fluide entre onglets sur mobile
-- Bouton flottant pour suppression des isolés
+- Tentative d'ajout des onglets Isolés et Suggestions IA
+- **BUG CRITIQUE** : Le traitement du fichier ne fonctionnait pas
+- Cette version ne doit pas être utilisée
 
 ---
 
@@ -56,11 +93,11 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ### ✨ Nouvelles fonctionnalités
 
-- Restauration du bouton Changelog/Nouveautés avec modal complète
-- Restauration du système d'onglets Clusters/Doublons simples
+- Restauration bouton Changelog/Nouveautés avec modal complète
+- Restauration système d'onglets Clusters/Doublons simples
 - Scoring moyen des clusters avec jauges visuelles colorées
 - Filtre pourcentage minimum pour clusters (slider 80-100%)
-- Sélection automatique des clusters ≥95%
+- Sélection automatique clusters ≥95%
 
 ### 🔧 Améliorations
 

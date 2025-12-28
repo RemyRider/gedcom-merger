@@ -1,72 +1,62 @@
-# 🌳 Fusionneur de Doublons GEDCOM v1.9.0
+# 🌳 Fusionneur de Doublons GEDCOM v1.9.2
 
 Application web React pour détecter et fusionner intelligemment les doublons dans vos fichiers GEDCOM, avec détection des individus isolés et suggestions IA.
 
-## 🚀 Démo
+## 🎯 CORRECTION MAJEURE v1.9.2
 
-**Production** : https://gedcom-merger.netlify.app  
-**Développement** : https://dev--gedcom-merger.netlify.app
+**Problème résolu** : L'algorithme de comparaison générait trop de faux positifs depuis la v1.8.7.
 
-## ✨ Fonctionnalités
+**Cause** : Le système hybride relatif donnait des scores élevés même quand seuls le nom et le sexe correspondaient.
 
-### 🔍 Détection intelligente des doublons
+**Solution** : Nouvelle règle anti-faux-positifs :
+
+```
+POUR ÊTRE DOUBLON, IL FAUT :
+├─ Nom identique (NÉCESSAIRE)
+├─ Sexe compatible (NÉCESSAIRE si renseigné)
+└─ AU MOINS 1 critère SUFFISANT parmi :
+   ├─ Date/année de naissance
+   ├─ Lieu de naissance  
+   ├─ Parents communs
+   ├─ Conjoints communs
+   ├─ Fratrie commune
+   ├─ Date de décès
+   └─ Profession
+```
+
+**Exemples** :
+
+| Cas | Données | Verdict v1.9.2 |
+|-----|---------|----------------|
+| Jean MARTIN (M) seul | Nom + Sexe uniquement | ❌ **REJETÉ** |
+| Jean MARTIN (M) né 1950 | Nom + Sexe + Naissance | ✅ **DOUBLON** |
+| Jean MARTIN (M) + Marie épouse | Nom + Sexe + Conjoint | ✅ **DOUBLON** |
+
+## 🚀 Fonctionnalités
+
+### Détection intelligente
 - Parser GEDCOM complet (INDI, FAM, relations)
 - Algorithme Soundex adapté au français
-- Dictionnaire de 40 variantes de prénoms français
+- 40 variantes de prénoms français (Jean/Jehan, Marie/Maria...)
 - 9 critères de similarité pondérés
-- Triple indexation pour performances optimales
-- Détection automatique des clusters (3+ personnes)
+- Triple indexation pour performances optimales (99% réduction comparaisons)
+- Normalisation automatique des lieux (retrait codes INSEE)
 
-### 👥 4 onglets d'analyse
+### Interface à 4 onglets
+- **🟠 Clusters** : Groupes de 3+ personnes interconnectées avec score moyen
+- **🔵 Doublons** : Paires de doublons simples
+- **🔴 Isolés** : Individus sans parents ET sans enfants
+- **🟣 Suggestions IA** : Analyse de patterns avec score de confiance
 
-| Onglet | Description |
-|--------|-------------|
-| **Clusters** | Groupes de 3+ personnes interconnectées avec score moyen |
-| **Doublons** | Paires de doublons classiques avec prévisualisation |
-| **Isolés** | Individus sans parents ni enfants (nettoyage) |
-| **Suggestions IA** | Analyse patterns avec score de confiance |
+### Fusion sécurisée
+- Prévisualisation complète avant fusion
+- Enrichissement automatique sans perte de données
+- Export GEDCOM nettoyé avec HEAD/TRLR générés si manquants
+- Statistiques avant/après
 
-### 🧹 Gestion des individus isolés
-- Détection automatique des personnes sans famille
-- Distinction : totalement isolés vs avec conjoints
-- Sélection en masse (tout / totalement isolés / désélectionner)
-- Suppression sécurisée avec confirmation
-
-### 🤖 Suggestions intelligentes (IA)
-- Analyse des patterns nom + période temporelle
-- Score de confiance 60-95%
-- Prise en compte : lieux communs, parents communs
-- Guide pour les cas complexes
-
-### 📍 Normalisation des lieux
-- Retrait automatique des codes INSEE
-- Exemple : "38142 Mizoen" → "Mizoen"
-- Conservation des noms historiques
-
-### 🛡️ Contrôles d'intégrité
-- Détection des dates incohérentes
-- Alerte parents trop jeunes/vieux
-- Individus sans nom
-
-### 💾 Export sécurisé
-- Génération automatique HEAD/TRLR si manquants
-- Gestion correcte des balises CONT/CONC
-- Fichier compatible avec tous les logiciels
-
-## 🛠️ Technologies
-
-- React 18.3.1
-- Vite 5.4.2 (build avec esbuild)
-- Tailwind CSS 3.4
-- Lucide React (icônes)
-
-## 📦 Installation locale
+## 📦 Installation
 
 ```bash
-# Cloner le repo
-git clone https://github.com/RemyRider/gedcom-merger.git
-cd gedcom-merger
-
 # Installer les dépendances
 npm install
 
@@ -79,53 +69,55 @@ npm run build
 
 ## 🌐 Déploiement Netlify
 
-### Option 1 : Drag & Drop
-1. Glissez le dossier `dist/` sur https://app.netlify.com/drop
-
-### Option 2 : Déploiement continu
-1. Connectez votre repo GitHub à Netlify
-2. Build command : `npm install && npm run build`
-3. Publish directory : `dist`
-
-## 🔒 Sécurité & Confidentialité
-
-- ✅ Traitement 100% côté client
-- ✅ Aucune donnée envoyée à un serveur
-- ✅ Headers de sécurité configurés
-- ✅ Protection XSS automatique (React)
-
-## 📊 Workflow Git recommandé
+### Via GitHub (recommandé)
 
 ```bash
-# Développement sur branche dev
+# Dans votre repo Git local
 git checkout dev
-# ... modifications ...
 git add .
-git commit -m "v1.9.x - description"
+git commit -m "v1.9.2: Correction algorithme anti-faux-positifs"
 git push origin dev
 
-# Test sur https://dev--gedcom-merger.netlify.app
-
-# Si OK, passage en production
-git checkout main
-git merge dev
-git push origin main
-
-# Déploiement auto sur https://gedcom-merger.netlify.app
+# Tester sur https://dev--gedcom-merger.netlify.app
+# Si OK:
+git checkout main && git merge dev && git push origin main
 ```
+
+### Via ZIP
+
+1. Builder: `npm run build`
+2. Glisser-déposer le dossier `dist/` sur https://app.netlify.com/drop
+
+## 🔒 Sécurité
+
+- Traitement 100% côté client (aucun serveur)
+- Aucune donnée envoyée sur internet
+- Protection XSS automatique (React)
+- Headers sécurité configurés (Netlify)
+
+## 📝 Technologies
+
+- React 18.3.1
+- Vite 5.4.2
+- Tailwind CSS 3.4
+- Lucide React (icônes)
+- esbuild (minification - pas Terser!)
+
+## 📊 Changelog
+
+Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet.
+
+## 🐛 Dépannage
+
+### Trop de faux positifs (versions < 1.9.2)
+→ Mettre à jour vers v1.9.2 qui implémente la règle anti-faux-positifs
+
+### Build échoue sur Netlify
+→ Vérifier que `vite.config.js` utilise `minify: 'esbuild'` (pas 'terser')
+
+### Score 100% avec seulement le nom
+→ Ceci n'est plus possible en v1.9.2 grâce à la validation "critère suffisant"
 
 ## 📄 Licence
 
 Projet personnel - Tous droits réservés
-
-## 👤 Auteur
-
-Développé par Rémiol - Business Analyst & Développeur
-
-## 🐛 Bugs / Suggestions
-
-Ouvrez une issue sur GitHub ou contactez-moi directement.
-
----
-
-**⭐ Si ce projet vous aide, n'hésitez pas à lui donner une étoile !**

@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, UserX, Lightbulb, Shield } from 'lucide-react';
+import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, UserX } from 'lucide-react';
 
 const GedcomDuplicateMerger = () => {
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ÉTATS PRINCIPAUX
-  // ═══════════════════════════════════════════════════════════════════════════
   const [file, setFile] = useState(null);
   const [individuals, setIndividuals] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
@@ -20,81 +17,77 @@ const GedcomDuplicateMerger = () => {
   const [progress, setProgress] = useState(0);
   const [expandedClusters, setExpandedClusters] = useState(new Set());
   
-  // États pour onglets et changelog
+  // États pour fonctionnalités avancées
   const [showChangelog, setShowChangelog] = useState(false);
   const [activeTab, setActiveTab] = useState('clusters');
   const [clusterScoreFilter, setClusterScoreFilter] = useState(80);
   const [selectedClusters, setSelectedClusters] = useState(new Set());
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // NOUVEAUX ÉTATS v1.9.0 - ISOLÉS ET SUGGESTIONS IA
-  // ═══════════════════════════════════════════════════════════════════════════
-  const [isolatedIndividuals, setIsolatedIndividuals] = useState([]);
+  
+  // États pour onglets Isolés et Suggestions IA
+  const [isolatedPersons, setIsolatedPersons] = useState([]);
   const [selectedIsolated, setSelectedIsolated] = useState(new Set());
   const [smartSuggestions, setSmartSuggestions] = useState([]);
   const [integrityReport, setIntegrityReport] = useState(null);
 
-  const VERSION = '1.9.0';
+  const VERSION = '1.9.2';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CHANGELOG COMPLET
   // ═══════════════════════════════════════════════════════════════════════════
   const CHANGELOG = [
     {
-      version: '1.9.0',
+      version: '1.9.2',
       date: '28 décembre 2025',
       tag: 'ACTUELLE',
       color: 'green',
-      title: 'Restauration onglets Isolés et Suggestions IA',
+      title: 'CORRECTION CRITIQUE : Algorithme anti-faux-positifs',
       items: [
-        'Restauration onglet "Isolés" pour individus sans famille',
-        'Restauration onglet "Suggestions IA" avec analyse patterns',
-        'Détection individus sans parents ET sans enfants',
-        'Sélection en masse des isolés (tout/rien/totalement isolés)',
-        'Suggestions intelligentes basées sur patterns nom/période',
-        'Normalisation automatique des lieux (retrait codes INSEE)',
-        'Contrôles d\'intégrité avancés',
-        'Score de confiance pour suggestions IA (60-95%)'
+        'CORRECTION MAJEURE: Nom + Sexe ne suffisent plus pour être doublon',
+        'Nouvelle règle: AU MOINS 1 critère suffisant requis',
+        'Critères suffisants: naissance, lieu, parents, conjoints, fratrie, décès, profession',
+        'Élimination des faux positifs sur homonymes sans données',
+        'Préservation des 4 onglets: Clusters, Doublons, Isolés, Suggestions IA',
+        'Maintien de toutes les fonctionnalités v1.9.1'
+      ]
+    },
+    {
+      version: '1.9.1',
+      date: '28 décembre 2025',
+      tag: null,
+      color: 'blue',
+      title: 'Correction traitement fichier + fonctionnalités',
+      items: [
+        'Correction du traitement des fichiers GEDCOM',
+        'Restauration onglet Isolés pour individus sans famille',
+        'Restauration onglet Suggestions IA avec analyse patterns',
+        'Normalisation automatique des lieux (codes INSEE)',
+        'Contrôles d\'intégrité avancés'
       ]
     },
     {
       version: '1.8.7',
       date: '24 décembre 2025',
       tag: null,
-      color: 'blue',
+      color: 'indigo',
       title: 'Version complète avec toutes les corrections',
       items: [
-        'Restauration bouton Changelog/Nouveautés avec modal complète',
-        'Restauration système d\'onglets Clusters/Doublons simples',
-        'Ajout scoring moyen des clusters avec jauges visuelles',
-        'Ajout filtre pourcentage minimum pour clusters',
-        'Ajout sélection automatique clusters ≥95%'
+        'Restauration bouton Changelog/Nouveautés',
+        'Système d\'onglets Clusters/Doublons simples',
+        'Scoring moyen des clusters avec jauges visuelles',
+        'Filtre pourcentage minimum pour clusters',
+        'Sélection automatique clusters ≥95%'
       ]
     },
     {
       version: '1.8.6',
       date: '16 décembre 2025',
       tag: null,
-      color: 'indigo',
+      color: 'blue',
       title: 'Corrections GEDCOM et génération HEAD/TRLR',
       items: [
         'Correction gestion balises CONT/CONC multi-lignes',
         'Génération automatique en-tête HEAD complet',
-        'Génération automatique balise TRLR de fin',
-        'Amélioration compatibilité avec logiciels généalogie'
-      ]
-    },
-    {
-      version: '1.4.0',
-      date: '5 décembre 2025',
-      tag: null,
-      color: 'purple',
-      title: 'Organisation interface et contrôle intégrité',
-      items: [
-        'Système d\'onglets séparant Clusters et Doublons simples',
-        'Scoring moyen des clusters avec jauges colorées',
-        'Auto-sélection clusters haute confiance (≥95%)',
-        'Filtre pourcentage pour masquer clusters sous seuil'
+        'Génération automatique balise TRLR de fin'
       ]
     },
     {
@@ -107,76 +100,74 @@ const GedcomDuplicateMerger = () => {
         'Parseur GEDCOM complet',
         'Détection intelligente avec Soundex français',
         'Système de scoring hybride 9 critères',
-        'Fusion sécurisée sans perte de données',
-        'Interface React moderne et responsive'
+        'Fusion sécurisée sans perte de données'
       ]
     }
   ];
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // DICTIONNAIRE VARIANTES PRÉNOMS FRANÇAIS
+  // DICTIONNAIRE VARIANTES PRÉNOMS FRANÇAIS (40 entrées)
   // ═══════════════════════════════════════════════════════════════════════════
   const NAME_VARIANTS = {
-    'catherine': ['katherine', 'cathrine', 'katrine', 'caterine'],
-    'jean': ['jehan', 'johan', 'joan'],
-    'marie': ['maria', 'mary', 'mari'],
-    'pierre': ['peter', 'pedro', 'piere'],
-    'jacques': ['james', 'jacob', 'jacque'],
-    'françois': ['francis', 'francois', 'fransois'],
-    'louis': ['lewis', 'luis', 'loui'],
-    'anne': ['ann', 'anna', 'ane'],
-    'marguerite': ['margaret', 'margueritte', 'margarite'],
-    'nicolas': ['nicholas', 'nicola', 'nikolas'],
-    'guillaume': ['william', 'guilaume', 'guillem'],
-    'antoine': ['anthony', 'antoin', 'antonio'],
-    'michel': ['michael', 'mickael', 'miguel'],
-    'philippe': ['philip', 'philipe', 'filippe'],
-    'charles': ['carl', 'carlos', 'charle'],
-    'henri': ['henry', 'henrie', 'enri'],
-    'joseph': ['josef', 'josephe', 'jose'],
-    'claude': ['claudio', 'claudius', 'claud'],
-    'etienne': ['stephen', 'estienne', 'steven'],
-    'gabriel': ['gabrielle', 'gabryel', 'gabreil'],
-    'laurent': ['lawrence', 'laurens', 'lorent'],
-    'matthieu': ['matthew', 'mathieu', 'matieu'],
-    'paul': ['pablo', 'paulo', 'paule'],
-    'simon': ['simeon', 'symon', 'simone'],
-    'thomas': ['tomas', 'thoma', 'tomaso'],
-    'vincent': ['vincenzo', 'vicent', 'vincentius'],
-    'andré': ['andrew', 'andreas', 'andre'],
-    'bernard': ['bernhard', 'bernardus', 'bernar'],
-    'denis': ['dennis', 'denys', 'dionysius'],
-    'georges': ['george', 'jorge', 'georg'],
-    'germain': ['germaine', 'german', 'jermain'],
-    'gilles': ['giles', 'gil', 'aegidius'],
-    'hugues': ['hugo', 'hugh', 'hug'],
-    'martin': ['martinus', 'marten', 'martine'],
-    'rene': ['renatus', 'renee', 'rená'],
-    'robert': ['roberto', 'rupert', 'rober'],
-    'sebastien': ['sebastian', 'sebastianus', 'bastien'],
-    'therese': ['teresa', 'theresia', 'terese'],
-    'victor': ['viktor', 'victoire', 'vittorio'],
-    'xavier': ['javier', 'xaver', 'saverio']
+    'jean': ['jehan', 'johan', 'johannes', 'joan', 'jan'],
+    'marie': ['maria', 'mary', 'marye', 'maryse'],
+    'pierre': ['peter', 'petrus', 'perre', 'peire'],
+    'jacques': ['jacob', 'jacobus', 'jacque', 'james'],
+    'françois': ['francois', 'franciscus', 'franz'],
+    'antoine': ['anthoine', 'antonius', 'anthony'],
+    'catherine': ['katherine', 'caterine', 'katarina'],
+    'marguerite': ['margueritte', 'margareta', 'margaret'],
+    'anne': ['anna', 'anne', 'hanne'],
+    'jeanne': ['jehanne', 'johanna', 'jane'],
+    'guillaume': ['william', 'wilhelmus', 'guilhem'],
+    'louis': ['ludovic', 'ludovicus', 'lewis'],
+    'charles': ['carolus', 'karl', 'carlo'],
+    'henri': ['henry', 'henricus', 'heinrich'],
+    'nicolas': ['nicolaus', 'nicholas', 'nicola'],
+    'philippe': ['philip', 'philippus', 'filippo'],
+    'andré': ['andreas', 'andrew', 'andre'],
+    'claude': ['claudius', 'claudio'],
+    'michel': ['michael', 'michaelus', 'miguel'],
+    'joseph': ['josephus', 'josef', 'giuseppe'],
+    'etienne': ['estienne', 'stephanus', 'stephen'],
+    'laurent': ['laurentius', 'lawrence', 'lorenzo'],
+    'bernard': ['bernardus', 'bernhard'],
+    'martin': ['martinus', 'marten'],
+    'simon': ['simeon', 'symeon'],
+    'paul': ['paulus', 'paulo', 'pablo'],
+    'denis': ['denys', 'dionysius'],
+    'rene': ['renatus', 'renaud'],
+    'gabriel': ['gabrielis'],
+    'vincent': ['vincentius', 'vincenzo'],
+    'suzanne': ['susanna', 'susan', 'susanne'],
+    'therese': ['theresia', 'teresa'],
+    'elisabeth': ['elizabeth', 'elizabetha', 'isabelle'],
+    'madeleine': ['magdalena', 'magdalene'],
+    'francoise': ['francisca', 'franziska'],
+    'genevieve': ['genoveva', 'geneveva'],
+    'helene': ['helena', 'helaine', 'ellen'],
+    'louise': ['louisa', 'luisa'],
+    'rose': ['rosa', 'rosalie'],
+    'victoire': ['victoria', 'victorine']
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // NORMALISATION DES LIEUX (retrait codes INSEE)
+  // NORMALISATION LIEU (retrait codes INSEE)
   // ═══════════════════════════════════════════════════════════════════════════
   const normalizePlace = (place) => {
     if (!place) return '';
-    // Retirer les codes INSEE : "38142 Mizoen" → "Mizoen"
-    // Pattern : 1-5 chiffres suivis d'un espace puis du nom
-    return place.replace(/^\d{1,5}\s+/, '').trim();
+    // Retirer codes INSEE type "38142 Mizoen" → "Mizoen"
+    return place.replace(/^\d{5}\s+/, '').trim();
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // NORMALISATION DES PRÉNOMS (variantes historiques)
+  // NORMALISATION PRÉNOM (avec variantes)
   // ═══════════════════════════════════════════════════════════════════════════
   const normalizeFirstName = (name) => {
     if (!name) return '';
     const lower = name.toLowerCase().trim();
     
-    // Chercher dans le dictionnaire des variantes
+    // Chercher dans les variantes
     for (const [canonical, variants] of Object.entries(NAME_VARIANTS)) {
       if (lower === canonical || variants.includes(lower)) {
         return canonical;
@@ -186,39 +177,31 @@ const GedcomDuplicateMerger = () => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SOUNDEX FRANÇAIS AMÉLIORÉ
+  // SOUNDEX FRANÇAIS
   // ═══════════════════════════════════════════════════════════════════════════
-  const soundexFr = (str) => {
-    if (!str) return '';
-    let s = str.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z]/g, '');
-    if (s.length === 0) return '';
+  const soundex = (str) => {
+    if (!str) return '0000';
     
-    // Normaliser d'abord les variantes de prénoms
-    s = normalizeFirstName(s) || s;
+    const normalized = normalizeFirstName(str);
+    const s = normalized.toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .replace(/[AEIOUYH]/g, '0')
+      .replace(/[BFPV]/g, '1')
+      .replace(/[CGJKQSXZ]/g, '2')
+      .replace(/[DT]/g, '3')
+      .replace(/[L]/g, '4')
+      .replace(/[MN]/g, '5')
+      .replace(/[R]/g, '6');
     
-    const first = s[0];
-    let code = s
-      .replace(/[aeiouyhw]/g, '0')
-      .replace(/[bfpv]/g, '1')
-      .replace(/[cgjkqsxz]/g, '2')
-      .replace(/[dt]/g, '3')
-      .replace(/[l]/g, '4')
-      .replace(/[mn]/g, '5')
-      .replace(/[r]/g, '6');
+    if (s.length === 0) return '0000';
     
-    let result = first;
-    for (let i = 1; i < code.length && result.length < 4; i++) {
-      if (code[i] !== '0' && code[i] !== code[i-1]) {
-        result += code[i];
-      }
-    }
-    return result.padEnd(4, '0').toUpperCase();
+    const first = normalized[0]?.toUpperCase() || '0';
+    const result = first + s.substring(1).replace(/(.)\1+/g, '$1').replace(/0/g, '');
+    return result.substring(0, 4).padEnd(4, '0');
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PARSEUR GEDCOM COMPLET
+  // PARSING GEDCOM
   // ═══════════════════════════════════════════════════════════════════════════
   const parseGedcom = (content) => {
     const lines = content.split('\n');
@@ -232,7 +215,7 @@ const GedcomDuplicateMerger = () => {
     lines.forEach(line => {
       const trimmed = line.trim();
       
-      // Gestion CONT/CONC (v1.8.6)
+      // CORRECTION v1.8.6: Gestion CONT/CONC
       if (currentPerson && (trimmed.startsWith('2 CONT ') || trimmed.startsWith('2 CONC '))) {
         const isCont = trimmed.startsWith('2 CONT ');
         const value = trimmed.split(isCont ? '2 CONT ' : '2 CONC ')[1] || '';
@@ -250,6 +233,8 @@ const GedcomDuplicateMerger = () => {
           currentPerson.deathPlace += separator + value;
         } else if (lastFieldType === 'OCCU') {
           currentPerson.occupation += separator + value;
+        } else if (lastFieldType === 'RELI') {
+          currentPerson.religion += separator + value;
         }
         return;
       }
@@ -257,410 +242,588 @@ const GedcomDuplicateMerger = () => {
       if (trimmed.startsWith('0') && trimmed.includes('INDI')) {
         if (currentPerson) people.push(currentPerson);
         const match = trimmed.match(/@([^@]+)@/);
-        const id = match ? match[1] : `INDI${people.length}`;
-        currentPerson = {
+        const id = match ? match[1] : trimmed.split(' ')[1];
+        currentPerson = { 
           id, names: [], birth: '', birthPlace: '', death: '', deathPlace: '',
-          sex: '', occupation: '', parents: [], spouses: [], familyAsChild: [], rawLines: [line]
+          sex: '', parents: [], spouses: [], familyAsChild: null, 
+          familiesAsSpouse: [], occupation: '', religion: ''
         };
-        currentFamily = null;
         currentEvent = null;
         lastFieldType = null;
-      } else if (trimmed.startsWith('0') && trimmed.includes('FAM')) {
-        if (currentPerson) { people.push(currentPerson); currentPerson = null; }
+      } 
+      else if (trimmed.startsWith('0') && trimmed.includes('FAM')) {
+        if (currentPerson) {
+          people.push(currentPerson);
+          currentPerson = null;
+        }
         const match = trimmed.match(/@([^@]+)@/);
-        const id = match ? match[1] : `FAM${families.size}`;
+        const id = match ? match[1] : trimmed.split(' ')[1];
         currentFamily = { id, husband: null, wife: null, children: [] };
         families.set(id, currentFamily);
         currentEvent = null;
-      } else if (trimmed.startsWith('0')) {
-        if (currentPerson) { people.push(currentPerson); currentPerson = null; }
-        currentFamily = null;
-        currentEvent = null;
-      } else if (currentPerson) {
-        currentPerson.rawLines.push(line);
-        if (trimmed.startsWith('1 NAME ')) {
-          currentPerson.names.push(trimmed.split('1 NAME ')[1].replace(/\//g, '').trim());
-          lastFieldType = 'NAME';
-        } else if (trimmed.startsWith('1 SEX ')) {
-          currentPerson.sex = trimmed.split('1 SEX ')[1].trim();
+      }
+      else if (currentPerson) {
+        if (trimmed.includes('NAME')) {
+          const name = trimmed.split('NAME')[1]?.trim();
+          if (name) {
+            currentPerson.names.push(name);
+            lastFieldType = 'NAME';
+          }
+        } else if (trimmed.includes('SEX')) {
+          currentPerson.sex = trimmed.split('SEX')[1]?.trim() || '';
         } else if (trimmed.startsWith('1 BIRT')) {
-          currentEvent = 'BIRT';
+          currentEvent = 'birth';
         } else if (trimmed.startsWith('1 DEAT')) {
-          currentEvent = 'DEAT';
-        } else if (trimmed.startsWith('1 OCCU ')) {
-          currentPerson.occupation = trimmed.split('1 OCCU ')[1].trim();
+          currentEvent = 'death';
+        } else if (trimmed.startsWith('1 OCCU')) {
+          currentPerson.occupation = trimmed.split('OCCU')[1]?.trim() || '';
           lastFieldType = 'OCCU';
-        } else if (trimmed.startsWith('1 FAMC ')) {
-          const match = trimmed.match(/@([^@]+)@/);
-          if (match) currentPerson.familyAsChild.push(match[1]);
-        } else if (trimmed.startsWith('1 FAMS ')) {
-          const match = trimmed.match(/@([^@]+)@/);
-          if (match) currentPerson.spouses.push(match[1]);
-        } else if (trimmed.startsWith('2 DATE ') && currentEvent) {
-          const dateValue = trimmed.split('2 DATE ')[1].trim();
-          if (currentEvent === 'BIRT') {
-            currentPerson.birth = dateValue;
+        } else if (trimmed.startsWith('1 RELI')) {
+          currentPerson.religion = trimmed.split('RELI')[1]?.trim() || '';
+          lastFieldType = 'RELI';
+        } else if (currentEvent && trimmed.includes('DATE')) {
+          const date = trimmed.split('DATE')[1]?.trim() || '';
+          if (currentEvent === 'birth') {
+            currentPerson.birth = date;
             lastFieldType = 'BIRT_DATE';
-          } else if (currentEvent === 'DEAT') {
-            currentPerson.death = dateValue;
+          }
+          else if (currentEvent === 'death') {
+            currentPerson.death = date;
             lastFieldType = 'DEAT_DATE';
           }
-        } else if (trimmed.startsWith('2 PLAC ') && currentEvent) {
-          // NORMALISATION AUTOMATIQUE DES LIEUX (v1.9.0)
-          const placeValue = normalizePlace(trimmed.split('2 PLAC ')[1].trim());
-          if (currentEvent === 'BIRT') {
-            currentPerson.birthPlace = placeValue;
+        } else if (currentEvent && trimmed.includes('PLAC')) {
+          const place = normalizePlace(trimmed.split('PLAC')[1]?.trim() || '');
+          if (currentEvent === 'birth') {
+            currentPerson.birthPlace = place;
             lastFieldType = 'BIRT_PLAC';
-          } else if (currentEvent === 'DEAT') {
-            currentPerson.deathPlace = placeValue;
+          }
+          else if (currentEvent === 'death') {
+            currentPerson.deathPlace = place;
             lastFieldType = 'DEAT_PLAC';
           }
+        } else if (trimmed.includes('FAMC')) {
+          const match = trimmed.match(/@([^@]+)@/);
+          if (match) currentPerson.familyAsChild = match[1];
+        } else if (trimmed.includes('FAMS')) {
+          const match = trimmed.match(/@([^@]+)@/);
+          if (match) currentPerson.familiesAsSpouse.push(match[1]);
         }
-      } else if (currentFamily) {
-        if (trimmed.startsWith('1 HUSB ')) {
+      }
+      else if (currentFamily) {
+        if (trimmed.includes('HUSB')) {
           const match = trimmed.match(/@([^@]+)@/);
           if (match) currentFamily.husband = match[1];
-        } else if (trimmed.startsWith('1 WIFE ')) {
+        } else if (trimmed.includes('WIFE')) {
           const match = trimmed.match(/@([^@]+)@/);
           if (match) currentFamily.wife = match[1];
-        } else if (trimmed.startsWith('1 CHIL ')) {
+        } else if (trimmed.includes('CHIL')) {
           const match = trimmed.match(/@([^@]+)@/);
           if (match) currentFamily.children.push(match[1]);
         }
       }
     });
-
+    
     if (currentPerson) people.push(currentPerson);
-
+    
     // Résolution des relations
-    families.forEach(family => {
-      const parentIds = [family.husband, family.wife].filter(Boolean);
-      family.children.forEach(childId => {
-        const child = people.find(p => p.id === childId);
-        if (child) {
-          parentIds.forEach(pid => {
-            if (!child.parents.includes(pid)) child.parents.push(pid);
-          });
+    people.forEach(person => {
+      if (person.familyAsChild) {
+        const family = families.get(person.familyAsChild);
+        if (family) {
+          if (family.husband) person.parents.push(family.husband);
+          if (family.wife) person.parents.push(family.wife);
+        }
+      }
+      person.familiesAsSpouse.forEach(famId => {
+        const family = families.get(famId);
+        if (family) {
+          if (family.husband && family.husband !== person.id) {
+            person.spouses.push(family.husband);
+          }
+          if (family.wife && family.wife !== person.id) {
+            person.spouses.push(family.wife);
+          }
         }
       });
-      
-      if (family.husband && family.wife) {
-        const husband = people.find(p => p.id === family.husband);
-        const wife = people.find(p => p.id === family.wife);
-        if (husband && !husband.spouses.includes(family.wife)) husband.spouses.push(family.wife);
-        if (wife && !wife.spouses.includes(family.husband)) wife.spouses.push(family.husband);
-      }
     });
-
+    
     return { people, families };
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CALCUL DE SIMILARITÉ (9 critères)
+  // ALGORITHME DE SIMILARITÉ - v1.9.2 CORRIGÉ ANTI-FAUX-POSITIFS
   // ═══════════════════════════════════════════════════════════════════════════
-  const calculateSimilarity = (person1, person2, allPeople) => {
-    let score = 0;
-    let maxScore = 0;
+  const calculateSimilarity = (person1, person2) => {
     const details = [];
-
-    // Sexe (éliminatoire)
-    if (person1.sex && person2.sex) {
-      maxScore += 15;
-      if (person1.sex === person2.sex) {
-        score += 15;
-        details.push({ criterion: 'Sexe', match: true, score: 15 });
-      } else {
-        return { score: 0, details: [{ criterion: 'Sexe', match: false, score: 0, note: 'Éliminatoire' }] };
-      }
-    }
-
-    // Noms (Soundex + variantes)
-    if (person1.names.length > 0 && person2.names.length > 0) {
-      maxScore += 30;
-      const names1 = person1.names.map(n => soundexFr(n));
-      const names2 = person2.names.map(n => soundexFr(n));
-      const nameMatch = names1.some(n1 => names2.some(n2 => n1 === n2));
-      if (nameMatch) {
-        score += 30;
-        details.push({ criterion: 'Noms (Soundex+variantes)', match: true, score: 30 });
-      } else {
-        details.push({ criterion: 'Noms (Soundex+variantes)', match: false, score: 0 });
-      }
-    }
-
-    // Date de naissance
-    if (person1.birth && person2.birth) {
-      maxScore += 25;
-      const year1 = person1.birth.match(/\d{4}/);
-      const year2 = person2.birth.match(/\d{4}/);
-      if (year1 && year2) {
-        const diff = Math.abs(parseInt(year1[0]) - parseInt(year2[0]));
-        if (diff === 0) {
-          score += 25;
-          details.push({ criterion: 'Année naissance', match: true, score: 25, note: 'Identique' });
-        } else if (diff <= 2) {
-          score += 15;
-          details.push({ criterion: 'Année naissance', match: true, score: 15, note: `±${diff} an(s)` });
+    
+    // Système hybride : Score de correspondance / Score maximum possible
+    let matchScore = 0;
+    let maxPossibleScore = 0;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // NOUVEAU v1.9.2: Tracking des critères SUFFISANTS (pas juste nom/sexe)
+    // ═══════════════════════════════════════════════════════════════════════
+    const sufficientCriteria = [];
+    
+    const name1 = person1.names[0]?.toLowerCase() || '';
+    const name2 = person2.names[0]?.toLowerCase() || '';
+    
+    // 1. NOMS (pondération: 30) - CRITÈRE NÉCESSAIRE
+    let nameMatches = false;
+    if (name1 || name2) {
+      maxPossibleScore += 30;
+      
+      if (name1 && name2) {
+        const firstName1 = normalizeFirstName(name1.split(' ')[0] || name1.split('/')[0]);
+        const firstName2 = normalizeFirstName(name2.split(' ')[0] || name2.split('/')[0]);
+        const lastName1 = name1.split(' ').pop()?.replace(/\//g, '') || '';
+        const lastName2 = name2.split(' ').pop()?.replace(/\//g, '') || '';
+        
+        const s1 = soundex(firstName1);
+        const s2 = soundex(firstName2);
+        const ls1 = soundex(lastName1);
+        const ls2 = soundex(lastName2);
+        
+        if (name1 === name2) {
+          matchScore += 30;
+          nameMatches = true;
+          details.push('✓ Noms identiques (+30/30)');
+        } else if (s1 === s2 && ls1 === ls2) {
+          matchScore += 25;
+          nameMatches = true;
+          details.push('✓ Noms phonétiquement identiques (+25/30)');
+        } else if (firstName1 === firstName2 && ls1 === ls2) {
+          matchScore += 25;
+          nameMatches = true;
+          details.push('✓ Variante prénom reconnue (+25/30)');
+        } else if (s1 === s2 || ls1 === ls2) {
+          matchScore += 20;
+          nameMatches = true;
+          details.push('≈ Prénom ou nom similaire (+20/30)');
+        } else if (name1.includes(name2) || name2.includes(name1)) {
+          matchScore += 15;
+          nameMatches = true;
+          details.push('≈ Noms partiellement similaires (+15/30)');
         } else {
-          details.push({ criterion: 'Année naissance', match: false, score: 0 });
+          details.push('✗ Noms différents (0/30)');
         }
       }
     }
 
-    // Parents communs
-    if (person1.parents.length > 0 && person2.parents.length > 0) {
-      maxScore += 20;
-      const commonParents = person1.parents.filter(p => person2.parents.includes(p));
-      if (commonParents.length > 0) {
-        score += 20;
-        details.push({ criterion: 'Parents', match: true, score: 20, note: `${commonParents.length} commun(s)` });
-      } else {
-        details.push({ criterion: 'Parents', match: false, score: 0 });
-      }
-    }
-
-    // Fratrie (via parents)
-    const getSiblings = (person) => {
-      const siblings = new Set();
-      allPeople.forEach(p => {
-        if (p.id !== person.id && person.parents.some(parent => p.parents.includes(parent))) {
-          siblings.add(p.id);
-        }
-      });
-      return siblings;
-    };
-
-    const siblings1 = getSiblings(person1);
-    const siblings2 = getSiblings(person2);
-    if (siblings1.size > 0 && siblings2.size > 0) {
-      maxScore += 15;
-      const commonSiblings = [...siblings1].filter(s => siblings2.has(s));
-      if (commonSiblings.length > 0) {
-        score += 15;
-        details.push({ criterion: 'Fratrie', match: true, score: 15, note: `${commonSiblings.length} commun(s)` });
-      }
-    }
-
-    // Date de décès
-    if (person1.death && person2.death) {
-      maxScore += 15;
-      const year1 = person1.death.match(/\d{4}/);
-      const year2 = person2.death.match(/\d{4}/);
-      if (year1 && year2) {
-        const diff = Math.abs(parseInt(year1[0]) - parseInt(year2[0]));
-        if (diff <= 2) {
-          score += 15;
-          details.push({ criterion: 'Année décès', match: true, score: 15 });
+    // 2. DATE DE NAISSANCE (pondération: 25) - CRITÈRE SUFFISANT
+    if (person1.birth || person2.birth) {
+      maxPossibleScore += 25;
+      
+      if (person1.birth && person2.birth) {
+        const y1 = person1.birth.match(/\d{4}/);
+        const y2 = person2.birth.match(/\d{4}/);
+        
+        if (person1.birth === person2.birth) {
+          matchScore += 25;
+          sufficientCriteria.push('naissance_exacte');
+          details.push('✓ Dates naissance identiques (+25/25)');
+        } else if (y1 && y2) {
+          const diff = Math.abs(parseInt(y1[0]) - parseInt(y2[0]));
+          if (diff === 0) {
+            matchScore += 20;
+            sufficientCriteria.push('annee_naissance');
+            details.push('✓ Années naissance identiques (+20/25)');
+          } else if (diff <= 2) {
+            matchScore += 12;
+            sufficientCriteria.push('annee_proche');
+            details.push('≈ Années naissance proches ±2 ans (+12/25)');
+          } else if (diff <= 5) {
+            matchScore += 5;
+            details.push('≈ Années naissance éloignées ±5 ans (+5/25)');
+          } else {
+            details.push('✗ Dates naissance trop éloignées (0/25)');
+          }
         }
       }
     }
 
-    // Lieu de naissance
-    if (person1.birthPlace && person2.birthPlace) {
-      maxScore += 10;
-      if (person1.birthPlace.toLowerCase() === person2.birthPlace.toLowerCase()) {
-        score += 10;
-        details.push({ criterion: 'Lieu naissance', match: true, score: 10 });
+    // 3. SEXE (pondération: 15) - CRITÈRE NÉCESSAIRE mais PAS SUFFISANT
+    // ⚠️ ÉLIMINATOIRE si différent
+    if (person1.sex || person2.sex) {
+      maxPossibleScore += 15;
+      
+      if (person1.sex && person2.sex) {
+        if (person1.sex === person2.sex) {
+          matchScore += 15;
+          details.push('✓ Même sexe (+15/15)');
+        } else {
+          details.push('✗ Sexes différents (ÉLIMINATOIRE)');
+          return { score: 0, details, sufficientCriteria: [] };
+        }
       }
     }
 
-    // Conjoints communs
-    if (person1.spouses.length > 0 && person2.spouses.length > 0) {
-      maxScore += 8;
-      const commonSpouses = person1.spouses.filter(s => person2.spouses.includes(s));
-      if (commonSpouses.length > 0) {
-        score += 8;
-        details.push({ criterion: 'Conjoints', match: true, score: 8 });
+    // 4. PARENTS (pondération: 20) - CRITÈRE SUFFISANT (très fort)
+    if (person1.parents.length > 0 || person2.parents.length > 0) {
+      maxPossibleScore += 20;
+      
+      if (person1.parents.length > 0 && person2.parents.length > 0) {
+        const common = person1.parents.filter(p => person2.parents.includes(p));
+        if (common.length === 2) {
+          matchScore += 20;
+          sufficientCriteria.push('parents_2');
+          details.push('✓ 2 parents communs (+20/20)');
+        } else if (common.length === 1) {
+          matchScore += 10;
+          sufficientCriteria.push('parent_1');
+          details.push('≈ 1 parent commun (+10/20)');
+        } else {
+          details.push('✗ Parents différents (0/20)');
+        }
       }
     }
 
-    // Profession
-    if (person1.occupation && person2.occupation) {
-      maxScore += 5;
-      if (person1.occupation.toLowerCase() === person2.occupation.toLowerCase()) {
-        score += 5;
-        details.push({ criterion: 'Profession', match: true, score: 5 });
+    // 5. FRATRIE (pondération: 15) - CRITÈRE SUFFISANT
+    const parentsCompared = (person1.parents.length > 0 && person2.parents.length > 0);
+    if (!parentsCompared && (person1.familyAsChild || person2.familyAsChild)) {
+      maxPossibleScore += 15;
+      
+      if (person1.familyAsChild && person2.familyAsChild) {
+        if (person1.familyAsChild === person2.familyAsChild) {
+          matchScore += 15;
+          sufficientCriteria.push('fratrie');
+          details.push('✓ Même fratrie (+15/15)');
+        } else {
+          details.push('✗ Fratries différentes (0/15)');
+        }
       }
     }
 
-    const finalScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-    return { score: finalScore, details };
+    // 6. LIEU DE NAISSANCE (pondération: 10) - CRITÈRE SUFFISANT
+    if (person1.birthPlace || person2.birthPlace) {
+      maxPossibleScore += 10;
+      
+      const bp1 = normalizePlace(person1.birthPlace)?.toLowerCase();
+      const bp2 = normalizePlace(person2.birthPlace)?.toLowerCase();
+      if (bp1 && bp2) {
+        if (bp1 === bp2) {
+          matchScore += 10;
+          sufficientCriteria.push('lieu_naissance');
+          details.push('✓ Lieux naissance identiques (+10/10)');
+        } else if (bp1.includes(bp2) || bp2.includes(bp1)) {
+          matchScore += 5;
+          sufficientCriteria.push('lieu_partiel');
+          details.push('≈ Lieux naissance similaires (+5/10)');
+        } else {
+          details.push('✗ Lieux naissance différents (0/10)');
+        }
+      }
+    }
+
+    // 7. CONJOINTS (pondération: 8) - CRITÈRE SUFFISANT (très fort)
+    if (person1.spouses.length > 0 || person2.spouses.length > 0) {
+      maxPossibleScore += 8;
+      
+      if (person1.spouses.length > 0 && person2.spouses.length > 0) {
+        const common = person1.spouses.filter(s => person2.spouses.includes(s));
+        if (common.length > 0) {
+          matchScore += 8;
+          sufficientCriteria.push('conjoints');
+          details.push('✓ Conjoints communs (+8/8)');
+        } else {
+          details.push('✗ Conjoints différents (0/8)');
+        }
+      }
+    }
+
+    // 8. DATE DE DÉCÈS (pondération: 15) - CRITÈRE SUFFISANT
+    if (person1.death || person2.death) {
+      maxPossibleScore += 15;
+      
+      if (person1.death && person2.death) {
+        const dy1 = person1.death.match(/\d{4}/);
+        const dy2 = person2.death.match(/\d{4}/);
+        
+        if (person1.death === person2.death) {
+          matchScore += 15;
+          sufficientCriteria.push('deces_exact');
+          details.push('✓ Dates décès identiques (+15/15)');
+        } else if (dy1 && dy2 && dy1[0] === dy2[0]) {
+          matchScore += 10;
+          sufficientCriteria.push('annee_deces');
+          details.push('✓ Années décès identiques (+10/15)');
+        } else {
+          details.push('✗ Dates décès différentes (0/15)');
+        }
+      }
+    }
+
+    // 9. PROFESSION (pondération: 5) - CRITÈRE SUFFISANT (faible)
+    if (person1.occupation || person2.occupation) {
+      maxPossibleScore += 5;
+      
+      if (person1.occupation && person2.occupation) {
+        if (person1.occupation.toLowerCase() === person2.occupation.toLowerCase()) {
+          matchScore += 5;
+          sufficientCriteria.push('profession');
+          details.push('✓ Même profession (+5/5)');
+        } else {
+          details.push('✗ Professions différentes (0/5)');
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NOUVEAU v1.9.2: VALIDATION ANTI-FAUX-POSITIFS
+    // ═══════════════════════════════════════════════════════════════════════
+    // Règle: Nom + Sexe NÉCESSAIRES mais PAS SUFFISANTS
+    // Il faut AU MOINS 1 critère suffisant pour valider le doublon
+    
+    const finalScore = maxPossibleScore > 0 
+      ? Math.round((matchScore / maxPossibleScore) * 100) 
+      : 0;
+    
+    // Si le nom correspond mais AUCUN critère suffisant → REJET
+    if (nameMatches && sufficientCriteria.length === 0) {
+      details.unshift('⚠️ REJET: Nom seul insuffisant - aucun critère confirmant');
+      return { 
+        score: 0, 
+        details, 
+        sufficientCriteria,
+        rejected: true,
+        rejectionReason: 'Nom + Sexe seuls ne suffisent pas. Aucun critère suffisant trouvé.'
+      };
+    }
+    
+    details.unshift(`📊 Score: ${matchScore}/${maxPossibleScore} points | Critères suffisants: ${sufficientCriteria.length > 0 ? sufficientCriteria.join(', ') : 'AUCUN'}`);
+    
+    return { score: finalScore, details, sufficientCriteria };
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // DÉTECTION DES DOUBLONS AVEC TRIPLE INDEXATION
+  // RECHERCHE DES DOUBLONS AVEC TRIPLE INDEXATION
   // ═══════════════════════════════════════════════════════════════════════════
   const findDuplicates = (people) => {
-    const potentialDuplicates = [];
+    const result = [];
     
-    // Triple indexation pour performance
-    const phoneticIndex = new Map();
-    const yearIndex = new Map();
-    const parentIndex = new Map();
-    
-    people.forEach(person => {
-      // Index phonétique
-      person.names.forEach(name => {
-        const key = soundexFr(name);
+    // Construction des index pour optimisation
+    const buildIndex = () => {
+      const phoneticIndex = new Map();
+      const yearIndex = new Map();
+      const parentIndex = new Map();
+      
+      people.forEach(person => {
+        // Index phonétique (Soundex)
+        const fullName = person.names[0] || '';
+        const parts = fullName.toLowerCase().split(' ');
+        const firstName = parts[0] || '';
+        const lastName = parts[parts.length - 1]?.replace(/\//g, '') || '';
+        
+        const key = `${soundex(firstName)}-${soundex(lastName)}`;
         if (!phoneticIndex.has(key)) phoneticIndex.set(key, []);
         phoneticIndex.get(key).push(person);
+        
+        // Index par année de naissance (±5 ans)
+        const year = person.birth?.match(/\d{4}/)?.[0];
+        if (year) {
+          const y = parseInt(year);
+          for (let i = y - 5; i <= y + 5; i++) {
+            const yearKey = String(i);
+            if (!yearIndex.has(yearKey)) yearIndex.set(yearKey, []);
+            yearIndex.get(yearKey).push(person);
+          }
+        }
+        
+        // Index par parents
+        person.parents.forEach(parentId => {
+          if (!parentIndex.has(parentId)) parentIndex.set(parentId, []);
+          parentIndex.get(parentId).push(person);
+        });
       });
       
-      // Index année
+      return { phoneticIndex, yearIndex, parentIndex };
+    };
+    
+    const { phoneticIndex, yearIndex, parentIndex } = buildIndex();
+    
+    const compared = new Set();
+    let totalComparisons = 0;
+    let skipped = 0;
+    
+    // Fonction pour comparer une paire
+    const comparePair = (person1, person2) => {
+      if (person1.id === person2.id) return;
+      
+      const pairKey = person1.id < person2.id 
+        ? `${person1.id}-${person2.id}` 
+        : `${person2.id}-${person1.id}`;
+      
+      if (compared.has(pairKey)) return;
+      compared.add(pairKey);
+      
+      totalComparisons++;
+      
+      // Quick check avant calcul complet
+      if (person1.sex && person2.sex && person1.sex !== person2.sex) {
+        skipped++;
+        return;
+      }
+      
+      const y1 = person1.birth?.match(/\d{4}/)?.[0];
+      const y2 = person2.birth?.match(/\d{4}/)?.[0];
+      if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 10) {
+        skipped++;
+        return;
+      }
+      
+      const sim = calculateSimilarity(person1, person2);
+      
+      // v1.9.2: On ignore les résultats rejetés par la règle anti-faux-positifs
+      if (sim.rejected) {
+        skipped++;
+        return;
+      }
+      
+      if (sim.score >= 80) {
+        result.push({
+          person1,
+          person2,
+          similarity: Math.round(sim.score),
+          details: sim.details,
+          sufficientCriteria: sim.sufficientCriteria,
+          id: pairKey
+        });
+      }
+    };
+    
+    // Comparer via les index
+    people.forEach((person, i) => {
+      // Via index phonétique
+      const fullName = person.names[0] || '';
+      const parts = fullName.toLowerCase().split(' ');
+      const firstName = parts[0] || '';
+      const lastName = parts[parts.length - 1]?.replace(/\//g, '') || '';
+      const phoneticKey = `${soundex(firstName)}-${soundex(lastName)}`;
+      
+      const phoneticMatches = phoneticIndex.get(phoneticKey) || [];
+      phoneticMatches.forEach(other => comparePair(person, other));
+      
+      // Via index année
       const year = person.birth?.match(/\d{4}/)?.[0];
       if (year) {
-        [-2, -1, 0, 1, 2].forEach(offset => {
-          const y = String(parseInt(year) + offset);
-          if (!yearIndex.has(y)) yearIndex.set(y, []);
-          yearIndex.get(y).push(person);
-        });
+        const yearMatches = yearIndex.get(year) || [];
+        yearMatches.forEach(other => comparePair(person, other));
       }
       
-      // Index parents
+      // Via index parents
       person.parents.forEach(parentId => {
-        if (!parentIndex.has(parentId)) parentIndex.set(parentId, []);
-        parentIndex.get(parentId).push(person);
+        const parentMatches = parentIndex.get(parentId) || [];
+        parentMatches.forEach(other => comparePair(person, other));
       });
-    });
-    
-    // Comparaison optimisée
-    const compared = new Set();
-    const candidatePairs = [];
-    
-    phoneticIndex.forEach(group => {
-      for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          const key = [group[i].id, group[j].id].sort().join('-');
-          if (!compared.has(key)) {
-            compared.add(key);
-            candidatePairs.push([group[i], group[j]]);
-          }
-        }
+      
+      // Progression
+      if (i % 100 === 0) {
+        const pct = Math.round((i / people.length) * 100);
+        setProgress(30 + pct * 0.65);
       }
     });
     
-    parentIndex.forEach(group => {
-      for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          const key = [group[i].id, group[j].id].sort().join('-');
-          if (!compared.has(key)) {
-            compared.add(key);
-            candidatePairs.push([group[i], group[j]]);
-          }
-        }
-      }
-    });
+    console.log(`v1.9.2 - Optimisation: ${totalComparisons} comparaisons (${skipped} skipped/rejetés)`);
+    console.log(`Réduction: ${((1 - totalComparisons / ((people.length * (people.length - 1)) / 2)) * 100).toFixed(1)}%`);
     
-    candidatePairs.forEach(([p1, p2]) => {
-      const result = calculateSimilarity(p1, p2, people);
-      if (result.score >= 80) {
-        potentialDuplicates.push({
-          id: `${p1.id}-${p2.id}`,
-          person1: p1,
-          person2: p2,
-          similarity: result.score,
-          details: result.details
-        });
-      }
-    });
+    const sorted = result.sort((a, b) => b.similarity - a.similarity);
     
-    potentialDuplicates.sort((a, b) => b.similarity - a.similarity);
+    detectClusters(sorted, people);
     
-    // Détecter les clusters
-    const detectedClusters = detectClusters(potentialDuplicates, people);
-    setClusters(detectedClusters);
-    
-    return potentialDuplicates;
+    return sorted;
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // DÉTECTION DES CLUSTERS
   // ═══════════════════════════════════════════════════════════════════════════
   const detectClusters = (duplicates, allPeople) => {
-    const personToClusters = new Map();
-    const clustersList = [];
+    const graph = new Map();
+    const visited = new Set();
+    const foundClusters = [];
     
     duplicates.forEach(dup => {
       const id1 = dup.person1.id;
       const id2 = dup.person2.id;
       
-      const cluster1 = personToClusters.get(id1);
-      const cluster2 = personToClusters.get(id2);
+      if (!graph.has(id1)) graph.set(id1, new Set());
+      if (!graph.has(id2)) graph.set(id2, new Set());
       
-      if (!cluster1 && !cluster2) {
-        const newCluster = { people: new Set([id1, id2]), pairs: [dup] };
-        clustersList.push(newCluster);
-        personToClusters.set(id1, newCluster);
-        personToClusters.set(id2, newCluster);
-      } else if (cluster1 && !cluster2) {
-        cluster1.people.add(id2);
-        cluster1.pairs.push(dup);
-        personToClusters.set(id2, cluster1);
-      } else if (!cluster1 && cluster2) {
-        cluster2.people.add(id1);
-        cluster2.pairs.push(dup);
-        personToClusters.set(id1, cluster2);
-      } else if (cluster1 !== cluster2) {
-        cluster2.people.forEach(id => {
-          cluster1.people.add(id);
-          personToClusters.set(id, cluster1);
-        });
-        cluster1.pairs.push(...cluster2.pairs, dup);
-        const idx = clustersList.indexOf(cluster2);
-        if (idx > -1) clustersList.splice(idx, 1);
-      } else {
-        cluster1.pairs.push(dup);
+      graph.get(id1).add(id2);
+      graph.get(id2).add(id1);
+    });
+    
+    const dfs = (nodeId, cluster) => {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      cluster.add(nodeId);
+      
+      const neighbors = graph.get(nodeId) || new Set();
+      neighbors.forEach(neighbor => dfs(neighbor, cluster));
+    };
+    
+    graph.forEach((_, nodeId) => {
+      if (!visited.has(nodeId)) {
+        const cluster = new Set();
+        dfs(nodeId, cluster);
+        if (cluster.size > 2) {
+          const clusterIds = Array.from(cluster);
+          const clusterPeople = clusterIds
+            .map(id => allPeople.find(p => p.id === id))
+            .filter(p => p != null);
+          
+          if (clusterPeople.length > 2) {
+            const clusterPairs = duplicates.filter(d => 
+              clusterIds.includes(d.person1.id) && clusterIds.includes(d.person2.id)
+            );
+            const avgScore = clusterPairs.length > 0
+              ? Math.round(clusterPairs.reduce((sum, p) => sum + p.similarity, 0) / clusterPairs.length)
+              : 0;
+            
+            foundClusters.push({
+              ids: clusterIds,
+              size: clusterPeople.length,
+              people: clusterPeople,
+              avgScore: avgScore,
+              pairs: clusterPairs
+            });
+          }
+        }
       }
     });
     
-    return clustersList
-      .filter(c => c.people.size >= 3)
-      .map(c => {
-        const peopleArray = [...c.people].map(id => allPeople.find(p => p.id === id)).filter(Boolean);
-        const avgScore = c.pairs.length > 0
-          ? Math.round(c.pairs.reduce((sum, p) => sum + p.similarity, 0) / c.pairs.length)
-          : 0;
-        return {
-          people: peopleArray,
-          pairs: c.pairs,
-          avgScore
-        };
-      })
-      .sort((a, b) => b.avgScore - a.avgScore);
+    // Tri par score moyen décroissant
+    foundClusters.sort((a, b) => b.avgScore - a.avgScore);
+    
+    console.log('Clusters détectés:', foundClusters.length);
+    setClusters(foundClusters);
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // DÉTECTION DES INDIVIDUS ISOLÉS (v1.9.0)
+  // DÉTECTION DES INDIVIDUS ISOLÉS
   // ═══════════════════════════════════════════════════════════════════════════
-  const detectIsolatedIndividuals = (people, families) => {
-    // Construire la carte des enfants depuis les familles
-    const childrenMap = new Map();
-    families.forEach(family => {
-      family.children.forEach(childId => {
-        if (family.husband) {
-          if (!childrenMap.has(family.husband)) childrenMap.set(family.husband, new Set());
-          childrenMap.get(family.husband).add(childId);
-        }
-        if (family.wife) {
-          if (!childrenMap.has(family.wife)) childrenMap.set(family.wife, new Set());
-          childrenMap.get(family.wife).add(childId);
-        }
-      });
-    });
-    
+  const detectIsolatedPersons = (people, families) => {
     const isolated = [];
     
     people.forEach(person => {
       const hasParents = person.parents.length > 0;
-      const hasChildren = childrenMap.has(person.id) && childrenMap.get(person.id).size > 0;
-      const hasSpouses = person.spouses.length > 0;
       
-      // Isolé = sans parents ET sans enfants
+      // Vérifier si a des enfants
+      let hasChildren = false;
+      families.forEach(family => {
+        if (family.husband === person.id || family.wife === person.id) {
+          if (family.children.length > 0) {
+            hasChildren = true;
+          }
+        }
+      });
+      
+      // Isolé = pas de parents ET pas d'enfants
       if (!hasParents && !hasChildren) {
+        const hasSpouses = person.spouses.length > 0;
         isolated.push({
           ...person,
-          hasSpouses,
-          isTotallyIsolated: !hasSpouses
+          isTotallyIsolated: !hasSpouses,
+          hasSpouses
         });
       }
     });
@@ -669,157 +832,159 @@ const GedcomDuplicateMerger = () => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SUGGESTIONS INTELLIGENTES (IA) (v1.9.0)
+  // SUGGESTIONS IA (analyse de patterns)
   // ═══════════════════════════════════════════════════════════════════════════
-  const generateSmartSuggestions = (people) => {
+  const generateAiSuggestions = (people) => {
     const suggestions = [];
     
-    // Grouper par nom normalisé et période
-    const nameGroups = new Map();
+    // Grouper par nom de famille (soundex)
+    const lastNameGroups = new Map();
     
     people.forEach(person => {
-      if (person.names.length === 0) return;
+      const fullName = person.names[0] || '';
+      const lastName = fullName.split(' ').pop()?.replace(/\//g, '').toLowerCase() || '';
+      const lastNameKey = soundex(lastName);
       
-      const normalizedName = soundexFr(person.names[0]);
-      const birthYear = person.birth?.match(/\d{4}/)?.[0];
-      const period = birthYear ? Math.floor(parseInt(birthYear) / 25) * 25 : null;
-      
-      const key = `${normalizedName}-${period || 'unknown'}`;
-      
-      if (!nameGroups.has(key)) {
-        nameGroups.set(key, {
-          people: [],
-          name: person.names[0],
-          period: period ? `${period}-${period + 25}` : 'Période inconnue'
-        });
+      if (!lastNameGroups.has(lastNameKey)) {
+        lastNameGroups.set(lastNameKey, []);
       }
-      nameGroups.get(key).people.push(person);
+      lastNameGroups.get(lastNameKey).push(person);
     });
     
-    // Analyser les groupes suspects (3+ personnes)
-    nameGroups.forEach((group, key) => {
-      if (group.people.length >= 3) {
-        // Calculer un score de confiance basé sur plusieurs facteurs
-        let confidence = 60; // Base
-        
-        // Bonus si même lieu de naissance
-        const places = group.people.map(p => p.birthPlace?.toLowerCase()).filter(Boolean);
-        const uniquePlaces = new Set(places);
-        if (uniquePlaces.size === 1 && places.length >= 2) {
-          confidence += 15;
+    // Analyser chaque groupe
+    lastNameGroups.forEach((group, key) => {
+      if (group.length < 2) return;
+      
+      // Chercher les patterns suspects
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          const p1 = group[i];
+          const p2 = group[j];
+          
+          // Ignorer si sexes différents
+          if (p1.sex && p2.sex && p1.sex !== p2.sex) continue;
+          
+          // Calculer la proximité temporelle
+          const y1 = p1.birth?.match(/\d{4}/)?.[0];
+          const y2 = p2.birth?.match(/\d{4}/)?.[0];
+          
+          let yearDiff = null;
+          if (y1 && y2) {
+            yearDiff = Math.abs(parseInt(y1) - parseInt(y2));
+          }
+          
+          // Suggestion si même période (25 ans)
+          if (yearDiff === null || yearDiff <= 25) {
+            const reasons = [];
+            let confidence = 60;
+            
+            if (yearDiff !== null && yearDiff <= 10) {
+              reasons.push(`Nés à ${yearDiff} ans d'écart`);
+              confidence += 15;
+            }
+            
+            if (p1.birthPlace && p2.birthPlace) {
+              const bp1 = normalizePlace(p1.birthPlace).toLowerCase();
+              const bp2 = normalizePlace(p2.birthPlace).toLowerCase();
+              if (bp1 === bp2) {
+                reasons.push('Même lieu de naissance');
+                confidence += 10;
+              }
+            }
+            
+            // Vérifier parents communs potentiels
+            if (p1.parents.some(par => p2.parents.includes(par))) {
+              reasons.push('Parents communs');
+              confidence += 10;
+            }
+            
+            if (reasons.length >= 2 && confidence >= 60) {
+              suggestions.push({
+                person1: p1,
+                person2: p2,
+                confidence: Math.min(confidence, 95),
+                reasons,
+                type: 'pattern_match'
+              });
+            }
+          }
         }
-        
-        // Bonus si parents communs
-        const allParents = group.people.flatMap(p => p.parents);
-        const parentCounts = {};
-        allParents.forEach(p => { parentCounts[p] = (parentCounts[p] || 0) + 1; });
-        const hasCommonParent = Object.values(parentCounts).some(c => c >= 2);
-        if (hasCommonParent) {
-          confidence += 20;
-        }
-        
-        // Malus si groupe trop grand (plus suspect d'être des homonymes)
-        if (group.people.length > 5) {
-          confidence -= 10;
-        }
-        
-        confidence = Math.min(95, Math.max(60, confidence));
-        
-        suggestions.push({
-          id: key,
-          name: group.name,
-          period: group.period,
-          people: group.people,
-          count: group.people.length,
-          confidence,
-          reason: buildSuggestionReason(group, hasCommonParent, uniquePlaces.size === 1)
-        });
       }
     });
     
     // Trier par confiance décroissante
     suggestions.sort((a, b) => b.confidence - a.confidence);
     
-    return suggestions;
-  };
-
-  const buildSuggestionReason = (group, hasCommonParent, sameBirthPlace) => {
-    const reasons = [`${group.people.length} personnes avec le même nom dans la période ${group.period}`];
-    if (hasCommonParent) reasons.push('Parents communs détectés');
-    if (sameBirthPlace) reasons.push('Même lieu de naissance');
-    return reasons.join('. ');
+    return suggestions.slice(0, 50); // Top 50
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CONTRÔLES D'INTÉGRITÉ (v1.9.0)
+  // CONTRÔLES D'INTÉGRITÉ
   // ═══════════════════════════════════════════════════════════════════════════
-  const performIntegrityChecks = (people, families) => {
-    const issues = {
-      critical: [],
-      warnings: [],
-      info: []
-    };
+  const checkIntegrity = (people) => {
+    const errors = [];
+    const warnings = [];
     
     people.forEach(person => {
       // Personne sans nom
-      if (person.names.length === 0 || !person.names[0]?.trim()) {
-        issues.warnings.push({
-          type: 'NO_NAME',
-          person: person,
-          message: `Individu ${person.id} sans nom renseigné`
+      if (!person.names[0] || person.names[0].trim() === '') {
+        errors.push({
+          type: 'no_name',
+          personId: person.id,
+          message: `Personne ${person.id} sans nom`
         });
       }
       
-      // Dates incohérentes (naissance > décès)
+      // Dates incohérentes
       if (person.birth && person.death) {
         const birthYear = person.birth.match(/\d{4}/)?.[0];
         const deathYear = person.death.match(/\d{4}/)?.[0];
+        
         if (birthYear && deathYear && parseInt(birthYear) > parseInt(deathYear)) {
-          issues.critical.push({
-            type: 'BIRTH_AFTER_DEATH',
-            person: person,
-            message: `${person.names[0] || person.id}: naissance (${birthYear}) après décès (${deathYear})`
+          errors.push({
+            type: 'date_error',
+            personId: person.id,
+            message: `${person.names[0] || person.id}: Naissance (${birthYear}) après décès (${deathYear})`
           });
         }
       }
       
-      // Parent trop jeune ou trop vieux
-      if (person.birth && person.parents.length > 0) {
-        const childBirthYear = parseInt(person.birth.match(/\d{4}/)?.[0]);
-        if (childBirthYear) {
-          person.parents.forEach(parentId => {
-            const parent = people.find(p => p.id === parentId);
-            if (parent?.birth) {
-              const parentBirthYear = parseInt(parent.birth.match(/\d{4}/)?.[0]);
-              if (parentBirthYear) {
-                const ageAtBirth = childBirthYear - parentBirthYear;
-                if (ageAtBirth < 15) {
-                  issues.critical.push({
-                    type: 'PARENT_TOO_YOUNG',
-                    person: person,
-                    parent: parent,
-                    message: `${parent.names[0] || parent.id} avait ${ageAtBirth} ans à la naissance de ${person.names[0] || person.id}`
-                  });
-                } else if (ageAtBirth > 80) {
-                  issues.warnings.push({
-                    type: 'PARENT_TOO_OLD',
-                    person: person,
-                    parent: parent,
-                    message: `${parent.names[0] || parent.id} avait ${ageAtBirth} ans à la naissance de ${person.names[0] || person.id}`
-                  });
-                }
-              }
+      // Parents trop jeunes ou trop vieux
+      if (person.birth) {
+        const childBirthYear = parseInt(person.birth.match(/\d{4}/)?.[0] || '0');
+        
+        person.parents.forEach(parentId => {
+          const parent = people.find(p => p.id === parentId);
+          if (parent?.birth) {
+            const parentBirthYear = parseInt(parent.birth.match(/\d{4}/)?.[0] || '0');
+            const ageAtBirth = childBirthYear - parentBirthYear;
+            
+            if (ageAtBirth < 15) {
+              warnings.push({
+                type: 'parent_too_young',
+                personId: person.id,
+                parentId,
+                message: `${parent.names[0] || parentId} avait ${ageAtBirth} ans à la naissance de ${person.names[0] || person.id}`
+              });
             }
-          });
-        }
+            if (ageAtBirth > 80) {
+              warnings.push({
+                type: 'parent_too_old',
+                personId: person.id,
+                parentId,
+                message: `${parent.names[0] || parentId} avait ${ageAtBirth} ans à la naissance de ${person.names[0] || person.id}`
+              });
+            }
+          }
+        });
       }
     });
     
-    return issues;
+    return { errors, warnings };
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // FONCTIONS UTILITAIRES CLUSTERS
+  // FONCTIONS UTILITAIRES
   // ═══════════════════════════════════════════════════════════════════════════
   const getClusterAverageScore = (cluster) => {
     return cluster.avgScore || 0;
@@ -839,156 +1004,83 @@ const GedcomDuplicateMerger = () => {
     setSelectedClusters(newSelected);
   };
 
-  const toggleClusterExpand = (idx) => {
+  const selectCluster = (clusterIds) => {
+    const newSelected = new Set(selectedPairs);
+    duplicates.forEach(dup => {
+      if (clusterIds.includes(dup.person1.id) && clusterIds.includes(dup.person2.id)) {
+        newSelected.add(dup.id);
+      }
+    });
+    setSelectedPairs(newSelected);
+  };
+
+  const toggleClusterExpand = (clusterIndex) => {
     const newExpanded = new Set(expandedClusters);
-    if (newExpanded.has(idx)) {
-      newExpanded.delete(idx);
+    if (newExpanded.has(clusterIndex)) {
+      newExpanded.delete(clusterIndex);
     } else {
-      newExpanded.add(idx);
+      newExpanded.add(clusterIndex);
     }
     setExpandedClusters(newExpanded);
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // FONCTIONS UTILITAIRES ISOLÉS (v1.9.0)
-  // ═══════════════════════════════════════════════════════════════════════════
-  const selectAllIsolated = () => {
-    setSelectedIsolated(new Set(isolatedIndividuals.map(p => p.id)));
-  };
-
-  const selectTotallyIsolated = () => {
-    setSelectedIsolated(new Set(
-      isolatedIndividuals.filter(p => p.isTotallyIsolated).map(p => p.id)
-    ));
-  };
-
-  const deselectAllIsolated = () => {
-    setSelectedIsolated(new Set());
-  };
-
-  const toggleIsolatedSelection = (personId) => {
-    const newSelected = new Set(selectedIsolated);
-    if (newSelected.has(personId)) {
-      newSelected.delete(personId);
-    } else {
-      newSelected.add(personId);
-    }
-    setSelectedIsolated(newSelected);
-  };
-
-  const deleteSelectedIsolated = () => {
-    if (selectedIsolated.size === 0) return;
-    
-    const confirmMsg = `Êtes-vous sûr de vouloir supprimer ${selectedIsolated.size} individu(s) isolé(s) ?\n\nCette action est irréversible.`;
-    if (!window.confirm(confirmMsg)) return;
-    
-    // Marquer pour suppression
-    const idsToRemove = new Set(selectedIsolated);
-    idsToRemove.forEach(id => {
-      mergedIds.set(id, 'DELETED');
-    });
-    setMergedIds(new Map(mergedIds));
-    
-    setValidationResults({
-      totalIndividuals: individuals.length,
-      mergedCount: 0,
-      deletedCount: idsToRemove.size,
-      remainingCount: individuals.length - idsToRemove.size
-    });
-    
-    setStep('merged');
-  };
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PRÉVISUALISATION ET QUALITÉ
-  // ═══════════════════════════════════════════════════════════════════════════
-  const calculateQualityScore = (person) => {
+  const calculateDataQuality = (person) => {
     let score = 0;
-    if (person.names.length > 0 && person.names[0]) score += 20;
-    if (person.birth) score += 20;
-    if (person.birthPlace) score += 15;
-    if (person.death) score += 15;
-    if (person.deathPlace) score += 10;
-    if (person.sex) score += 10;
-    if (person.occupation) score += 10;
+    if (person.names[0]?.length > 5) score += 10;
+    if (person.birth) score += 8;
+    if (person.death) score += 6;
+    if (person.sex) score += 4;
+    if (person.birthPlace) score += 7;
+    if (person.deathPlace) score += 5;
+    score += person.parents.length * 6;
+    score += person.spouses.length * 5;
+    if (person.occupation) score += 4;
+    if (person.religion) score += 2;
+    if (person.familyAsChild) score += 3;
+    score += person.familiesAsSpouse.length * 3;
     return score;
   };
 
-  const mergePersonData = (keep, remove) => {
-    const merged = { ...keep };
-    if (!merged.names[0] && remove.names[0]) merged.names = [...remove.names];
-    if (!merged.birth && remove.birth) merged.birth = remove.birth;
-    if (!merged.birthPlace && remove.birthPlace) merged.birthPlace = remove.birthPlace;
-    if (!merged.death && remove.death) merged.death = remove.death;
-    if (!merged.deathPlace && remove.deathPlace) merged.deathPlace = remove.deathPlace;
-    if (!merged.sex && remove.sex) merged.sex = remove.sex;
-    if (!merged.occupation && remove.occupation) merged.occupation = remove.occupation;
+  const mergePersonData = (keepPerson, removePerson) => {
+    const merged = { ...keepPerson };
+    
+    if (!merged.birth && removePerson.birth) merged.birth = removePerson.birth;
+    if (!merged.birthPlace && removePerson.birthPlace) merged.birthPlace = removePerson.birthPlace;
+    if (!merged.death && removePerson.death) merged.death = removePerson.death;
+    if (!merged.deathPlace && removePerson.deathPlace) merged.deathPlace = removePerson.deathPlace;
+    if (!merged.sex && removePerson.sex) merged.sex = removePerson.sex;
+    if (!merged.occupation && removePerson.occupation) merged.occupation = removePerson.occupation;
+    if (!merged.religion && removePerson.religion) merged.religion = removePerson.religion;
+    
+    removePerson.names.forEach(name => {
+      if (!merged.names.includes(name)) merged.names.push(name);
+    });
+    
+    removePerson.parents.forEach(parent => {
+      if (!merged.parents.includes(parent)) merged.parents.push(parent);
+    });
+    
+    removePerson.spouses.forEach(spouse => {
+      if (!merged.spouses.includes(spouse)) merged.spouses.push(spouse);
+    });
+    
+    if (!merged.familyAsChild && removePerson.familyAsChild) {
+      merged.familyAsChild = removePerson.familyAsChild;
+    }
+    
+    removePerson.familiesAsSpouse.forEach(fam => {
+      if (!merged.familiesAsSpouse.includes(fam)) merged.familiesAsSpouse.push(fam);
+    });
+    
     return merged;
   };
 
-  const showPreview = (pair) => {
-    const quality1 = calculateQualityScore(pair.person1);
-    const quality2 = calculateQualityScore(pair.person2);
-    const keepPerson = quality1 >= quality2 ? pair.person1 : pair.person2;
-    const removePerson = keepPerson === pair.person1 ? pair.person2 : pair.person1;
-    const merged = mergePersonData(keepPerson, removePerson);
-    
-    setPreviewPair({
-      original: pair,
-      keepPerson,
-      removePerson,
-      merged,
-      quality1,
-      quality2
-    });
+  const openPreview = (pair) => {
+    setPreviewPair(pair);
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // GESTION FICHIER
-  // ═══════════════════════════════════════════════════════════════════════════
-  const handleFileUpload = (event) => {
-    const uploadedFile = event.target.files[0];
-    if (!uploadedFile) return;
-
-    setStep('analyzing');
-    setProgress(0);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target.result;
-      setOriginalGedcom(content);
-      
-      setTimeout(() => {
-        const { people, families } = parseGedcom(content);
-        setIndividuals(people);
-        setProgress(30);
-        
-        setTimeout(() => {
-          // Détection des doublons
-          const found = findDuplicates(people);
-          setDuplicates(found);
-          setProgress(60);
-          
-          // Détection des isolés (v1.9.0)
-          const isolated = detectIsolatedIndividuals(people, families);
-          setIsolatedIndividuals(isolated);
-          setProgress(75);
-          
-          // Suggestions IA (v1.9.0)
-          const suggestions = generateSmartSuggestions(people);
-          setSmartSuggestions(suggestions);
-          setProgress(90);
-          
-          // Contrôles d'intégrité (v1.9.0)
-          const integrity = performIntegrityChecks(people, families);
-          setIntegrityReport(integrity);
-          
-          setProgress(100);
-          setTimeout(() => setStep('review'), 500);
-        }, 100);
-      }, 100);
-    };
-    reader.readAsText(uploadedFile);
+  const closePreview = () => {
+    setPreviewPair(null);
   };
 
   const togglePairSelection = (pairId) => {
@@ -1002,57 +1094,78 @@ const GedcomDuplicateMerger = () => {
   };
 
   const selectHighConfidence = () => {
-    const high = duplicates.filter(d => d.similarity >= 95).map(d => d.id);
-    setSelectedPairs(new Set(high));
+    const highConfidencePairs = duplicates
+      .filter(pair => pair.similarity >= 95)
+      .map(pair => pair.id);
+    setSelectedPairs(new Set(highConfidencePairs));
   };
 
-  const selectFilteredDuplicates = () => {
-    const filtered = getFilteredDuplicates().map(d => d.id);
-    setSelectedPairs(new Set(filtered));
-  };
-
-  const getFilteredDuplicates = () => {
-    let filtered = duplicates.filter(d => d.similarity >= filterScore);
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(d => 
-        d.person1.names[0]?.toLowerCase().includes(term) ||
-        d.person2.names[0]?.toLowerCase().includes(term) ||
-        d.person1.id.toLowerCase().includes(term) ||
-        d.person2.id.toLowerCase().includes(term)
-      );
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTION FICHIER
+  // ═══════════════════════════════════════════════════════════════════════════
+  const handleFileUpload = (event) => {
+    const uploadedFile = event.target.files[0];
+    if (uploadedFile) {
+      setFile(uploadedFile);
+      setProgress(5);
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        setOriginalGedcom(content);
+        setProgress(15);
+        
+        const { people, families } = parseGedcom(content);
+        setProgress(30);
+        
+        setIndividuals(people);
+        
+        // Détection des doublons
+        const dups = findDuplicates(people);
+        setDuplicates(dups);
+        
+        // Détection des isolés
+        const isolated = detectIsolatedPersons(people, families);
+        setIsolatedPersons(isolated);
+        
+        // Suggestions IA
+        const suggestions = generateAiSuggestions(people);
+        setSmartSuggestions(suggestions);
+        
+        // Contrôles d'intégrité
+        const integrity = checkIntegrity(people);
+        setIntegrityReport(integrity);
+        
+        setProgress(100);
+        setStep('review');
+      };
+      reader.readAsText(uploadedFile);
     }
-    return filtered;
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FUSION ET EXPORT
   // ═══════════════════════════════════════════════════════════════════════════
-  const mergeDuplicates = () => {
+  const handleMerge = () => {
     const idsToMerge = new Map();
     
-    // Fusion depuis les paires sélectionnées
-    selectedPairs.forEach(pairId => {
-      const pair = duplicates.find(d => d.id === pairId);
-      if (pair) {
+    duplicates.forEach(pair => {
+      if (selectedPairs.has(pair.id)) {
+        const quality1 = calculateDataQuality(pair.person1);
+        const quality2 = calculateDataQuality(pair.person2);
+        
+        const keepPerson = quality1 >= quality2 ? pair.person1 : pair.person2;
+        const removePerson = quality1 >= quality2 ? pair.person2 : pair.person1;
+        
         const id1 = pair.person1.id;
         const id2 = pair.person2.id;
-        let targetId = id1;
+        let targetId = keepPerson.id;
+        
         if (idsToMerge.has(id1)) targetId = idsToMerge.get(id1);
         else if (idsToMerge.has(id2)) targetId = idsToMerge.get(id2);
+        
         idsToMerge.set(id1, targetId);
         idsToMerge.set(id2, targetId);
-      }
-    });
-    
-    // Fusion depuis les clusters sélectionnés
-    selectedClusters.forEach(clusterIdx => {
-      const cluster = clusters[clusterIdx];
-      if (cluster && cluster.people.length > 0) {
-        const targetId = cluster.people[0].id;
-        cluster.people.forEach(person => {
-          idsToMerge.set(person.id, targetId);
-        });
       }
     });
     
@@ -1062,6 +1175,9 @@ const GedcomDuplicateMerger = () => {
     idsToMerge.forEach((target, source) => {
       if (source !== target) idsToRemove.add(source);
     });
+    
+    // Ajouter les isolés sélectionnés
+    selectedIsolated.forEach(id => idsToRemove.add(id));
     
     setValidationResults({
       totalIndividuals: individuals.length,
@@ -1079,29 +1195,23 @@ const GedcomDuplicateMerger = () => {
     const mergeMap = new Map();
     
     mergedIds.forEach((targetId, sourceId) => {
-      if (sourceId !== targetId && targetId !== 'DELETED') {
+      if (sourceId !== targetId) {
         idsToRemove.add(sourceId);
         mergeMap.set(sourceId, targetId);
-      } else if (targetId === 'DELETED') {
-        idsToRemove.add(sourceId);
       }
     });
+    
+    // Ajouter les isolés sélectionnés
+    selectedIsolated.forEach(id => idsToRemove.add(id));
 
     const lines = originalGedcom.split('\n');
     const outputLines = [];
     let skip = false;
     let hasHead = false;
-    let hasTrlr = false;
 
-    // Vérifier présence HEAD/TRLR
+    // Vérifier présence HEAD
     if (lines.length > 0 && lines[0].trim().startsWith('0 HEAD')) {
       hasHead = true;
-    }
-    if (lines.length > 0) {
-      const lastNonEmpty = lines.filter(l => l.trim()).pop();
-      if (lastNonEmpty && lastNonEmpty.trim().startsWith('0 TRLR')) {
-        hasTrlr = true;
-      }
     }
 
     // Générer HEAD si manquant
@@ -1116,864 +1226,738 @@ const GedcomDuplicateMerger = () => {
       outputLines.push('1 CHAR UTF-8');
       const now = new Date();
       const dateStr = `${now.getDate()} ${['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][now.getMonth()]} ${now.getFullYear()}`;
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       outputLines.push(`1 DATE ${dateStr}`);
+      outputLines.push(`2 TIME ${timeStr}`);
     }
 
-    lines.forEach(line => {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       const trimmed = line.trim();
-      
-      if (trimmed.startsWith('0') && trimmed.includes('@')) {
-        const match = trimmed.match(/@([^@]+)@/);
-        if (match && idsToRemove.has(match[1])) {
-          skip = true;
-          return;
-        }
-        skip = false;
-      }
-      
-      if (!skip) {
-        let processedLine = line;
-        mergeMap.forEach((targetId, sourceId) => {
-          const regex = new RegExp(`@${sourceId}@`, 'g');
-          processedLine = processedLine.replace(regex, `@${targetId}@`);
-        });
-        outputLines.push(processedLine);
-      }
-    });
 
-    // Ajouter TRLR si manquant
-    if (!hasTrlr) {
-      outputLines.push('0 TRLR');
+      // Skip TRLR (on l'ajoutera à la fin)
+      if (trimmed.startsWith('0 TRLR')) {
+        continue;
+      }
+
+      if (trimmed.startsWith('0 ')) {
+        skip = false;
+        if (trimmed.includes('@')) {
+          const match = trimmed.match(/@([^@]+)@/);
+          if (match && idsToRemove.has(match[1])) {
+            skip = true;
+            continue;
+          }
+        }
+      }
+
+      if (skip) continue;
+
+      let processedLine = line;
+      mergeMap.forEach((targetId, sourceId) => {
+        processedLine = processedLine.replace(new RegExp(`@${sourceId}@`, 'g'), `@${targetId}@`);
+      });
+
+      outputLines.push(processedLine);
     }
+
+    // Toujours ajouter TRLR à la fin
+    outputLines.push('0 TRLR');
 
     const blob = new Blob([outputLines.join('\n')], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `gedcom_nettoye_v${VERSION}.ged`;
-    a.click();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `gedcom_nettoye_${new Date().toISOString().slice(0,10)}.ged`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
   const resetAll = () => {
-    setFile(null);
+    setStep('upload');
     setIndividuals([]);
     setDuplicates([]);
     setSelectedPairs(new Set());
-    setStep('upload');
     setOriginalGedcom('');
-    setMergedIds(new Map());
-    setValidationResults(null);
-    setPreviewPair(null);
     setSearchTerm('');
     setFilterScore(80);
-    setClusters([]);
     setProgress(0);
-    setExpandedClusters(new Set());
-    setShowChangelog(false);
     setActiveTab('clusters');
     setClusterScoreFilter(80);
     setSelectedClusters(new Set());
-    setIsolatedIndividuals([]);
+    setClusters([]);
+    setExpandedClusters(new Set());
+    setIsolatedPersons([]);
     setSelectedIsolated(new Set());
     setSmartSuggestions([]);
     setIntegrityReport(null);
+    setFile(null);
+    setMergedIds(new Map());
+    setValidationResults(null);
+    setPreviewPair(null);
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // RENDU COMPOSANT
+  // FILTRAGE ET COMPTEURS
+  // ═══════════════════════════════════════════════════════════════════════════
+  const getFilteredDuplicates = () => {
+    return duplicates.filter(pair => {
+      const scoreMatch = pair.similarity >= filterScore;
+      const searchMatch = !searchTerm || 
+        pair.person1.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        pair.person2.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        pair.person1.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pair.person2.id.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return scoreMatch && searchMatch;
+    });
+  };
+
+  const getSimplePairs = () => {
+    const clusterIds = new Set();
+    clusters.forEach(c => c.ids.forEach(id => clusterIds.add(id)));
+    
+    return getFilteredDuplicates().filter(pair => 
+      !clusterIds.has(pair.person1.id) && !clusterIds.has(pair.person2.id)
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* HEADER */}
-          <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 md:p-8 text-white">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <Users className="w-10 h-10 md:w-12 md:h-12" />
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl md:text-3xl font-bold">Fusionneur GEDCOM v{VERSION}</h1>
-                    <button
-                      onClick={() => setShowChangelog(true)}
-                      className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm"
-                      title="Voir les nouveautés"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Nouveautés
-                    </button>
-                  </div>
-                  <p className="text-indigo-100 mt-2">Nettoyez votre arbre généalogique</p>
-                </div>
-              </div>
-              {(step === 'review' || step === 'merged') && (
-                <button
-                  onClick={resetAll}
-                  className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <Upload className="w-5 h-5" />
-                  Nouveau
-                </button>
-              )}
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-4 shadow-lg">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Users className="w-8 h-8" />
+            <div>
+              <h1 className="text-xl font-bold">Fusionneur GEDCOM</h1>
+              <p className="text-emerald-100 text-sm">v{VERSION} - Algorithme anti-faux-positifs</p>
             </div>
           </div>
+          <button
+            onClick={() => setShowChangelog(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Nouveautés</span>
+          </button>
+        </div>
+      </div>
 
-          <div className="p-4 md:p-8">
-            {/* ÉTAPE UPLOAD */}
-            {step === 'upload' && (
-              <div className="text-center py-12">
-                <Upload className="w-20 h-20 md:w-24 md:h-24 mx-auto text-indigo-400 mb-6" />
-                <h2 className="text-xl md:text-2xl font-semibold mb-4">Téléchargez votre fichier GEDCOM</h2>
-                <label>
-                  <input type="file" accept=".ged,.gedcom" onChange={handleFileUpload} className="hidden" />
-                  <span className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl cursor-pointer inline-block font-semibold transition-colors text-lg">
-                    Sélectionner un fichier
-                  </span>
-                </label>
-                <p className="text-gray-500 mt-4">Formats acceptés : .ged, .gedcom</p>
+      {/* Barre de progression */}
+      {progress > 0 && progress < 100 && (
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 py-2">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
-            )}
+              <span className="text-sm text-gray-600">{progress}%</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {/* ÉTAPE ANALYSE */}
-            {step === 'analyzing' && (
-              <div className="text-center py-12">
-                <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 relative">
-                  <div className="absolute inset-0 border-4 border-indigo-200 rounded-full"></div>
-                  <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
-                </div>
-                <h2 className="text-xl md:text-2xl font-semibold mb-4">Analyse en cours...</h2>
-                <div className="max-w-md mx-auto">
-                  <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-indigo-600 transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-gray-600 mt-2">{progress}%</p>
-                </div>
+      {/* Contenu principal */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        
+        {/* ÉTAPE: Upload */}
+        {step === 'upload' && (
+          <div className="max-w-xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <div className="text-center mb-6">
+                <Upload className="w-16 h-16 mx-auto text-emerald-500 mb-4" />
+                <h2 className="text-2xl font-bold text-gray-800">Importer votre fichier GEDCOM</h2>
+                <p className="text-gray-500 mt-2">Glissez-déposez ou sélectionnez un fichier .ged</p>
               </div>
-            )}
-
-            {/* ÉTAPE RÉVISION */}
-            {step === 'review' && (
-              <div>
-                {/* Statistiques */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
-                  <div className="bg-blue-50 p-4 rounded-lg text-center">
-                    <p className="text-2xl md:text-3xl font-bold text-blue-600">{individuals.length}</p>
-                    <p className="text-sm text-blue-800">Individus</p>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-lg text-center">
-                    <p className="text-2xl md:text-3xl font-bold text-orange-600">{clusters.length}</p>
-                    <p className="text-sm text-orange-800">Clusters</p>
-                  </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                    <p className="text-2xl md:text-3xl font-bold text-yellow-600">{duplicates.length}</p>
-                    <p className="text-sm text-yellow-800">Doublons</p>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded-lg text-center">
-                    <p className="text-2xl md:text-3xl font-bold text-red-600">{isolatedIndividuals.length}</p>
-                    <p className="text-sm text-red-800">Isolés</p>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg text-center">
-                    <p className="text-2xl md:text-3xl font-bold text-purple-600">{smartSuggestions.length}</p>
-                    <p className="text-sm text-purple-800">Suggestions IA</p>
-                  </div>
+              
+              <label className="block">
+                <div className="border-2 border-dashed border-emerald-300 rounded-xl p-8 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-all">
+                  <input
+                    type="file"
+                    accept=".ged,.gedcom"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <FileText className="w-12 h-12 mx-auto text-emerald-400 mb-3" />
+                  <p className="text-emerald-600 font-medium">Cliquez pour sélectionner</p>
+                  <p className="text-gray-400 text-sm mt-1">ou glissez-déposez ici</p>
                 </div>
+              </label>
+              
+              {/* Info v1.9.2 */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-800 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" />
+                  Nouveauté v1.9.2
+                </h3>
+                <p className="text-blue-700 text-sm mt-1">
+                  L'algorithme anti-faux-positifs rejette désormais les correspondances basées uniquement sur le nom et le sexe. 
+                  Un critère supplémentaire (naissance, parents, lieu...) est requis pour valider un doublon.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {/* Alertes intégrité */}
-                {integrityReport && (integrityReport.critical.length > 0 || integrityReport.warnings.length > 0) && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-5 h-5 text-red-600" />
-                      <h3 className="font-semibold text-red-800">Alertes d'intégrité</h3>
-                    </div>
-                    {integrityReport.critical.length > 0 && (
-                      <div className="text-sm text-red-700">
-                        <strong>{integrityReport.critical.length} erreur(s) critique(s)</strong> : {integrityReport.critical[0]?.message}
-                        {integrityReport.critical.length > 1 && ` et ${integrityReport.critical.length - 1} autre(s)`}
-                      </div>
-                    )}
-                    {integrityReport.warnings.length > 0 && (
-                      <div className="text-sm text-orange-700 mt-1">
-                        <strong>{integrityReport.warnings.length} avertissement(s)</strong>
-                      </div>
-                    )}
+        {/* ÉTAPE: Review */}
+        {step === 'review' && (
+          <div>
+            {/* Alertes intégrité */}
+            {integrityReport && (integrityReport.errors.length > 0 || integrityReport.warnings.length > 0) && (
+              <div className="mb-4 space-y-2">
+                {integrityReport.errors.length > 0 && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 className="font-semibold text-red-800 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      {integrityReport.errors.length} erreur(s) détectée(s)
+                    </h3>
+                    <ul className="mt-2 text-sm text-red-700">
+                      {integrityReport.errors.slice(0, 5).map((err, i) => (
+                        <li key={i}>• {err.message}</li>
+                      ))}
+                      {integrityReport.errors.length > 5 && (
+                        <li className="text-red-500">... et {integrityReport.errors.length - 5} autre(s)</li>
+                      )}
+                    </ul>
                   </div>
                 )}
-
-                {/* NAVIGATION PAR ONGLETS */}
-                {(duplicates.length > 0 || clusters.length > 0 || isolatedIndividuals.length > 0 || smartSuggestions.length > 0) && (
-                  <div className="mb-6">
-                    <nav className="flex flex-wrap border-b border-gray-200">
-                      {/* Onglet Clusters */}
-                      <button
-                        onClick={() => setActiveTab('clusters')}
-                        className={`flex-1 min-w-[120px] px-4 py-3 font-medium text-sm transition-colors ${
-                          activeTab === 'clusters'
-                            ? 'border-b-2 border-orange-600 text-orange-600 bg-orange-50'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <Users className="w-4 h-4" />
-                          <span className="hidden sm:inline">Clusters</span> ({clusters.length})
-                        </div>
-                      </button>
-                      
-                      {/* Onglet Doublons */}
-                      <button
-                        onClick={() => setActiveTab('pairs')}
-                        className={`flex-1 min-w-[120px] px-4 py-3 font-medium text-sm transition-colors ${
-                          activeTab === 'pairs'
-                            ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="hidden sm:inline">Doublons</span> ({duplicates.length})
-                        </div>
-                      </button>
-                      
-                      {/* Onglet Isolés (v1.9.0) */}
-                      <button
-                        onClick={() => setActiveTab('isolated')}
-                        className={`flex-1 min-w-[120px] px-4 py-3 font-medium text-sm transition-colors ${
-                          activeTab === 'isolated'
-                            ? 'border-b-2 border-red-600 text-red-600 bg-red-50'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <UserX className="w-4 h-4" />
-                          <span className="hidden sm:inline">Isolés</span> ({isolatedIndividuals.length})
-                        </div>
-                      </button>
-                      
-                      {/* Onglet Suggestions IA (v1.9.0) */}
-                      <button
-                        onClick={() => setActiveTab('suggestions')}
-                        className={`flex-1 min-w-[120px] px-4 py-3 font-medium text-sm transition-colors ${
-                          activeTab === 'suggestions'
-                            ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <Lightbulb className="w-4 h-4" />
-                          <span className="hidden sm:inline">IA</span> ({smartSuggestions.length})
-                        </div>
-                      </button>
-                    </nav>
+                {integrityReport.warnings.length > 0 && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h3 className="font-semibold text-yellow-800 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      {integrityReport.warnings.length} avertissement(s)
+                    </h3>
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* Statistiques */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+              <div className="bg-white rounded-xl p-4 shadow border">
+                <div className="text-2xl font-bold text-gray-800">{individuals.length}</div>
+                <div className="text-sm text-gray-500">Individus</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow border">
+                <div className="text-2xl font-bold text-orange-600">{clusters.length}</div>
+                <div className="text-sm text-gray-500">Clusters</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow border">
+                <div className="text-2xl font-bold text-blue-600">{getSimplePairs().length}</div>
+                <div className="text-sm text-gray-500">Doublons</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow border">
+                <div className="text-2xl font-bold text-red-600">{isolatedPersons.length}</div>
+                <div className="text-sm text-gray-500">Isolés</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow border">
+                <div className="text-2xl font-bold text-purple-600">{smartSuggestions.length}</div>
+                <div className="text-sm text-gray-500">Suggestions IA</div>
+              </div>
+            </div>
 
-                {/* ═══════════════════════════════════════════════════════════════════ */}
-                {/* CONTENU ONGLET CLUSTERS */}
-                {/* ═══════════════════════════════════════════════════════════════════ */}
-                {activeTab === 'clusters' && clusters.length > 0 && (
+            {/* Onglets */}
+            <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
+              <div className="flex border-b">
+                {[
+                  { id: 'clusters', label: 'Clusters', icon: '🟠', count: getFilteredClusters().length },
+                  { id: 'pairs', label: 'Doublons', icon: '🔵', count: getSimplePairs().length },
+                  { id: 'isolated', label: 'Isolés', icon: '🔴', count: isolatedPersons.length },
+                  { id: 'ai', label: 'Suggestions IA', icon: '🟣', count: smartSuggestions.length }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-emerald-50 text-emerald-700 border-b-2 border-emerald-500'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="mr-1">{tab.icon}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="ml-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs">{tab.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-4">
+                {/* Onglet Clusters */}
+                {activeTab === 'clusters' && (
                   <div>
-                    <div className="mb-6 bg-white border-2 border-gray-200 rounded-lg p-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Score moyen minimum: {clusterScoreFilter}%
-                        </label>
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600">Score min:</label>
                         <input
                           type="range"
                           min="80"
                           max="100"
                           value={clusterScoreFilter}
                           onChange={(e) => setClusterScoreFilter(parseInt(e.target.value))}
-                          className="w-full"
+                          className="w-24"
                         />
-                        <p className="text-sm text-gray-600 mt-3">
-                          {getFilteredClusters().length} cluster(s) affiché(s)
-                        </p>
+                        <span className="text-sm font-medium">{clusterScoreFilter}%</span>
                       </div>
-                    </div>
-
-                    <div className="mb-6 flex gap-4 flex-wrap">
                       <button
                         onClick={autoSelectHighConfidenceClusters}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
+                        className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
                       >
                         Sélectionner ≥95%
                       </button>
-                      <span className="text-sm text-gray-600 py-2">
-                        {selectedClusters.size} cluster(s) sélectionné(s)
-                      </span>
                     </div>
-
-                    <div className="space-y-4">
-                      {getFilteredClusters().map((cluster, idx) => {
-                        const originalIdx = clusters.indexOf(cluster);
-                        const avgScore = getClusterAverageScore(cluster);
-                        return (
-                          <div
-                            key={originalIdx}
-                            className={`border-2 rounded-lg p-4 ${
-                              selectedClusters.has(originalIdx)
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-orange-300 bg-orange-50'
-                            }`}
-                          >
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+                    
+                    {getFilteredClusters().length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">Aucun cluster trouvé avec ce filtre</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {getFilteredClusters().map((cluster, idx) => (
+                          <div key={idx} className={`border rounded-lg p-3 ${
+                            selectedClusters.has(idx) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
+                          }`}>
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedClusters.has(originalIdx)}
-                                  onChange={() => {
-                                    const newSelected = new Set(selectedClusters);
-                                    if (newSelected.has(originalIdx)) {
-                                      newSelected.delete(originalIdx);
-                                    } else {
-                                      newSelected.add(originalIdx);
-                                    }
-                                    setSelectedClusters(newSelected);
-                                  }}
-                                  className="w-5 h-5 text-indigo-600"
-                                />
-                                <Users className="w-6 h-6 text-orange-600" />
-                                <h3 className="font-semibold text-orange-900">
-                                  Cluster #{originalIdx + 1} — {cluster.people.length} personnes
-                                </h3>
-                                <span className={`px-2 py-1 rounded text-sm font-medium ${
-                                  avgScore >= 95 ? 'bg-green-200 text-green-800' :
-                                  avgScore >= 90 ? 'bg-yellow-200 text-yellow-800' :
-                                  'bg-orange-200 text-orange-800'
+                                <span className="font-medium">{cluster.size} personnes</span>
+                                <span className={`px-2 py-0.5 rounded text-sm ${
+                                  cluster.avgScore >= 95 ? 'bg-green-100 text-green-800' :
+                                  cluster.avgScore >= 90 ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-orange-100 text-orange-800'
                                 }`}>
-                                  {avgScore}%
+                                  Score: {cluster.avgScore}%
                                 </span>
                               </div>
-                              <button
-                                onClick={() => toggleClusterExpand(originalIdx)}
-                                className="text-sm text-orange-700 hover:text-orange-900"
-                              >
-                                {expandedClusters.has(originalIdx) ? '▲ Masquer' : '▼ Voir détails'}
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => toggleClusterExpand(idx)}
+                                  className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                                >
+                                  {expandedClusters.has(idx) ? 'Réduire' : 'Détails'}
+                                </button>
+                                <button
+                                  onClick={() => selectCluster(cluster.ids)}
+                                  className="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                                >
+                                  Sélectionner
+                                </button>
+                              </div>
                             </div>
-
-                            {expandedClusters.has(originalIdx) && (
-                              <div className="border-t border-orange-200 pt-3 mt-3">
-                                <div className="overflow-x-auto">
-                                  <table className="w-full text-sm">
-                                    <thead className="bg-orange-100">
-                                      <tr>
-                                        <th className="px-3 py-2 text-left">#</th>
-                                        <th className="px-3 py-2 text-left">Nom</th>
-                                        <th className="px-3 py-2 text-left">Naissance</th>
-                                        <th className="px-3 py-2 text-left">ID</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                      {cluster.people.map((person, pIdx) => (
-                                        <tr key={pIdx} className="hover:bg-orange-100">
-                                          <td className="px-3 py-2">{pIdx + 1}</td>
-                                          <td className="px-3 py-2 font-medium">{person.names[0] || 'Sans nom'}</td>
-                                          <td className="px-3 py-2">{person.birth || '-'}</td>
-                                          <td className="px-3 py-2 font-mono text-xs">{person.id}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
+                            
+                            {expandedClusters.has(idx) && (
+                              <div className="mt-3 pt-3 border-t">
+                                <div className="text-sm text-gray-600">
+                                  {cluster.people.map(p => p.names[0] || p.id).join(', ')}
                                 </div>
                               </div>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {activeTab === 'clusters' && clusters.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    Aucun cluster détecté (groupes de 3+ personnes similaires)
-                  </div>
-                )}
-
-                {/* ═══════════════════════════════════════════════════════════════════ */}
-                {/* CONTENU ONGLET DOUBLONS SIMPLES */}
-                {/* ═══════════════════════════════════════════════════════════════════ */}
+                {/* Onglet Doublons simples */}
                 {activeTab === 'pairs' && (
                   <div>
-                    <div className="mb-6 bg-white border-2 border-gray-200 rounded-lg p-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Rechercher</label>
-                          <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Nom ou ID"
-                            className="w-full px-4 py-2 border rounded-lg"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Score min: {filterScore}%</label>
-                          <input
-                            type="range"
-                            min="80"
-                            max="100"
-                            value={filterScore}
-                            onChange={(e) => setFilterScore(parseInt(e.target.value))}
-                            className="w-full"
-                          />
-                        </div>
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <input
+                        type="text"
+                        placeholder="Rechercher par nom ou ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="px-3 py-2 border rounded-lg text-sm flex-1 min-w-[200px]"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600">Score min:</label>
+                        <input
+                          type="range"
+                          min="80"
+                          max="100"
+                          value={filterScore}
+                          onChange={(e) => setFilterScore(parseInt(e.target.value))}
+                          className="w-24"
+                        />
+                        <span className="text-sm font-medium">{filterScore}%</span>
                       </div>
-                    </div>
-
-                    <div className="mb-6 flex gap-4 flex-wrap">
                       <button
                         onClick={selectHighConfidence}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium"
+                        className="px-3 py-1 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700"
                       >
                         Sélectionner ≥95%
                       </button>
-                      <button
-                        onClick={selectFilteredDuplicates}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium"
-                      >
-                        Sélectionner tout (≥{filterScore}%)
-                      </button>
-                      <span className="text-sm text-gray-600 py-2">
-                        {selectedPairs.size} paire(s) sélectionnée(s) sur {getFilteredDuplicates().length}
-                      </span>
                     </div>
-
-                    <div className="space-y-3">
-                      {getFilteredDuplicates().map((pair) => (
-                        <div
-                          key={pair.id}
-                          className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                            selectedPairs.has(pair.id)
-                              ? 'border-indigo-500 bg-indigo-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => togglePairSelection(pair.id)}
-                        >
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedPairs.has(pair.id)}
-                                onChange={() => {}}
-                                className="w-5 h-5 text-indigo-600"
-                              />
-                              <div>
-                                <p className="font-semibold">
-                                  {pair.person1.names[0] || 'Sans nom'} ↔ {pair.person2.names[0] || 'Sans nom'}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {pair.person1.birth || '?'} • {pair.person2.birth || '?'}
-                                </p>
+                    
+                    {getSimplePairs().length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">Aucun doublon simple trouvé</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {getSimplePairs().slice(0, 50).map((pair) => (
+                          <div key={pair.id} className={`border rounded-lg p-3 ${
+                            selectedPairs.has(pair.id) ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'
+                          }`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium">{pair.person1.names[0] || pair.person1.id}</div>
+                                <div className="text-sm text-gray-500">↔ {pair.person2.names[0] || pair.person2.id}</div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded text-sm font-medium ${
+                                  pair.similarity >= 95 ? 'bg-green-100 text-green-800' :
+                                  pair.similarity >= 90 ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-orange-100 text-orange-800'
+                                }`}>
+                                  {pair.similarity}%
+                                </span>
+                                <button
+                                  onClick={() => openPreview(pair)}
+                                  className="px-2 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                                >
+                                  Prévisualiser
+                                </button>
+                                <button
+                                  onClick={() => togglePairSelection(pair.id)}
+                                  className={`px-2 py-1 text-sm rounded ${
+                                    selectedPairs.has(pair.id)
+                                      ? 'bg-emerald-600 text-white'
+                                      : 'bg-gray-100 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {selectedPairs.has(pair.id) ? '✓' : 'Sélectionner'}
+                                </button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                pair.similarity >= 95 ? 'bg-green-100 text-green-800' :
-                                pair.similarity >= 90 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-orange-100 text-orange-800'
-                              }`}>
-                                {pair.similarity}%
-                              </span>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); showPreview(pair); }}
-                                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                              >
-                                Prévisualiser
-                              </button>
-                            </div>
+                            {/* Afficher les critères suffisants */}
+                            {pair.sufficientCriteria && pair.sufficientCriteria.length > 0 && (
+                              <div className="mt-2 text-xs text-emerald-600">
+                                Critères validants: {pair.sufficientCriteria.join(', ')}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {getFilteredDuplicates().length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        Aucun doublon trouvé avec les critères actuels
+                        ))}
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* ═══════════════════════════════════════════════════════════════════ */}
-                {/* CONTENU ONGLET ISOLÉS (v1.9.0) */}
-                {/* ═══════════════════════════════════════════════════════════════════ */}
+                {/* Onglet Isolés */}
                 {activeTab === 'isolated' && (
                   <div>
-                    <div className="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
-                      <h3 className="font-semibold text-yellow-900 mb-2">
-                        🔍 {isolatedIndividuals.length} individu(s) isolé(s) détecté(s)
-                      </h3>
-                      <p className="text-sm text-yellow-700 mb-3">
-                        Ces personnes n'ont ni parents ni enfants renseignés dans l'arbre.
-                      </p>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="bg-white rounded p-2">
-                          <span className="text-gray-600">Totalement isolés :</span>
-                          <span className="font-bold text-red-600 ml-2">
-                            {isolatedIndividuals.filter(p => p.isTotallyIsolated).length}
-                          </span>
-                        </div>
-                        <div className="bg-white rounded p-2">
-                          <span className="text-gray-600">Avec conjoints :</span>
-                          <span className="font-bold text-orange-600 ml-2">
-                            {isolatedIndividuals.filter(p => p.hasSpouses).length}
-                          </span>
-                        </div>
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <button
+                        onClick={() => setSelectedIsolated(new Set(isolatedPersons.map(p => p.id)))}
+                        className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
+                      >
+                        Tout sélectionner
+                      </button>
+                      <button
+                        onClick={() => setSelectedIsolated(new Set(
+                          isolatedPersons.filter(p => p.isTotallyIsolated).map(p => p.id)
+                        ))}
+                        className="px-3 py-1 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700"
+                      >
+                        Totalement isolés
+                      </button>
+                      <button
+                        onClick={() => setSelectedIsolated(new Set())}
+                        className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600"
+                      >
+                        Désélectionner tout
+                      </button>
+                      <span className="text-sm text-gray-500 self-center">
+                        {selectedIsolated.size} sélectionné(s)
+                      </span>
+                    </div>
+                    
+                    <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="text-sm">
+                        <span className="font-medium">Totalement isolés:</span> {isolatedPersons.filter(p => p.isTotallyIsolated).length}
+                        <span className="mx-2">|</span>
+                        <span className="font-medium">Avec conjoints:</span> {isolatedPersons.filter(p => !p.isTotallyIsolated).length}
                       </div>
                     </div>
-
-                    {isolatedIndividuals.length > 0 && (
-                      <>
-                        <div className="mb-6 flex gap-3 flex-wrap">
-                          <button
-                            onClick={selectAllIsolated}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium text-sm"
-                          >
-                            Tout sélectionner
-                          </button>
-                          <button
-                            onClick={selectTotallyIsolated}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm"
-                          >
-                            Totalement isolés
-                          </button>
-                          <button
-                            onClick={deselectAllIsolated}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium text-sm"
-                          >
-                            Désélectionner tout
-                          </button>
-                          <span className="text-sm text-gray-600 py-2">
-                            {selectedIsolated.size} sélectionné(s)
-                          </span>
-                        </div>
-
-                        <div className="space-y-3 mb-6">
-                          {isolatedIndividuals.map((person) => (
-                            <div
-                              key={person.id}
-                              className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                                selectedIsolated.has(person.id)
-                                  ? 'border-yellow-500 bg-yellow-50'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                              onClick={() => toggleIsolatedSelection(person.id)}
-                            >
-                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedIsolated.has(person.id)}
-                                    onChange={() => {}}
-                                    className="w-5 h-5 text-yellow-600"
-                                  />
-                                  <UserX className="w-5 h-5 text-red-500" />
-                                  <div>
-                                    <p className="font-semibold">{person.names[0] || 'Sans nom'}</p>
-                                    <p className="text-sm text-gray-600">
-                                      {person.birth || '?'} {person.birthPlace ? `• ${person.birthPlace}` : ''}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {person.isTotallyIsolated ? (
-                                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
-                                      Totalement isolé
-                                    </span>
-                                  ) : (
-                                    <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-medium">
-                                      Avec conjoint(s)
-                                    </span>
-                                  )}
-                                  <span className="text-xs text-gray-500 font-mono">{person.id}</span>
+                    
+                    {isolatedPersons.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">Aucun individu isolé trouvé</p>
+                    ) : (
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {isolatedPersons.map((person) => (
+                          <div key={person.id} className={`border rounded-lg p-3 ${
+                            selectedIsolated.has(person.id) ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                          }`}>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium">{person.names[0] || person.id}</div>
+                                <div className="text-xs text-gray-500">
+                                  {person.isTotallyIsolated 
+                                    ? '⚠️ Totalement isolé (aucune famille)'
+                                    : '👤 Sans ascendants ni descendants'
+                                  }
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {selectedIsolated.size > 0 && (
-                          <div className="fixed bottom-6 right-6 z-50">
-                            <button
-                              onClick={deleteSelectedIsolated}
-                              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg flex items-center gap-2"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                              Supprimer {selectedIsolated.size} isolé(s)
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {isolatedIndividuals.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        ✅ Aucun individu isolé détecté dans votre arbre
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ═══════════════════════════════════════════════════════════════════ */}
-                {/* CONTENU ONGLET SUGGESTIONS IA (v1.9.0) */}
-                {/* ═══════════════════════════════════════════════════════════════════ */}
-                {activeTab === 'suggestions' && (
-                  <div>
-                    <div className="mb-6 bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
-                      <h3 className="font-semibold text-purple-900 mb-2">
-                        🤖 {smartSuggestions.length} suggestion(s) intelligente(s)
-                      </h3>
-                      <p className="text-sm text-purple-700">
-                        L'IA analyse les patterns de votre arbre pour détecter des groupes suspects 
-                        de personnes portant le même nom dans la même période.
-                      </p>
-                    </div>
-
-                    {smartSuggestions.length > 0 ? (
-                      <div className="space-y-4">
-                        {smartSuggestions.map((suggestion) => (
-                          <div
-                            key={suggestion.id}
-                            className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50/50"
-                          >
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-                              <div className="flex items-center gap-3">
-                                <Lightbulb className="w-6 h-6 text-purple-600" />
-                                <div>
-                                  <h4 className="font-semibold text-purple-900">
-                                    {suggestion.name} — {suggestion.count} personnes
-                                  </h4>
-                                  <p className="text-sm text-purple-700">Période : {suggestion.period}</p>
-                                </div>
-                              </div>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                suggestion.confidence >= 85 ? 'bg-green-100 text-green-800' :
-                                suggestion.confidence >= 75 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-orange-100 text-orange-800'
-                              }`}>
-                                Confiance : {suggestion.confidence}%
-                              </span>
-                            </div>
-                            
-                            <p className="text-sm text-gray-600 mb-3">{suggestion.reason}</p>
-                            
-                            <div className="bg-white rounded-lg p-3">
-                              <p className="text-xs text-gray-500 mb-2">Personnes concernées :</p>
-                              <div className="flex flex-wrap gap-2">
-                                {suggestion.people.slice(0, 5).map((person, idx) => (
-                                  <span key={idx} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                                    {person.names[0] || person.id} {person.birth ? `(${person.birth.match(/\d{4}/)?.[0] || '?'})` : ''}
-                                  </span>
-                                ))}
-                                {suggestion.people.length > 5 && (
-                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                                    +{suggestion.people.length - 5} autres
-                                  </span>
-                                )}
-                              </div>
+                              <button
+                                onClick={() => {
+                                  const newSelected = new Set(selectedIsolated);
+                                  if (newSelected.has(person.id)) {
+                                    newSelected.delete(person.id);
+                                  } else {
+                                    newSelected.add(person.id);
+                                  }
+                                  setSelectedIsolated(newSelected);
+                                }}
+                                className={`px-2 py-1 text-sm rounded ${
+                                  selectedIsolated.has(person.id)
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-gray-100 hover:bg-gray-200'
+                                }`}
+                              >
+                                {selectedIsolated.has(person.id) ? '✓' : 'Sélectionner'}
+                              </button>
                             </div>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        Aucune suggestion générée. L'IA n'a pas détecté de patterns suspects.
-                      </div>
                     )}
                   </div>
                 )}
 
-                {/* BOUTON FUSIONNER */}
-                {(selectedPairs.size > 0 || selectedClusters.size > 0) && (
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      onClick={mergeDuplicates}
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg flex items-center gap-3"
-                    >
-                      <CheckCircle className="w-6 h-6" />
-                      Fusionner {selectedPairs.size + selectedClusters.size} sélection(s)
-                    </button>
+                {/* Onglet Suggestions IA */}
+                {activeTab === 'ai' && (
+                  <div>
+                    <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <div className="flex items-center gap-2 text-purple-800">
+                        <Brain className="w-5 h-5" />
+                        <span className="font-medium">Analyse de patterns</span>
+                      </div>
+                      <p className="text-sm text-purple-600 mt-1">
+                        Ces suggestions sont basées sur l'analyse des noms, périodes et lieux.
+                        Vérifiez chaque suggestion avant de l'accepter.
+                      </p>
+                    </div>
+                    
+                    {smartSuggestions.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">Aucune suggestion IA disponible</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {smartSuggestions.map((suggestion, idx) => (
+                          <div key={idx} className="border border-purple-200 rounded-lg p-3 bg-purple-50/30">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`px-2 py-1 rounded text-sm font-medium ${
+                                suggestion.confidence >= 90 ? 'bg-green-100 text-green-800' :
+                                suggestion.confidence >= 75 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-purple-100 text-purple-800'
+                              }`}>
+                                Confiance: {suggestion.confidence}%
+                              </span>
+                            </div>
+                            <div className="text-sm">
+                              <div className="font-medium">{suggestion.person1.names[0] || suggestion.person1.id}</div>
+                              <div className="text-gray-500">↔ {suggestion.person2.names[0] || suggestion.person2.id}</div>
+                            </div>
+                            <div className="mt-2 text-xs text-purple-600">
+                              Raisons: {suggestion.reasons.join(' • ')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
-            {/* ÉTAPE FUSION TERMINÉE */}
-            {step === 'merged' && validationResults && (
-              <div className="text-center py-12">
-                <CheckCircle className="w-20 h-20 md:w-24 md:h-24 mx-auto text-green-500 mb-6" />
-                <h2 className="text-xl md:text-2xl font-semibold mb-6">Opération terminée !</h2>
-                
-                <div className="max-w-md mx-auto bg-gray-50 rounded-lg p-6 mb-8">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{validationResults.totalIndividuals}</p>
-                      <p className="text-sm text-gray-600">Original</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {validationResults.mergedCount || 0}{validationResults.deletedCount ? ` + ${validationResults.deletedCount}` : ''}
-                      </p>
-                      <p className="text-sm text-gray-600">Supprimés</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{validationResults.remainingCount}</p>
-                      <p className="text-sm text-gray-600">Restants</p>
-                    </div>
+            {/* Boutons d'action */}
+            <div className="mt-6 flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={resetAll}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                Recommencer
+              </button>
+              
+              {(selectedPairs.size > 0 || selectedIsolated.size > 0) && (
+                <button
+                  onClick={handleMerge}
+                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium"
+                >
+                  Fusionner ({selectedPairs.size + selectedIsolated.size} sélections)
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ÉTAPE: Merged */}
+        {step === 'merged' && validationResults && (
+          <div className="max-w-xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 border">
+              <div className="text-center mb-6">
+                <CheckCircle className="w-16 h-16 mx-auto text-emerald-500 mb-4" />
+                <h2 className="text-2xl font-bold text-gray-800">Fusion terminée !</h2>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-800">{validationResults.totalIndividuals}</div>
+                    <div className="text-sm text-gray-500">Avant</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-red-600">-{validationResults.mergedCount}</div>
+                    <div className="text-sm text-gray-500">Supprimés</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-emerald-600">{validationResults.remainingCount}</div>
+                    <div className="text-sm text-gray-500">Après</div>
                   </div>
                 </div>
-
+              </div>
+              
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={downloadCleanedFile}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg flex items-center gap-3 mx-auto"
+                  className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex items-center justify-center gap-2"
                 >
-                  <Download className="w-6 h-6" />
-                  Télécharger GEDCOM nettoyé
+                  <Download className="w-5 h-5" />
+                  Télécharger le fichier nettoyé
+                </button>
+                <button
+                  onClick={resetAll}
+                  className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                >
+                  Traiter un autre fichier
                 </button>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* MODAL PRÉVISUALISATION */}
-      {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {previewPair && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setPreviewPair(null)}>
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-indigo-600 text-white p-4 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Prévisualisation de la fusion</h3>
-              <button onClick={() => setPreviewPair(null)} className="text-white hover:text-gray-200 text-2xl">✕</button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                <p className="text-sm text-blue-900">
-                  L'ID <span className="font-mono bg-blue-100 px-2 py-0.5 rounded">{previewPair.keepPerson.id}</span> sera conservé 
-                  (score qualité: {Math.max(previewPair.quality1, previewPair.quality2)} points)
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="border-2 border-green-500 rounded-lg bg-green-50 p-4">
-                  <h4 className="font-bold text-green-900 mb-3 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" /> Conservé
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>ID:</strong> {previewPair.keepPerson.id}</p>
-                    <p><strong>Nom:</strong> {previewPair.keepPerson.names[0] || 'N/A'}</p>
-                    <p><strong>Naissance:</strong> {previewPair.keepPerson.birth || 'N/A'}</p>
-                    <p><strong>Décès:</strong> {previewPair.keepPerson.death || 'N/A'}</p>
-                  </div>
-                </div>
-
-                <div className="border-2 border-red-500 rounded-lg bg-red-50 p-4">
-                  <h4 className="font-bold text-red-900 mb-3 flex items-center gap-2">
-                    <Trash2 className="w-5 h-5" /> Supprimé
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>ID:</strong> {previewPair.removePerson.id}</p>
-                    <p><strong>Nom:</strong> {previewPair.removePerson.names[0] || 'N/A'}</p>
-                    <p><strong>Naissance:</strong> {previewPair.removePerson.birth || 'N/A'}</p>
-                    <p><strong>Décès:</strong> {previewPair.removePerson.death || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-2 border-indigo-500 rounded-lg bg-indigo-50 p-4">
-                <h4 className="font-bold text-indigo-900 mb-3">📊 Résultat après fusion</h4>
-                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p><strong>Nom:</strong> {previewPair.merged.names[0] || 'N/A'}</p>
-                    <p><strong>Naissance:</strong> {previewPair.merged.birth || 'N/A'}</p>
-                    {previewPair.merged.birthPlace && <p><strong>Lieu:</strong> {previewPair.merged.birthPlace}</p>}
-                  </div>
-                  <div>
-                    <p><strong>Décès:</strong> {previewPair.merged.death || 'N/A'}</p>
-                    {previewPair.merged.deathPlace && <p><strong>Lieu:</strong> {previewPair.merged.deathPlace}</p>}
-                    {previewPair.merged.occupation && <p><strong>Profession:</strong> {previewPair.merged.occupation}</p>}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-gray-50 p-4 flex justify-end gap-3">
-              <button
-                onClick={() => setPreviewPair(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
-              >
-                Fermer
-              </button>
-              <button
-                onClick={() => {
-                  togglePairSelection(previewPair.original.id);
-                  setPreviewPair(null);
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                {selectedPairs.has(previewPair.original.id) ? 'Désélectionner' : 'Sélectionner'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════════ */}
-      {/* MODAL CHANGELOG */}
-      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* Modal Changelog */}
       {showChangelog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowChangelog(false)}>
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-4 flex justify-between items-center">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Historique des versions
-              </h3>
-              <button onClick={() => setShowChangelog(false)} className="text-white hover:text-gray-200 text-2xl">✕</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Sparkles className="w-6 h-6" />
+                  Historique des versions
+                </h2>
+                <button
+                  onClick={() => setShowChangelog(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             
-            <div className="p-6 space-y-6">
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
               {CHANGELOG.map((version, idx) => (
-                <div key={idx} className={`border-l-4 pl-4 ${
-                  version.color === 'green' ? 'border-green-500' :
-                  version.color === 'blue' ? 'border-blue-500' :
-                  version.color === 'indigo' ? 'border-indigo-500' :
-                  version.color === 'purple' ? 'border-purple-500' :
-                  'border-gray-400'
-                }`}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h4 className="font-bold text-lg">v{version.version}</h4>
+                <div key={idx} className={`mb-6 pb-6 ${idx < CHANGELOG.length - 1 ? 'border-b' : ''}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium bg-${version.color}-100 text-${version.color}-800`}>
+                      v{version.version}
+                    </span>
                     {version.tag && (
-                      <span className={`px-2 py-0.5 text-xs rounded ${
-                        version.tag === 'ACTUELLE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                        version.tag === 'ACTUELLE' ? 'bg-green-500 text-white' : 'bg-gray-200'
                       }`}>
                         {version.tag}
                       </span>
                     )}
                     <span className="text-sm text-gray-500">{version.date}</span>
                   </div>
-                  <p className="font-medium text-gray-700 mb-2">{version.title}</p>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                  <h3 className="font-semibold text-gray-800 mb-2">{version.title}</h3>
+                  <ul className="space-y-1">
                     {version.items.map((item, i) => (
-                      <li key={i}>• {item}</li>
+                      <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                        <span className="text-emerald-500 mt-1">•</span>
+                        <span>{item}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
               ))}
             </div>
-
-            <div className="sticky bottom-0 bg-gray-50 p-4 flex justify-end">
+            
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
               <button
                 onClick={() => setShowChangelog(false)}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
               >
                 Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Prévisualisation */}
+      {previewPair && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="sticky top-0 bg-emerald-600 text-white px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Prévisualisation de la fusion</h2>
+                <button onClick={closePreview} className="p-2 hover:bg-white/20 rounded-lg">✕</button>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-bold text-lg mb-2">{previewPair.person1.names[0] || previewPair.person1.id}</h3>
+                  <div className="text-sm space-y-1 text-gray-600">
+                    <p>ID: {previewPair.person1.id}</p>
+                    <p>Naissance: {previewPair.person1.birth || 'N/A'}</p>
+                    <p>Lieu: {previewPair.person1.birthPlace || 'N/A'}</p>
+                    <p>Décès: {previewPair.person1.death || 'N/A'}</p>
+                    <p>Sexe: {previewPair.person1.sex || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-bold text-lg mb-2">{previewPair.person2.names[0] || previewPair.person2.id}</h3>
+                  <div className="text-sm space-y-1 text-gray-600">
+                    <p>ID: {previewPair.person2.id}</p>
+                    <p>Naissance: {previewPair.person2.birth || 'N/A'}</p>
+                    <p>Lieu: {previewPair.person2.birthPlace || 'N/A'}</p>
+                    <p>Décès: {previewPair.person2.death || 'N/A'}</p>
+                    <p>Sexe: {previewPair.person2.sex || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold mb-2">Détails de la comparaison</h4>
+                <div className="text-sm space-y-1">
+                  {previewPair.details.map((detail, i) => (
+                    <p key={i} className="text-gray-600">{detail}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t flex gap-3">
+              <button onClick={closePreview} className="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                Fermer
+              </button>
+              <button
+                onClick={() => { togglePairSelection(previewPair.id); closePreview(); }}
+                className={`flex-1 px-4 py-2 rounded-lg ${
+                  selectedPairs.has(previewPair.id)
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+              >
+                {selectedPairs.has(previewPair.id) ? 'Désélectionner' : 'Sélectionner pour fusion'}
               </button>
             </div>
           </div>

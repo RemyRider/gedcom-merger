@@ -260,7 +260,7 @@ const GedcomDuplicateMerger = () => {
         const id = match ? match[1] : `INDI${people.length}`;
         currentPerson = {
           id, names: [], birth: '', birthPlace: '', death: '', deathPlace: '',
-          sex: '', occupation: '', parents: [], spouses: [], rawLines: [line]
+          sex: '', occupation: '', parents: [], spouses: [], familyAsChild: [], rawLines: [line]
         };
         currentFamily = null;
         currentEvent = null;
@@ -292,7 +292,7 @@ const GedcomDuplicateMerger = () => {
           lastFieldType = 'OCCU';
         } else if (trimmed.startsWith('1 FAMC ')) {
           const match = trimmed.match(/@([^@]+)@/);
-          if (match) currentPerson.parents.push(match[1]);
+          if (match) currentPerson.familyAsChild.push(match[1]);
         } else if (trimmed.startsWith('1 FAMS ')) {
           const match = trimmed.match(/@([^@]+)@/);
           if (match) currentPerson.spouses.push(match[1]);

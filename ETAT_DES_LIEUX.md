@@ -52,6 +52,18 @@
 
 ## Fonctionnalités Manquantes
 
+### ⚠️ Régressions et fonctionnalités perdues à vérifier
+
+Ces fonctionnalités ont été développées mais pourraient avoir été perdues lors de refactorisations :
+
+| Fonctionnalité | Version d'origine | Statut actuel | Action |
+|----------------|-------------------|---------------|--------|
+| **Web Workers** | v1.6.0 | ❌ Absent v1.9.3 | À réimplémenter |
+| **Matching géo Isère** | v1.7.0 | ❌ Absent v1.9.3 | À réimplémenter |
+| Affichage parents | v1.2.0 → perdu v1.4.0 → restauré v1.7.1 | ✅ À vérifier | Tester |
+| Détection clusters | v1.3.0 → perdu v1.6.0 → restauré v1.7.1 | ✅ À vérifier | Tester |
+| Contraste textes | Problème v1.7.2 → corrigé v1.7.3 | ✅ À vérifier | Tester |
+
 ### Priorité Haute
 
 #### 1. Web Workers pour calculs lourds
@@ -109,18 +121,50 @@
 
 ---
 
-## Historique des versions majeures
+## Historique complet des versions
 
-| Version | Date | Changements clés |
-|---------|------|------------------|
-| v1.0.0 | 29/11/2025 | Version initiale, Soundex français, triple indexation |
-| v1.3.0 | 04/12/2025 | Prévisualisation fusions, clusters, scoring 9 critères |
-| v1.6.0 | 10/12/2025 | Détection clusters avancée, variants orthographiques |
-| v1.7.1 | 14/12/2025 | Correction bugs clusters et affichage parents |
-| v1.8.6 | 16/12/2025 | Gestion CONT/CONC, HEAD/TRLR automatiques |
-| v1.9.0 | 28/12/2025 | 4 onglets, suggestions IA, individus isolés |
-| v1.9.2 | 28/12/2025 | Algorithme anti-faux-positifs |
-| v1.9.3 | 28/12/2025 | Bouton flottant, tableau clusters, onglet "À supprimer" |
+| Version | Date | Type | Changements clés |
+|---------|------|------|------------------|
+| **v1.0.0** | 29/11/2025 | 🚀 Initial | Soundex français, triple indexation, scoring 9 critères |
+| **v1.1.0** | 30/11/2025 | ✨ Feature | Recherche par ID, normalisation lieux français (40+ villes) |
+| **v1.2.0** | 01/12/2025 | ✨ Feature | Affichage détaillé parents/conjoints, export rapport statistique |
+| **v1.3.0** | 03/12/2025 | ✨ Feature | Prévisualisation fusions, détection clusters, badges qualité |
+| v1.3.1 | 05/12/2025 | 🐛 Fix | Corrections responsive iPhone, zones tactiles 48px |
+| v1.4.0 | ~06/12/2025 | ⚠️ Régression | Perte affichage parents dans cartes doublons |
+| v1.5.0 | ~08/12/2025 | ? | *Version intermédiaire - détails à vérifier* |
+| **v1.6.0** | 10/12/2025 | ✨ Feature | Web Workers (⚠️ jamais finalisés), variants orthographiques (40 prénoms), suggestions IA |
+| v1.6.1 | ~11/12/2025 | 🐛 Fix | *Version de référence pour v1.7.0* |
+| **v1.7.0** | 14/12/2025 | ✨ Feature | Matching géographique Isère (512 communes) - ⚠️ Non présent en v1.9.3 |
+| v1.7.1 | 14/12/2025 | 🐛 Fix | Correction bugs clusters (régression v1.6.0) et parents (régression v1.4.0) |
+| v1.7.2 | ~14/12/2025 | 🐛 Fix | *Problèmes de lisibilité signalés* |
+| v1.7.3 | ~14/12/2025 | 🐛 Fix | Correction contraste textes (text-gray-900) |
+| **v1.8.0** | ~15/12/2025 | ✨ Feature | Détection individus isolés, normalisation codes INSEE, contrôle intégrité |
+| v1.8.1 | ~15/12/2025 | ⚠️ Bug | Problème performance critique O(n³), timeout |
+| v1.8.2 | ~15/12/2025 | 🐛 Fix | Hotfix performance avec cache intelligent |
+| v1.8.3 | ~15/12/2025 | ⚠️ Régression | Web Worker supprimé (erreur MIME type) → interface gelée gros fichiers |
+| v1.8.4 | ~15/12/2025 | 🔧 WIP | Tests 5 niveaux prévus (jamais finalisés) |
+| v1.8.5 | 15/12/2025 | 🐛 Fix | Gestion CONT/CONC (continuation multi-lignes) |
+| **v1.8.6** | 16/12/2025 | ✨ Feature | HEAD/TRLR automatiques, conformité GEDCOM 5.5.1 |
+| v1.8.7 | ~20/12/2025 | ? | *Version intermédiaire - 125 tests* |
+| **v1.9.0** | 28/12/2025 | ✨ Feature | 4 onglets (Clusters, Doublons, À supprimer, IA), restauration suggestions IA |
+| v1.9.1 | 28/12/2025 | 🐛 Fix | *Corrections mineures* |
+| **v1.9.2** | 28/12/2025 | ✨ Feature | Algorithme anti-faux-positifs (critères suffisants obligatoires) |
+| **v1.9.3** | 28/12/2025 | ✨ Feature | Bouton flottant, tableau clusters détaillé, onglet "À supprimer" renommé |
+
+### Légende
+- 🚀 **Initial** : Première version
+- ✨ **Feature** : Nouvelle fonctionnalité
+- 🐛 **Fix** : Correction de bug
+- ⚠️ **Régression** : Bug introduit ou fonctionnalité perdue
+- 🔧 **WIP** : Travail non finalisé
+- ? : Détails à vérifier
+
+### Versions à investiguer
+
+Les versions suivantes nécessitent une vérification pour confirmer leur contenu exact :
+- v1.4.0 à v1.5.0 : Transition peu documentée
+- v1.8.7 : Passage de 125 à 128 tests
+- v1.9.1 : Contenu exact des corrections
 
 ---
 

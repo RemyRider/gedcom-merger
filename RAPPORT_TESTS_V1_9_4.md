@@ -1,7 +1,7 @@
 # Rapport de Tests v1.9.4
 
 **Date** : 30 décembre 2025
-**Résultat** : ✅ 226/226 tests passés (100%)
+**Résultat** : ✅ 236/236 tests passés (100%)
 
 ## Résumé par niveau
 
@@ -23,21 +23,33 @@
 | 14 | Onglet À supprimer | 8 |
 | 15 | Bouton flottant | 5 |
 | 16 | Contrôle intégrité 8 types | 8 |
-| 17 ★ | performIntegrityChecks | 8 |
-| 18 ★ | Bouton Recommencer header | 5 |
-| 19 ★ | Boutons sélection dynamiques | 6 |
-| 20 ★ | Modal intégrité | 6 |
+| 17 | performIntegrityChecks | 8 |
+| 18 | Bouton Recommencer header | 5 |
+| 19 | Boutons sélection dynamiques | 6 |
+| 20 | Modal intégrité | 6 |
+| **21 ★** | **ANTI-RÉGRESSION UI CRITIQUE** | **10** |
 | Bonus A | Documentation | 17 |
 | Bonus B | Responsive et UX | 12 |
 | Bonus C | Statistiques | 8 |
 
-★ = Nouveaux niveaux v1.9.4
+★ = **NOUVEAU** - Tests anti-régression pour fonctionnalités critiques
 
-## Build
+## Tests Anti-Régression (Niveau 21)
 
-- **Durée** : 5.64s
-- **Bundle JS** : ~190 KB (gzip: ~60 KB)
-- **Bundle CSS** : 19 KB (gzip: 4 KB)
+Ces tests **BLOQUENT** le déploiement si des fonctionnalités critiques disparaissent :
+
+| Test | Vérifie |
+|------|---------|
+| CRITIQUE: Texte drag & drop | Présence "glissez-déposez" |
+| CRITIQUE: Zone de drop | Bordure dashed pour drop zone |
+| CRITIQUE: Label englobant | Structure label > input |
+| CRITIQUE: Input type file | Input pour sélection fichier |
+| CRITIQUE: Input file caché | UX drag & drop (hidden) |
+| CRITIQUE: Accept GEDCOM | Accepte .ged/.gedcom |
+| CRITIQUE: Écran upload | Condition step === 'upload' |
+| CRITIQUE: Texte action | Message d'upload présent |
+| CRITIQUE: Écran review | Écran de révision existe |
+| CRITIQUE: Écran merged | Écran de résultat existe |
 
 ## Configuration Netlify
 
@@ -47,4 +59,4 @@
   publish = "dist"
 ```
 
-Les tests sont exécutés AVANT chaque build, bloquant le déploiement en cas d'échec.
+**Si UN SEUL test échoue → Build bloqué → Pas de déploiement**

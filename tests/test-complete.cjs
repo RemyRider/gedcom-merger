@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS COMPLÈTE v1.9.4 - 226 TESTS (20 NIVEAUX + 3 BONUS)
+// SUITE DE TESTS COMPLÈTE v1.9.4 - 236 TESTS (21 NIVEAUX + 3 BONUS)
 // Basé sur v1.9.3 (187 tests) + 39 nouveaux tests v1.9.4
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -35,7 +35,7 @@ const changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8');
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                    SUITE DE TESTS COMPLÈTE v1.9.4');
-console.log('                    20 NIVEAUX + 3 BONUS = 226 TESTS');
+console.log('                    21 NIVEAUX + 3 BONUS = 236 TESTS');
 console.log('               (Base v1.9.3: 187 tests + 39 nouveaux tests)');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
@@ -410,6 +410,30 @@ check(appCode.includes('max-h-') || appCode.includes('overflow-y-auto'), 'IA: Sc
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// NIVEAU 21: FONCTIONNALITÉS CRITIQUES UI - ANTI-RÉGRESSION (10 tests)
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ NIVEAU 21: FONCTIONNALITÉS CRITIQUES UI - ANTI-RÉGRESSION (10 tests)       │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+
+// Tests DRAG & DROP - CRITIQUE !
+check(appCode.includes('glissez-déposez') || appCode.includes('drag') || appCode.includes('drop'), 'CRITIQUE: Texte drag & drop présent');
+check(appCode.includes('border-dashed'), 'CRITIQUE: Zone de drop avec bordure dashed');
+check(appCode.includes('<label') && appCode.includes('<input'), 'CRITIQUE: Label englobant input file');
+check(appCode.includes('type="file"'), 'CRITIQUE: Input type file');
+check(appCode.includes('className="hidden"') || appCode.includes('class="hidden"'), 'CRITIQUE: Input file caché (UX drag&drop)');
+check(appCode.includes('.ged') || appCode.includes('.gedcom'), 'CRITIQUE: Accept fichiers GEDCOM');
+
+// Tests ÉCRAN UPLOAD - CRITIQUE !
+check(appCode.includes("step === 'upload'") || appCode.includes('step === "upload"'), 'CRITIQUE: Condition écran upload');
+check(appCode.includes('Importer') || appCode.includes('Upload') || appCode.includes('Charger'), 'CRITIQUE: Texte action upload');
+
+// Tests STRUCTURE ÉCRANS
+check(appCode.includes("step === 'review'") || appCode.includes('step === "review"'), 'CRITIQUE: Écran review existe');
+check(appCode.includes("step === 'merged'") || appCode.includes('step === "merged"'), 'CRITIQUE: Écran merged existe');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // BONUS A: CHANGELOG ET DOCUMENTATION (17 tests) - +1 pour v1.9.4
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
@@ -481,7 +505,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 226;
+const expectedTotal = 236;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);

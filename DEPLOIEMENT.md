@@ -10,8 +10,11 @@
 ### Configuration
 
 Le fichier `netlify.toml` configure automatiquement :
+- **Tests automatiques** : `npm test` s'exécute AVANT chaque build
 - Commande build : `npm run build`
 - Répertoire de sortie : `dist`
+
+**Si les tests échouent, le build est bloqué** → Protection contre les régressions !
 
 ### Workflow
 
@@ -25,6 +28,12 @@ Les deux environnements se déploient automatiquement :
 ### Vérifications avant déploiement
 
 ```bash
-npm test          # Exécuter les tests
+npm test          # 226 tests doivent passer
 npm run build     # Vérifier le build
 ```
+
+### Logs Netlify
+
+Si un déploiement échoue, vérifier les logs :
+- ✅ Tests passés → Build continue
+- ❌ Tests échoués → Build bloqué avec détail des échecs

@@ -1,94 +1,70 @@
-# Fusionneur de Doublons GEDCOM v1.9.3
+# Fusionneur GEDCOM v1.9.3
 
-Application web moderne pour détecter et fusionner intelligemment les doublons dans vos fichiers GEDCOM (format standard de généalogie).
+Application web responsive pour détecter et fusionner les doublons dans les fichiers de généalogie GEDCOM.
 
-## 🚀 Fonctionnalités
+## Nouveautés v1.9.3 (30 décembre 2025)
 
-### Détection intelligente
-- **Algorithme Soundex français** adapté aux noms de famille français
-- **Triple indexation** pour des performances optimales sur les grands arbres
-- **Système de scoring hybride** avec 9 critères pondérés
-- **Protection anti-faux-positifs** : un critère suffisant requis au-delà du nom
+### 4 Corrections majeures
 
-### Interface multi-onglets
-- **🟠 Clusters** : groupes de 3+ personnes potentiellement identiques
-- **🔵 Doublons** : paires simples avec score de similarité
-- **🔴 À supprimer** : individus totalement isolés ou sans identité
-- **🟣 Suggestions IA** : patterns suspects détectés automatiquement
+1. **Onglet "À supprimer"** remplace "Isolés" avec filtrage strict
+   - Critère 1: Totalement isolé (sans parents ET sans enfants ET sans conjoints)
+   - Critère 2: Sans identité (pas de nom ET pas de prénom)
 
-### Actions distinctes
-- **Fusionner** : combine les données de plusieurs doublons (enrichissement)
-- **Supprimer** : retire définitivement les individus isolés de l'arbre
+2. **Bouton flottant** pour actions rapides sans scroller
+   - Bouton "Fusionner X doublon(s)" en bas à droite
+   - Bouton "Supprimer X individu(s)" distinct
 
-### UX optimisée
-- **Bouton flottant** pour actions rapides sans scroller
-- **Tableau détaillé** des clusters avec toutes les informations
-- **Prévisualisation** avant fusion
-- **Responsive** : mobile, tablette, desktop
+3. **Tableau clusters détaillé** avec 9 colonnes
+   - Nom complet, Naissance, Lieu, Décès, Sexe
+   - Parents, Conjoints, ID
+   - Statistiques du cluster
 
-## 📋 Critères de détection
+4. **Action "Supprimer" distincte** de "Fusionner"
+   - Confirmation explicite avant suppression
+   - Compteurs séparés dans les résultats
 
-### Critères nécessaires
-- Nom similaire (Soundex)
-- Même sexe (ou indéterminé)
+## Fonctionnalités
 
-### Critères suffisants (au moins 1 requis)
-- Date de naissance identique ou proche
-- Lieu de naissance identique
-- Parents communs
-- Conjoints communs
-- Même fratrie
-- Date de décès identique
-- Même profession
+- Détection intelligente avec Soundex français
+- Algorithme anti-faux-positifs (critères suffisants requis)
+- Triple indexation pour performance optimale
+- 4 onglets : Clusters, Doublons, À supprimer, Suggestions IA
+- Export GEDCOM nettoyé avec HEAD/TRLR générés
 
-## 🔴 Onglet "À supprimer"
-
-Remonte uniquement les cas critiques :
-1. **Totalement isolés** : sans ascendants, sans descendants, sans conjoints
-2. **Sans identité** : sans nom ET sans prénom
-
-## 🛠️ Installation locale
+## Installation
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 🚀 Déploiement Netlify
+## Déploiement Netlify
 
 ```bash
 npm run build
-# Upload du dossier dist/ sur Netlify
+# Uploader le contenu du dossier dist/
 ```
 
-## 📁 Structure du projet
+## Structure
 
 ```
-gedcom-merger-v1.9.3/
-├── src/
-│   ├── App.jsx          # Composant principal
-│   ├── main.jsx         # Point d'entrée React
-│   └── index.css        # Styles Tailwind
-├── index.html           # Page HTML
-├── package.json         # Dépendances
-├── vite.config.js       # Config Vite (esbuild)
-├── tailwind.config.js   # Config Tailwind
-├── postcss.config.js    # Config PostCSS
-├── netlify.toml         # Config Netlify
-├── README.md            # Ce fichier
-├── CHANGELOG.md         # Historique versions
-└── LIVRAISON_V1_9_3.md  # Notes de livraison
+src/
+  App.jsx       # Composant principal (~1500 lignes)
+  main.jsx      # Point d'entrée React
+  index.css     # Styles Tailwind
 ```
 
-## 📊 Performances
+## Algorithme anti-faux-positifs (v1.9.2)
 
-- Build : ~6 secondes
-- Bundle gzippé : ~60 KB
-- Réduction comparaisons : 99%+ grâce à la triple indexation
+Le nom + sexe sont NÉCESSAIRES mais PAS SUFFISANTS. Au moins 1 critère suffisant requis :
+- Date de naissance exacte ou année
+- Lieu de naissance
+- Parents communs (1 ou 2)
+- Fratrie identique
+- Conjoints communs
+- Date de décès
+- Profession identique
 
-## 📄 Licence
+## Licence
 
-Usage personnel - Développé pour le nettoyage d'arbres généalogiques MyHeritage.
-
----
-Version 1.9.3 - 28 décembre 2025
+MIT - Rémiol 2025

@@ -1,69 +1,77 @@
-# Changelog - Fusionneur GEDCOM
+# Changelog GEDCOM Merger
 
-## [1.9.3] - 28 décembre 2025
+## v1.9.3 (30 décembre 2025) - ACTUELLE
 
-### ✨ Nouveautés
-- **Onglet "À supprimer"** renommé et filtré :
-  - Uniquement les individus **totalement isolés** (sans ascendants, descendants, ni conjoints)
-  - Ajout des individus **sans identité** (ni nom ni prénom)
-- **Bouton flottant** pour fusionner/supprimer sans scroller en bas de page
-- **Tableau clusters détaillé** avec colonnes : #, Nom, Naissance, Lieu, Décès, Sexe, Parents, Conjoints, ID
-- **Actions distinctes** :
-  - "Fusionner X doublons" pour les clusters/doublons
-  - "Supprimer X individus" pour les isolés
-- **Sélections globales** préservées entre les onglets
+### Corrections chirurgicales depuis v1.9.2
 
-### 🔧 Améliorations
-- Confirmation de sécurité avant suppression définitive
-- Statistiques de cluster enrichies (avec/sans naissance, décès, parents)
+1. **Onglet "À supprimer"** (remplace "Isolés")
+   - Filtrage strict : totalement isolés OU sans identité
+   - Totalement isolé = sans parents ET sans enfants ET sans conjoints
+   - Sans identité = pas de nom ET pas de prénom
+
+2. **Bouton flottant**
+   - Position fixe en bas à droite
+   - "Fusionner X doublon(s)" - bouton indigo
+   - "Supprimer X individu(s)" - bouton rouge
+
+3. **Tableau clusters détaillé**
+   - 9 colonnes : #, Nom, Naissance, Lieu, Décès, Sexe, Parents, Conjoints, ID
+   - Statistiques : avec naissance, avec décès, paires liées
+   - Boutons Détails/Réduire avec icônes ChevronDown/Up
+
+4. **Action "Supprimer" distincte**
+   - Fonction handleDeleteToDelete() séparée de handleMerge()
+   - Confirmation explicite avant suppression
+   - Compteurs distincts dans validationResults
+
+### Préservé de v1.9.2
+- Algorithme anti-faux-positifs complet
+- Triple indexation pour performance
+- 4 onglets avec compteurs
 
 ---
 
-## [1.9.2] - 28 décembre 2025
+## v1.9.2 (28 décembre 2025)
 
-### 🔴 CORRECTION CRITIQUE
-- **Algorithme anti-faux-positifs** : Nom + Sexe ne suffisent plus
-- Nouvelle règle : AU MOINS 1 critère suffisant requis
+### CORRECTION CRITIQUE : Algorithme anti-faux-positifs
+
+- Nom + Sexe ne suffisent plus pour être doublon
+- Règle : AU MOINS 1 critère suffisant requis
 - Critères suffisants : naissance, lieu, parents, conjoints, fratrie, décès, profession
 - Élimination des faux positifs sur homonymes sans données
 
 ---
 
-## [1.9.1] - 28 décembre 2025
+## v1.9.1 (28 décembre 2025)
 
-### 🔧 Corrections
 - Correction du traitement des fichiers GEDCOM
 - Restauration onglet Isolés
 - Restauration onglet Suggestions IA
-- Normalisation automatique des lieux
+- Normalisation automatique des lieux (codes INSEE)
 
 ---
 
-## [1.8.7] - 24 décembre 2025
+## v1.8.7 (24 décembre 2025)
 
-### ✨ Fonctionnalités restaurées
-- Bouton Changelog/Nouveautés
-- Système d'onglets Clusters/Doublons
+- Restauration bouton Changelog/Nouveautés
+- Système d'onglets Clusters/Doublons simples
 - Scoring moyen des clusters avec jauges visuelles
 - Filtre pourcentage minimum
-- Sélection automatique clusters ≥95%
 
 ---
 
-## [1.8.6] - 16 décembre 2025
+## v1.8.6 (16 décembre 2025)
 
-### 🔧 Corrections GEDCOM
-- Gestion balises CONT/CONC multi-lignes
-- Génération automatique en-tête HEAD
-- Génération automatique balise TRLR
+- Correction gestion balises CONT/CONC multi-lignes
+- Génération automatique en-tête HEAD complet
+- Génération automatique balise TRLR de fin
 
 ---
 
-## [1.0.0] - 1 décembre 2025
+## v1.0.0 (1 décembre 2025)
 
-### 🎉 Version initiale
+Version initiale :
 - Parseur GEDCOM complet
 - Détection intelligente avec Soundex français
 - Système de scoring hybride 9 critères
-- Interface responsive moderne
 - Fusion sécurisée sans perte de données

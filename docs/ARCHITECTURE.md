@@ -1,83 +1,75 @@
 # Architecture GEDCOM Merger v1.9.3
 
-## Vue d'ensemble
-
-Application React monopage (SPA) pour la détection et fusion de doublons dans les fichiers GEDCOM.
-
-## Stack technique
-
-- **Frontend** : React 18 + Vite 5
-- **Styling** : Tailwind CSS 3
-- **Icônes** : Lucide React
-- **Build** : esbuild (minification)
-- **Déploiement** : Netlify
-
-## Composants principaux
-
-### App.jsx (~2000 lignes)
-
-Composant unique contenant :
-- Parseur GEDCOM
-- Algorithme de détection (Soundex + scoring)
-- Interface utilisateur (4 onglets)
-- Gestion d'état React (22 états)
-
-## Algorithmes clés
-
-### 1. Soundex français
-Encodage phonétique adapté aux noms français.
-
-### 2. Triple indexation
-- Index phonétique (Soundex)
-- Index temporel (année naissance)
-- Index familial (parents)
-
-Réduit la complexité de O(n²) à ~O(n).
-
-### 3. Scoring hybride (9 critères)
-| Critère | Poids |
-|---------|-------|
-| Nom | 30 |
-| Naissance | 25 |
-| Parents | 20 |
-| Sexe | 15 |
-| Fratrie | 15 |
-| Décès | 15 |
-| Lieu | 10 |
-| Conjoints | 8 |
-| Profession | 5 |
-
-### 4. Anti-faux-positifs (v1.9.2)
-Exige au moins 1 critère suffisant au-delà du nom.
-
-## Flux de données
+## Structure du projet
 
 ```
-Upload .ged → parseGedcom() → individuals[]
-     ↓
-findDuplicates() → duplicates[]
-     ↓
-detectClusters() → clusters[]
-     ↓
-detectToDeletePersons() → toDeletePersons[]
-     ↓
-generateAiSuggestions() → smartSuggestions[]
-     ↓
-Sélection utilisateur
-     ↓
-downloadCleanedFile() → fichier .ged nettoyé
+gedcom-merger-v1.9.3/
+├── src/
+│   ├── App.jsx          # Composant principal (~1500 lignes)
+│   ├── main.jsx         # Point d'entrée React
+│   └── index.css        # Styles Tailwind
+├── tests/
+│   └── test-complete.cjs # Tests automatisés
+├── docs/
+│   ├── ARCHITECTURE.md  # Ce fichier
+│   └── TESTS.md         # Documentation des tests
+├── index.html           # Template HTML
+├── package.json         # Dépendances npm
+├── vite.config.js       # Configuration Vite (esbuild)
+├── tailwind.config.js   # Configuration Tailwind
+├── postcss.config.js    # Configuration PostCSS
+├── README.md            # Documentation principale
+├── CHANGELOG.md         # Historique des versions
+└── DEPLOIEMENT.md       # Guide de déploiement
 ```
 
-## États React (22)
+## États React (22 states)
 
-| État | Type | Usage |
-|------|------|-------|
-| individuals | Array | Personnes parsées |
-| duplicates | Array | Paires détectées |
-| clusters | Array | Groupes 3+ |
-| toDeletePersons | Array | À supprimer |
-| smartSuggestions | Array | Suggestions IA |
-| selectedPairs | Set | Sélection doublons |
-| selectedToDelete | Set | Sélection isolés |
-| activeTab | String | Onglet actif |
-| ... | | |
+```javascript
+// Fichier et données
+file, originalGedcom, individuals, familiesData
+
+// Doublons et clusters
+duplicates, clusters, selectedPairs, selectedClusters, expandedClusters
+
+// Onglet À supprimer (v1.9.3)
+toDeletePersons, selectedToDelete
+
+// Suggestions IA
+smartSuggestions, integrityReport
+
+// Interface
+step, progress, activeTab, showChangelog, previewPair
+searchTerm, filterScore, clusterScoreFilter
+
+// Résultats
+mergedIds, validationResults
+```
+
+## Algorithme de similarité
+
+### Pondérations (total possible: 143 points)
+- Noms : 30 points
+- Date naissance : 25 points
+- Sexe : 15 points (ÉLIMINATOIRE si différent)
+- Parents : 20 points
+- Fratrie : 15 points
+- Lieu naissance : 10 points
+- Conjoints : 8 points
+- Date décès : 15 points
+- Profession : 5 points
+
+### Critères suffisants (v1.9.2)
+Le nom seul ne suffit plus. Au moins 1 critère requis :
+- naissance_exacte, annee_naissance, annee_proche
+- lieu_naissance, lieu_partiel
+- parents_2, parent_1, fratrie
+- conjoints
+- deces_exact, annee_deces
+- profession
+
+## Performance
+
+- Triple indexation : phonétique + année + parents
+- Réduction comparaisons : ~95%
+- Seuil minimum : 80%

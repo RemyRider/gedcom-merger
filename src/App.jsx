@@ -27,14 +27,30 @@ const GedcomDuplicateMerger = () => {
   const [showIntegrityModal, setShowIntegrityModal] = useState(false);
   const [familiesData, setFamiliesData] = useState(new Map());
 
-  const VERSION = '1.9.5';
+  const VERSION = '2.0.0';
 
   const CHANGELOG = [
     {
-      version: '1.9.5',
+      version: '2.0.0',
       date: '31 décembre 2025',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Phase 1 - Préservation complète des données GEDCOM',
+      items: [
+        'NOUVEAU: rawLines[] stocke TOUTES les lignes GEDCOM originales par personne',
+        'NOUVEAU: rawLinesByTag{} indexe les lignes par tag (SOUR, NOTE, OBJE, EVEN...)',
+        'NOUVEAU: Fusion SOUR/NOTE/OBJE combine les sources des 2 personnes',
+        'NOUVEAU: Les tags inconnus (_TAG, EVEN, etc.) sont préservés',
+        'AMÉLIORATION: generateMergedIndiLines utilise rawLines → zéro perte',
+        'Base solide pour Phase 2 (choix meilleure valeur, conflits)',
+        '284 tests (22 niveaux + 6 bonus)'
+      ]
+    },
+    {
+      version: '1.9.5',
+      date: '31 décembre 2025',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Fusion intelligente + Parsing corrigé + Déduplication CHIL',
       items: [
         'CRITIQUE: Correction parsing DATE/PLAC niveau 2 uniquement',
@@ -203,7 +219,10 @@ const GedcomDuplicateMerger = () => {
           sex: '', parents: [], spouses: [], familyAsChild: null, 
           familiesAsSpouse: [], occupation: '', religion: '',
           baptism: '', baptismPlace: '', burial: '', burialPlace: '',
-          residence: '', title: '', note: '', children: []
+          residence: '', title: '', note: '', children: [],
+          // v2.0.0: Lignes brutes pour préservation complète
+          rawLines: [line],  // Stocker la ligne 0 @Ixxx@ INDI
+          rawLinesByTag: {}  // Indexé par tag: { 'SOUR': [...], 'NOTE': [...], ... }
         };
         currentEvent = null;
         lastFieldType = null;
@@ -217,6 +236,37 @@ const GedcomDuplicateMerger = () => {
         currentEvent = null;
       }
       else if (currentPerson) {
+        // v2.0.0: Stocker TOUTES les lignes brutes
+        currentPerson.rawLines.push(line);
+        
+        // v2.0.0: Indexer par tag de niveau 1 pour fusion intelligente
+        if (trimmed.startsWith('1 ')) {
+          const tagMatch = trimmed.match(/^1\s+(\S+)/);
+          if (tagMatch) {
+            const tag = tagMatch[1];
+            // Tags à indexer pour fusion: SOUR, NOTE, OBJE, EVEN, _* (custom)
+            if (['SOUR', 'NOTE', 'OBJE', 'EVEN', 'EDUC', 'NATI', 'IMMI', 'EMIG', 'CENS', 'WILL', 'PROB'].includes(tag) || tag.startsWith('_')) {
+              if (!currentPerson.rawLinesByTag[tag]) currentPerson.rawLinesByTag[tag] = [];
+              currentPerson.rawLinesByTag[tag].push({ startIdx: currentPerson.rawLines.length - 1, lines: [line] });
+            }
+          }
+        } else if (trimmed.match(/^[2-9]\s/) && currentPerson.rawLinesByTag) {
+          // Lignes de niveau 2+ : ajouter au dernier bloc du tag parent
+          const lastTagKey = Object.keys(currentPerson.rawLinesByTag).find(key => {
+            const blocks = currentPerson.rawLinesByTag[key];
+            if (blocks && blocks.length > 0) {
+              const lastBlock = blocks[blocks.length - 1];
+              return lastBlock.startIdx === currentPerson.rawLines.length - 2 || 
+                     (lastBlock.lines && lastBlock.startIdx + lastBlock.lines.length === currentPerson.rawLines.length - 1);
+            }
+            return false;
+          });
+          if (lastTagKey) {
+            const blocks = currentPerson.rawLinesByTag[lastTagKey];
+            blocks[blocks.length - 1].lines.push(line);
+          }
+        }
+        
         if (trimmed.includes('NAME')) {
           const name = trimmed.split('NAME')[1]?.trim();
           if (name) { currentPerson.names.push(name); lastFieldType = 'NAME'; }
@@ -735,6 +785,37 @@ const GedcomDuplicateMerger = () => {
     const primary = quality1 >= quality2 ? person1 : person2;
     const secondary = quality1 >= quality2 ? person2 : person1;
     
+    // v2.0.0: Fusionner les rawLinesByTag (SOUR, NOTE, OBJE, etc.)
+    const mergedRawLinesByTag = {};
+    const allTags = new Set([
+      ...Object.keys(primary.rawLinesByTag || {}),
+      ...Object.keys(secondary.rawLinesByTag || {})
+    ]);
+    
+    allTags.forEach(tag => {
+      const primaryBlocks = (primary.rawLinesByTag || {})[tag] || [];
+      const secondaryBlocks = (secondary.rawLinesByTag || {})[tag] || [];
+      
+      // Dédupliquer les SOUR par référence @Sxxx@
+      if (tag === 'SOUR') {
+        const seenRefs = new Set();
+        const dedupedBlocks = [];
+        [...primaryBlocks, ...secondaryBlocks].forEach(block => {
+          const firstLine = block.lines[0] || '';
+          const refMatch = firstLine.match(/@([^@]+)@/);
+          const ref = refMatch ? refMatch[1] : firstLine;
+          if (!seenRefs.has(ref)) {
+            seenRefs.add(ref);
+            dedupedBlocks.push(block);
+          }
+        });
+        mergedRawLinesByTag[tag] = dedupedBlocks;
+      } else {
+        // Pour les autres tags, combiner tous les blocs
+        mergedRawLinesByTag[tag] = [...primaryBlocks, ...secondaryBlocks];
+      }
+    });
+    
     return {
       id: primary.id,
       removedId: secondary.id,
@@ -762,6 +843,9 @@ const GedcomDuplicateMerger = () => {
       children: [...new Set([...(primary.children || []), ...(secondary.children || [])])],
       familyAsChild: primary.familyAsChild || secondary.familyAsChild,
       familiesAsSpouse: [...new Set([...primary.familiesAsSpouse, ...secondary.familiesAsSpouse])],
+      // v2.0.0: Données brutes fusionnées
+      rawLines: primary.rawLines || [],
+      rawLinesByTag: mergedRawLinesByTag,
       // Métadonnées fusion
       mergedFrom: [primary.id, secondary.id],
       qualityScore: Math.max(quality1, quality2)
@@ -834,6 +918,44 @@ const GedcomDuplicateMerger = () => {
     }
     if (merged.note) {
       lines.push('1 NOTE ' + merged.note);
+    }
+    
+    // v2.0.0: Ajouter les tags fusionnés depuis rawLinesByTag
+    if (merged.rawLinesByTag) {
+      // Ordre recommandé des tags à ajouter
+      const tagsOrder = ['SOUR', 'OBJE', 'EVEN', 'EDUC', 'NATI', 'IMMI', 'EMIG', 'CENS', 'WILL', 'PROB'];
+      
+      // D'abord les tags connus dans l'ordre
+      tagsOrder.forEach(tag => {
+        const blocks = merged.rawLinesByTag[tag];
+        if (blocks && blocks.length > 0) {
+          blocks.forEach(block => {
+            if (block.lines && block.lines.length > 0) {
+              block.lines.forEach(rawLine => {
+                const trimmedLine = rawLine.trim();
+                if (trimmedLine) lines.push(trimmedLine);
+              });
+            }
+          });
+        }
+      });
+      
+      // Ensuite les tags custom (_TAG)
+      Object.keys(merged.rawLinesByTag)
+        .filter(tag => tag.startsWith('_'))
+        .forEach(tag => {
+          const blocks = merged.rawLinesByTag[tag];
+          if (blocks && blocks.length > 0) {
+            blocks.forEach(block => {
+              if (block.lines && block.lines.length > 0) {
+                block.lines.forEach(rawLine => {
+                  const trimmedLine = rawLine.trim();
+                  if (trimmedLine) lines.push(trimmedLine);
+                });
+              }
+            });
+          }
+        });
     }
     
     return lines;

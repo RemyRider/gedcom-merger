@@ -29,7 +29,7 @@ const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const indexHtml = fs.readFileSync('./index.html', 'utf8');
 const viteConfig = fs.readFileSync('./vite.config.js', 'utf8');
 const netlifyToml = fs.readFileSync('./netlify.toml', 'utf8');
-const tailwindConfig = fs.readFileSync('./tailwind.config.cjs', 'utf8');
+const tailwindConfig = fs.readFileSync('./tailwind.config.js', 'utf8');
 const changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8');
 
 console.log('');

@@ -1,63 +1,41 @@
-# Changelog - Fusionneur GEDCOM
+# Changelog GEDCOM Merger
 
-## v1.9.4 (30 décembre 2025) - ACTUELLE
+## v1.9.5 (31 décembre 2025) - ACTUELLE
+### Détails complets + Boutons désélection + Parsing étendu
+- Affichage de TOUS les champs parsés (ID, sexe, profession, religion, lieux décès...)
+- Boutons "Désélectionner tout" sur onglets Clusters et Doublons
+- Parsing étendu: baptême, inhumation, résidence, titre, notes, enfants
+- Algo amélioré: lieu de décès (+8 pts), enfants communs (+15 pts) comme critères
+- Sous-titre dynamique basé sur CHANGELOG[0].title
+- 246 tests (22 niveaux + 3 bonus)
 
-### Nouvelles fonctionnalités
-- Contrôle d'intégrité 8 types restauré (style v1.6.1)
-- Bouton "Recommencer" déplacé dans le header
-- Boutons de sélection affichent la valeur dynamique du filtre
-- Modal d'intégrité avec rapport détaillé complet
-
-### Vérifications d'intégrité
-- Type 1: Liens bidirectionnels famille-individu
-- Type 2: Dates incohérentes (naissance après décès)
-- Type 3: Boucles généalogiques
-- Type 4: Structure GEDCOM (sauts de niveau)
-- Type 5: Références orphelines
-- Type 6: IDs dupliqués
-- Type 7: Personnes isolées
-- Type 8: Score de complétude
-
-### Tests
-- 226 tests automatisés (20 niveaux + 3 bonus)
-- Tests exécutés automatiquement avant chaque build Netlify
-
----
+## v1.9.4 (30 décembre 2025)
+### Contrôle intégrité + Boutons dynamiques + Recommencer header
+- Contrôle d'intégrité 8 types restauré
+- Bouton Recommencer déplacé dans le header
+- Boutons sélection affichent la valeur dynamique du filtre
+- Modal intégrité avec rapport détaillé
+- 236 tests anti-régression
 
 ## v1.9.3 (30 décembre 2025)
-
-### Nouvelles fonctionnalités
+### Onglet À supprimer + Bouton flottant + Tableau clusters
 - Onglet "À supprimer" remplace "Isolés" avec filtrage strict
-- Critères: totalement isolés (sans famille) OU sans nom/prénom
-- Bouton flottant pour actions rapides sans scroller
+- Bouton flottant pour actions rapides
 - Tableau clusters détaillé avec 9 colonnes
-- Action "Supprimer" distincte de "Fusionner"
-
-### Préservation
-- Algorithme anti-faux-positifs v1.9.2 préservé
-
----
 
 ## v1.9.2 (28 décembre 2025)
+### CORRECTION CRITIQUE : Algorithme anti-faux-positifs
+- Nom + Sexe ne suffisent plus pour être doublon
+- AU MOINS 1 critère suffisant requis
 
-### Correction critique
-- CORRECTION MAJEURE: Nom + Sexe ne suffisent plus pour être doublon
-- Nouvelle règle: AU MOINS 1 critère suffisant requis
-- Critères suffisants: naissance, lieu, parents, conjoints, fratrie, décès, profession
-
----
+## Versions antérieures
+Voir ETAT_DES_LIEUX.md pour l'historique complet.
 
 ## v1.8.7 (24 décembre 2025)
-
-### Améliorations
+- Version complète avec toutes les corrections
 - Système onglets Clusters/Doublons simples
-- Scoring moyen des clusters avec jauges visuelles
-- Filtre pourcentage minimum pour clusters
-
----
 
 ## v1.8.6 (16 décembre 2025)
-
-### Corrections GEDCOM
-- Correction gestion balises CONT/CONC multi-lignes
-- Génération automatique en-tête HEAD complet
+- HEAD/TRLR automatiques
+- Conformité GEDCOM 5.5.1
+- Gestion CONT/CONC

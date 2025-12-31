@@ -1,39 +1,51 @@
-# Guide de Déploiement GEDCOM Merger
+# Déploiement GEDCOM Merger
+
+## Prérequis
+
+- Node.js 18+
+- npm
+
+## Installation locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Tests
+
+```bash
+npm test
+```
+
+**IMPORTANT**: Les tests sont exécutés AVANT chaque build Netlify.
+Si un test échoue, le déploiement est bloqué.
+
+## Build
+
+```bash
+npm run build
+```
 
 ## Déploiement Netlify
 
-### Prérequis
+### Automatique (GitHub)
 
-- Compte Netlify
-- Repository GitHub connecté
+1. Push sur `dev` → déploiement sur dev--gedcom-merger.netlify.app
+2. Push sur `main` → déploiement sur gedcom-merger.netlify.app
 
-### Configuration
+### Configuration netlify.toml
 
-Le fichier `netlify.toml` configure automatiquement :
-- **Tests automatiques** : `npm test` s'exécute AVANT chaque build
-- Commande build : `npm run build`
-- Répertoire de sortie : `dist`
-
-**Si les tests échouent, le build est bloqué** → Protection contre les régressions !
-
-### Workflow
-
-1. **Développement** : Pousser sur la branche `dev`
-2. **Production** : Merger `dev` vers `main`
-
-Les deux environnements se déploient automatiquement :
-- **Dev** : https://dev--gedcom-merger.netlify.app
-- **Prod** : https://gedcom-merger.netlify.app
-
-### Vérifications avant déploiement
-
-```bash
-npm test          # 226 tests doivent passer
-npm run build     # Vérifier le build
+```toml
+[build]
+  command = "npm test && npm run build"
+  publish = "dist"
 ```
 
-### Logs Netlify
+## Workflow recommandé
 
-Si un déploiement échoue, vérifier les logs :
-- ✅ Tests passés → Build continue
-- ❌ Tests échoués → Build bloqué avec détail des échecs
+1. Développer sur branche `dev`
+2. Tester localement (`npm test`)
+3. Push sur `dev`
+4. Vérifier sur environnement dev
+5. Merger sur `main` pour production

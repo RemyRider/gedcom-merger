@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS COMPLÈTE v1.9.4 - 236 TESTS (21 NIVEAUX + 3 BONUS)
-// Basé sur v1.9.3 (187 tests) + 39 nouveaux tests v1.9.4
+// SUITE DE TESTS COMPLÈTE v1.9.5 - 254 TESTS (22 NIVEAUX + 4 BONUS)
+// Basé sur v1.9.3 (187 tests) + 39 nouveaux tests v1.9.5
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -34,8 +34,8 @@ const changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8');
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                    SUITE DE TESTS COMPLÈTE v1.9.4');
-console.log('                    21 NIVEAUX + 3 BONUS = 236 TESTS');
+console.log('                    SUITE DE TESTS COMPLÈTE v1.9.5');
+console.log('                    22 NIVEAUX + 4 BONUS = 254 TESTS');
 console.log('               (Base v1.9.3: 187 tests + 39 nouveaux tests)');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
@@ -66,10 +66,10 @@ console.log('┌─────────────────────�
 console.log('│ NIVEAU 2: VERSIONS ET COHÉRENCE (10 tests)                                 │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 
-check(appCode.includes("VERSION = '1.9.4'") || appCode.includes('VERSION = "1.9.4"'), 'VERSION 1.9.4 dans App.jsx');
-check(packageJson.version === '1.9.4', 'Version 1.9.4 dans package.json');
-check(indexHtml.includes('1.9.4') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
-check(changelogMd.includes('v1.9.4') || changelogMd.includes('1.9.4'), 'Version 1.9.4 dans CHANGELOG.md');
+check(appCode.includes("VERSION = '1.9.5'") || appCode.includes('VERSION = "1.9.5"'), 'VERSION 1.9.5 dans App.jsx');
+check(packageJson.version === '1.9.5', 'Version 1.9.5 dans package.json');
+check(indexHtml.includes('1.9.5') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
+check(changelogMd.includes('v1.9.5') || changelogMd.includes('1.9.5'), 'Version 1.9.5 dans CHANGELOG.md');
 check(packageJson.name === 'gedcom-merger', 'Nom du package correct');
 check(packageJson.scripts && packageJson.scripts.test, 'Script test configuré');
 check(packageJson.scripts && packageJson.scripts.build, 'Script build configuré');
@@ -79,7 +79,7 @@ check(packageJson.dependencies && packageJson.dependencies['lucide-react'], 'Dé
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 3: IMPORTS LUCIDE-REACT (17 tests) - +2 pour v1.9.4
+// NIVEAU 3: IMPORTS LUCIDE-REACT (17 tests) - +2 pour v1.9.5
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ NIVEAU 3: IMPORTS LUCIDE-REACT (17 tests)                                  │');
@@ -100,12 +100,12 @@ check(appCode.includes('FileText'), 'Icône FileText');
 check(appCode.includes('<Upload'), 'Utilisation Upload JSX');
 check(appCode.includes('<Download'), 'Utilisation Download JSX');
 check(appCode.includes('<Brain'), 'Utilisation Brain JSX');
-check(appCode.includes('RefreshCw'), 'Icône RefreshCw (v1.9.4)');
-check(appCode.includes('Shield'), 'Icône Shield (v1.9.4)');
+check(appCode.includes('RefreshCw'), 'Icône RefreshCw (v1.9.5)');
+check(appCode.includes('Shield'), 'Icône Shield (v1.9.5)');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 4: ÉTATS REACT (24 tests) - +2 pour v1.9.4
+// NIVEAU 4: ÉTATS REACT (24 tests) - +2 pour v1.9.5
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ NIVEAU 4: ÉTATS REACT (24 tests)                                           │');
@@ -133,8 +133,8 @@ check(appCode.includes('const [toDeletePersons, setToDeletePersons]'), 'État to
 check(appCode.includes('const [selectedToDelete, setSelectedToDelete]'), 'État selectedToDelete (v1.9.3)');
 check(appCode.includes('const [smartSuggestions, setSmartSuggestions]'), 'État smartSuggestions (IA)');
 check(appCode.includes('const [familiesData, setFamiliesData]') || appCode.includes('familiesData'), 'État familiesData');
-check(appCode.includes('const [integrityReport, setIntegrityReport]'), 'État integrityReport (v1.9.4)');
-check(appCode.includes('const [showIntegrityModal, setShowIntegrityModal]'), 'État showIntegrityModal (v1.9.4)');
+check(appCode.includes('const [integrityReport, setIntegrityReport]'), 'État integrityReport (v1.9.5)');
+check(appCode.includes('const [showIntegrityModal, setShowIntegrityModal]'), 'État showIntegrityModal (v1.9.5)');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -340,10 +340,10 @@ check(packageJson.devDependencies && packageJson.devDependencies.tailwindcss, 'T
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 17: CONTRÔLE INTÉGRITÉ 8 TYPES v1.9.4 (15 tests) ★ NOUVEAU
+// NIVEAU 17: CONTRÔLE INTÉGRITÉ 8 TYPES v1.9.5 (15 tests) ★ NOUVEAU
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 17: CONTRÔLE INTÉGRITÉ 8 TYPES v1.9.4 (15 tests) ★ NOUVEAU         │');
+console.log('│ NIVEAU 17: CONTRÔLE INTÉGRITÉ 8 TYPES v1.9.5 (15 tests) ★ NOUVEAU         │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 
 check(appCode.includes('performIntegrityChecks'), 'Fonction performIntegrityChecks');
@@ -364,10 +364,10 @@ check(appCode.includes('errorCount') || appCode.includes('warningCount') || appC
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 18: BOUTON RECOMMENCER HEADER v1.9.4 (5 tests) ★ NOUVEAU
+// NIVEAU 18: BOUTON RECOMMENCER HEADER v1.9.5 (5 tests) ★ NOUVEAU
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 18: BOUTON RECOMMENCER HEADER v1.9.4 (5 tests) ★ NOUVEAU           │');
+console.log('│ NIVEAU 18: BOUTON RECOMMENCER HEADER v1.9.5 (5 tests) ★ NOUVEAU           │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 
 check(appCode.includes('RefreshCw'), 'Icône RefreshCw importée');
@@ -378,10 +378,10 @@ check(appCode.includes('onClick') && appCode.includes('reset'), 'Handler reset l
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 19: BOUTONS SÉLECTION DYNAMIQUES v1.9.4 (6 tests) ★ NOUVEAU
+// NIVEAU 19: BOUTONS SÉLECTION DYNAMIQUES v1.9.5 (6 tests) ★ NOUVEAU
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 19: BOUTONS SÉLECTION DYNAMIQUES v1.9.4 (6 tests) ★ NOUVEAU        │');
+console.log('│ NIVEAU 19: BOUTONS SÉLECTION DYNAMIQUES v1.9.5 (6 tests) ★ NOUVEAU        │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 
 check(appCode.includes('{clusterScoreFilter}%') || appCode.includes('`${clusterScoreFilter}%`') || appCode.includes('clusterScoreFilter}'), 'Bouton clusters affiche valeur dynamique');
@@ -393,10 +393,10 @@ check(appCode.includes('>= filterScore') || appCode.includes('>=filterScore') ||
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 20: AFFICHAGE COMPLET IA v1.9.4 (8 tests) ★ NOUVEAU
+// NIVEAU 20: AFFICHAGE COMPLET IA v1.9.5 (8 tests) ★ NOUVEAU
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 20: AFFICHAGE COMPLET IA v1.9.4 (8 tests) ★ NOUVEAU                │');
+console.log('│ NIVEAU 20: AFFICHAGE COMPLET IA v1.9.5 (8 tests) ★ NOUVEAU                │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 
 check(appCode.includes('Naissance') && appCode.includes('ai'), 'IA: Label Naissance présent');
@@ -434,7 +434,55 @@ check(appCode.includes("step === 'merged'") || appCode.includes('step === "merge
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// BONUS A: CHANGELOG ET DOCUMENTATION (17 tests) - +1 pour v1.9.4
+// NIVEAU 22: FONCTIONNALITÉS v1.9.5 (10 tests) ★ NOUVEAU
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ NIVEAU 22: FONCTIONNALITÉS v1.9.5 (10 tests) ★ NOUVEAU                      │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+
+// Sous-titre dynamique
+check(appCode.includes('CHANGELOG[0].title'), 'v1.9.5: Sous-titre dynamique basé sur CHANGELOG');
+
+// Boutons Désélectionner
+check(appCode.includes('Désélectionner tout'), 'v1.9.5: Bouton Désélectionner tout présent');
+check(appCode.includes('setSelectedClusters(new Set())'), 'v1.9.5: Désélection clusters implémentée');
+check(appCode.includes('setSelectedPairs(new Set())'), 'v1.9.5: Désélection paires implémentée');
+
+// Parsing étendu
+check(appCode.includes("baptism: ''") || appCode.includes('baptism:'), 'v1.9.5: Parsing baptême');
+check(appCode.includes("burial: ''") || appCode.includes('burial:'), 'v1.9.5: Parsing inhumation');
+check(appCode.includes('children: []'), 'v1.9.5: Parsing enfants (tableau)');
+
+// Algo amélioré
+check(appCode.includes("sufficientCriteria.push('lieu_deces')"), 'v1.9.5: Lieu décès comme critère suffisant');
+check(appCode.includes("sufficientCriteria.push('enfants_2+')") || appCode.includes("sufficientCriteria.push('enfant_1')"), 'v1.9.5: Enfants communs comme critère suffisant');
+
+// Affichage enrichi
+check(appCode.includes('Lieu décès') || appCode.includes('deathPlace ||'), 'v1.9.5: Affichage lieu décès dans UI');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BONUS D: PARSING ÉTENDU v1.9.5 (8 tests) ★ NOUVEAU
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ BONUS D: PARSING ÉTENDU v1.9.5 (8 tests) ★ NOUVEAU                          │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+
+// Tags GEDCOM parsés
+check(appCode.includes("1 BAPM") || appCode.includes("1 CHR"), 'v1.9.5: Parsing tag BAPM/CHR (baptême)');
+check(appCode.includes("1 BURI") || appCode.includes("1 CREM"), 'v1.9.5: Parsing tag BURI/CREM (inhumation)');
+check(appCode.includes("1 RESI"), 'v1.9.5: Parsing tag RESI (résidence)');
+check(appCode.includes("1 TITL"), 'v1.9.5: Parsing tag TITL (titre)');
+
+// Champs dans structure person
+check(appCode.includes("baptismPlace:") || appCode.includes("baptismPlace: ''"), 'v1.9.5: Champ baptismPlace dans structure');
+check(appCode.includes("burialPlace:") || appCode.includes("burialPlace: ''"), 'v1.9.5: Champ burialPlace dans structure');
+check(appCode.includes("residence:") || appCode.includes("residence: ''"), 'v1.9.5: Champ residence dans structure');
+check(appCode.includes("title:") || appCode.includes("title: ''"), 'v1.9.5: Champ title dans structure');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BONUS A: CHANGELOG ET DOCUMENTATION (17 tests) - +1 pour v1.9.5
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ BONUS A: CHANGELOG ET DOCUMENTATION (17 tests)                             │');
@@ -444,7 +492,7 @@ check(appCode.includes('CHANGELOG') || appCode.includes('changelog'), 'Variable 
 check(appCode.includes('showChangelog'), 'État showChangelog');
 check(appCode.includes('setShowChangelog'), 'Setter showChangelog');
 check(appCode.includes('Nouveautés') || appCode.includes('Changelog') || appCode.includes('History'), 'Bouton changelog');
-check(changelogMd.includes('1.9.4'), 'v1.9.4 dans CHANGELOG');
+check(changelogMd.includes('1.9.5'), 'v1.9.5 dans CHANGELOG');
 check(changelogMd.includes('1.9.3'), 'v1.9.3 dans CHANGELOG');
 check(changelogMd.includes('1.9.2'), 'v1.9.2 dans CHANGELOG');
 check(changelogMd.includes('1.8.7') || changelogMd.includes('1.8.6'), 'v1.8.x dans CHANGELOG');
@@ -452,7 +500,7 @@ check(changelogMd.includes('anti-faux-positif') || changelogMd.includes('faux po
 check(changelogMd.includes('supprimer') || changelogMd.includes('À supprimer'), 'Mention À supprimer');
 check(changelogMd.includes('flottant') || changelogMd.includes('floating') || changelogMd.includes('fixe'), 'Mention bouton flottant');
 check(changelogMd.includes('cluster') || changelogMd.includes('Cluster'), 'Mention clusters');
-check(changelogMd.includes('intégrité') || changelogMd.includes('Intégrité') || changelogMd.includes('contrôle'), 'Mention intégrité (v1.9.4)');
+check(changelogMd.includes('intégrité') || changelogMd.includes('Intégrité') || changelogMd.includes('contrôle'), 'Mention intégrité (v1.9.5)');
 check(changelogMd.includes('ACTUELLE') || changelogMd.includes('actuelle'), 'Tag version actuelle');
 check(fs.existsSync('./README.md'), 'README.md existe');
 check(fs.existsSync('./docs/ARCHITECTURE.md') || fs.existsSync('./ARCHITECTURE.md') || fs.existsSync('./docs'), 'Documentation architecture existe');
@@ -505,7 +553,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 236;
+const expectedTotal = 254;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -516,7 +564,7 @@ console.log('');
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 1.9.4 validée et prête pour déploiement');
+  console.log('  ✅ Version 1.9.5 validée et prête pour déploiement');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

@@ -1,39 +1,26 @@
-# GEDCOM Merger v1.9.4
+# GEDCOM Merger
 
-Application professionnelle de fusion de doublons pour fichiers généalogiques GEDCOM.
+Application de détection et fusion de doublons pour fichiers généalogiques GEDCOM.
 
 ## Fonctionnalités
 
-- **Détection intelligente des doublons** avec algorithme anti-faux-positifs
-- **Clusters de doublons** pour identifier les groupes de personnes similaires
-- **Suggestions IA** avec affichage détaillé des informations
-- **Contrôle d'intégrité** 8 types (liens bidirectionnels, dates, boucles, structure, orphelins, IDs, isolés, complétude)
-- **Interface responsive** optimisée mobile et desktop
-- **Export GEDCOM** propre avec HEAD/TRLR standardisé
+- Détection intelligente des doublons avec algorithme anti-faux-positifs
+- Parsing GEDCOM étendu (baptême, inhumation, résidence, etc.)
+- Interface responsive avec 4 onglets (Clusters, Doublons, À supprimer, IA)
+- Contrôle d'intégrité 8 types
+- Export GEDCOM fusionné
 
-## Installation
+## Déploiement
 
-```bash
-npm install
-npm run dev
-```
-
-## Build Production
-
-```bash
-npm run build
-```
+- Production: https://gedcom-merger.netlify.app
+- Développement: https://dev--gedcom-merger.netlify.app
 
 ## Tests
 
 ```bash
-npm test
+npm test  # 246 tests
 ```
 
-## Déploiement
+## Version
 
-Voir [DEPLOIEMENT.md](DEPLOIEMENT.md) pour les instructions de déploiement Netlify.
-
-## Changelog
-
-Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
+v1.9.5 - 31 décembre 2025

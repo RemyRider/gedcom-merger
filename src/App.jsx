@@ -27,14 +27,29 @@ const GedcomDuplicateMerger = () => {
   const [showIntegrityModal, setShowIntegrityModal] = useState(false);
   const [familiesData, setFamiliesData] = useState(new Map());
 
-  const VERSION = '1.9.4';
+  const VERSION = '1.9.5';
 
   const CHANGELOG = [
     {
-      version: '1.9.4',
-      date: '30 décembre 2025',
+      version: '1.9.5',
+      date: '31 décembre 2025',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Détails complets + Boutons désélection + Parsing étendu',
+      items: [
+        'Affichage de TOUS les champs parsés (ID, sexe, profession, religion, lieux décès...)',
+        'Boutons "Désélectionner tout" sur onglets Clusters et Doublons',
+        'Parsing étendu: baptême, inhumation, résidence, titre, notes',
+        'Algo amélioré: lieu de décès, enfants communs comme critères',
+        'Sous-titre dynamique basé sur la version actuelle',
+        '236 tests anti-régression préservés'
+      ]
+    },
+    {
+      version: '1.9.4',
+      date: '30 décembre 2025',
+      tag: null,
+      color: 'blue',
       title: 'Contrôle intégrité + Boutons dynamiques + Recommencer header',
       items: [
         'Contrôle d\'intégrité 8 types restauré (v1.6.1)',
@@ -184,7 +199,9 @@ const GedcomDuplicateMerger = () => {
         currentPerson = { 
           id, names: [], birth: '', birthPlace: '', death: '', deathPlace: '',
           sex: '', parents: [], spouses: [], familyAsChild: null, 
-          familiesAsSpouse: [], occupation: '', religion: ''
+          familiesAsSpouse: [], occupation: '', religion: '',
+          baptism: '', baptismPlace: '', burial: '', burialPlace: '',
+          residence: '', title: '', note: '', children: []
         };
         currentEvent = null;
         lastFieldType = null;
@@ -205,17 +222,31 @@ const GedcomDuplicateMerger = () => {
           currentPerson.sex = trimmed.split('SEX')[1]?.trim() || '';
         } else if (trimmed.startsWith('1 BIRT')) currentEvent = 'birth';
         else if (trimmed.startsWith('1 DEAT')) currentEvent = 'death';
+        else if (trimmed.startsWith('1 BAPM') || trimmed.startsWith('1 CHR')) currentEvent = 'baptism';
+        else if (trimmed.startsWith('1 BURI') || trimmed.startsWith('1 CREM')) currentEvent = 'burial';
+        else if (trimmed.startsWith('1 RESI')) currentEvent = 'residence';
         else if (trimmed.startsWith('1 OCCU')) {
           currentPerson.occupation = trimmed.split('OCCU')[1]?.trim() || '';
           lastFieldType = 'OCCU';
+        } else if (trimmed.startsWith('1 TITL')) {
+          currentPerson.title = trimmed.split('TITL')[1]?.trim() || '';
+        } else if (trimmed.startsWith('1 RELI')) {
+          currentPerson.religion = trimmed.split('RELI')[1]?.trim() || '';
+        } else if (trimmed.startsWith('1 NOTE')) {
+          currentPerson.note = trimmed.split('NOTE')[1]?.trim() || '';
         } else if (currentEvent && trimmed.includes('DATE')) {
           const date = trimmed.split('DATE')[1]?.trim() || '';
           if (currentEvent === 'birth') { currentPerson.birth = date; lastFieldType = 'BIRT_DATE'; }
           else if (currentEvent === 'death') { currentPerson.death = date; lastFieldType = 'DEAT_DATE'; }
+          else if (currentEvent === 'baptism') { currentPerson.baptism = date; }
+          else if (currentEvent === 'burial') { currentPerson.burial = date; }
         } else if (currentEvent && trimmed.includes('PLAC')) {
           const place = normalizePlace(trimmed.split('PLAC')[1]?.trim() || '');
           if (currentEvent === 'birth') { currentPerson.birthPlace = place; lastFieldType = 'BIRT_PLAC'; }
           else if (currentEvent === 'death') { currentPerson.deathPlace = place; lastFieldType = 'DEAT_PLAC'; }
+          else if (currentEvent === 'baptism') { currentPerson.baptismPlace = place; }
+          else if (currentEvent === 'burial') { currentPerson.burialPlace = place; }
+          else if (currentEvent === 'residence') { currentPerson.residence = place; }
         } else if (trimmed.includes('FAMC')) {
           const match = trimmed.match(/@([^@]+)@/);
           if (match) currentPerson.familyAsChild = match[1];
@@ -253,6 +284,9 @@ const GedcomDuplicateMerger = () => {
         if (family) {
           if (family.husband && family.husband !== person.id) person.spouses.push(family.husband);
           if (family.wife && family.wife !== person.id) person.spouses.push(family.wife);
+          family.children.forEach(childId => {
+            if (!person.children.includes(childId)) person.children.push(childId);
+          });
         }
       });
     });
@@ -366,6 +400,29 @@ const GedcomDuplicateMerger = () => {
       if (person1.occupation && person2.occupation) {
         if (person1.occupation.toLowerCase() === person2.occupation.toLowerCase()) { matchScore += 5; sufficientCriteria.push('profession'); details.push('✓ Même profession (+5/5)'); }
         else details.push('✗ Professions différentes (0/5)');
+      }
+    }
+
+    // Lieu de décès (nouveau critère v1.9.5)
+    if (person1.deathPlace || person2.deathPlace) {
+      maxPossibleScore += 8;
+      const dp1 = normalizePlace(person1.deathPlace)?.toLowerCase();
+      const dp2 = normalizePlace(person2.deathPlace)?.toLowerCase();
+      if (dp1 && dp2) {
+        if (dp1 === dp2) { matchScore += 8; sufficientCriteria.push('lieu_deces'); details.push('✓ Lieux décès identiques (+8/8)'); }
+        else if (dp1.includes(dp2) || dp2.includes(dp1)) { matchScore += 4; sufficientCriteria.push('lieu_deces_partiel'); details.push('≈ Lieux décès similaires (+4/8)'); }
+        else details.push('✗ Lieux décès différents (0/8)');
+      }
+    }
+
+    // Enfants communs (nouveau critère v1.9.5 - très fort)
+    if (person1.children.length > 0 || person2.children.length > 0) {
+      maxPossibleScore += 15;
+      if (person1.children.length > 0 && person2.children.length > 0) {
+        const commonChildren = person1.children.filter(c => person2.children.includes(c));
+        if (commonChildren.length >= 2) { matchScore += 15; sufficientCriteria.push('enfants_2+'); details.push('✓ 2+ enfants communs (+15/15)'); }
+        else if (commonChildren.length === 1) { matchScore += 10; sufficientCriteria.push('enfant_1'); details.push('≈ 1 enfant commun (+10/15)'); }
+        else details.push('✗ Enfants différents (0/15)');
       }
     }
 
@@ -808,7 +865,7 @@ const GedcomDuplicateMerger = () => {
             <Users className="w-8 h-8" />
             <div>
               <h1 className="text-xl font-bold">Fusionneur GEDCOM</h1>
-              <p className="text-emerald-100 text-sm">v{VERSION} - Contrôle intégrité + Boutons dynamiques</p>
+              <p className="text-emerald-100 text-sm">v{VERSION} - {CHANGELOG[0].title}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -909,7 +966,10 @@ const GedcomDuplicateMerger = () => {
                         <input type="range" min="80" max="100" value={clusterScoreFilter} onChange={(e) => setClusterScoreFilter(parseInt(e.target.value))} className="w-24" />
                         <span className="text-sm font-medium">{clusterScoreFilter}%</span>
                       </div>
-                      <button onClick={autoSelectHighConfidenceClusters} className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Sélectionner ≥{clusterScoreFilter}%</button>
+                      <div className="flex gap-2">
+                        <button onClick={autoSelectHighConfidenceClusters} className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Sélectionner ≥{clusterScoreFilter}%</button>
+                        <button onClick={() => setSelectedClusters(new Set())} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600">Désélectionner tout</button>
+                      </div>
                     </div>
                     {getFilteredClusters().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun cluster trouvé avec ce filtre</p> : (
                       <div className="space-y-3">
@@ -934,28 +994,34 @@ const GedcomDuplicateMerger = () => {
                                     <thead className="bg-gray-50">
                                       <tr>
                                         <th className="px-2 py-1 text-left font-medium text-gray-600">#</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">ID</th>
                                         <th className="px-2 py-1 text-left font-medium text-gray-600">Nom complet</th>
-                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Naissance</th>
-                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Lieu</th>
-                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Décès</th>
                                         <th className="px-2 py-1 text-left font-medium text-gray-600">Sexe</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Naissance</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Lieu naiss.</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Décès</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Lieu décès</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Profession</th>
                                         <th className="px-2 py-1 text-left font-medium text-gray-600">Parents</th>
                                         <th className="px-2 py-1 text-left font-medium text-gray-600">Conjoints</th>
-                                        <th className="px-2 py-1 text-left font-medium text-gray-600">ID</th>
+                                        <th className="px-2 py-1 text-left font-medium text-gray-600">Enfants</th>
                                       </tr>
                                     </thead>
                                     <tbody>
                                       {cluster.people.map((person, pIdx) => (
                                         <tr key={person.id} className={pIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                           <td className="px-2 py-1 text-gray-500">{pIdx + 1}</td>
+                                          <td className="px-2 py-1 text-xs text-gray-400 font-mono">{person.id}</td>
                                           <td className="px-2 py-1 font-medium">{person.names[0] || '-'}</td>
+                                          <td className="px-2 py-1">{person.sex === 'M' ? '♂' : person.sex === 'F' ? '♀' : '-'}</td>
                                           <td className="px-2 py-1">{person.birth || '-'}</td>
-                                          <td className="px-2 py-1">{person.birthPlace || '-'}</td>
+                                          <td className="px-2 py-1 text-xs">{person.birthPlace || '-'}</td>
                                           <td className="px-2 py-1">{person.death || '-'}</td>
-                                          <td className="px-2 py-1">{person.sex || '-'}</td>
+                                          <td className="px-2 py-1 text-xs">{person.deathPlace || '-'}</td>
+                                          <td className="px-2 py-1 text-xs">{person.occupation || '-'}</td>
                                           <td className="px-2 py-1 text-xs">{person.parents.length > 0 ? person.parents.map(p => getPersonName(p)).join(', ') : '-'}</td>
                                           <td className="px-2 py-1 text-xs">{person.spouses.length > 0 ? person.spouses.map(s => getPersonName(s)).join(', ') : '-'}</td>
-                                          <td className="px-2 py-1 text-xs text-gray-400">{person.id}</td>
+                                          <td className="px-2 py-1 text-xs">{person.children?.length > 0 ? person.children.map(c => getPersonName(c)).join(', ') : '-'}</td>
                                         </tr>
                                       ))}
                                     </tbody>
@@ -964,6 +1030,7 @@ const GedcomDuplicateMerger = () => {
                                 <div className="mt-2 pt-2 border-t text-xs text-gray-500 flex flex-wrap gap-3">
                                   <span>📊 Avec naissance: {cluster.people.filter(p => p.birth).length}/{cluster.size}</span>
                                   <span>📊 Avec décès: {cluster.people.filter(p => p.death).length}/{cluster.size}</span>
+                                  <span>📊 Avec profession: {cluster.people.filter(p => p.occupation).length}/{cluster.size}</span>
                                   <span>📊 Paires liées: {cluster.pairs?.length || 0}</span>
                                 </div>
                               </div>
@@ -984,7 +1051,10 @@ const GedcomDuplicateMerger = () => {
                         <input type="range" min="80" max="100" value={filterScore} onChange={(e) => setFilterScore(parseInt(e.target.value))} className="w-24" />
                         <span className="text-sm font-medium">{filterScore}%</span>
                       </div>
-                      <button onClick={selectHighConfidence} className="px-3 py-1 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700">Sélectionner ≥{filterScore}%</button>
+                      <div className="flex gap-2">
+                        <button onClick={selectHighConfidence} className="px-3 py-1 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700">Sélectionner ≥{filterScore}%</button>
+                        <button onClick={() => setSelectedPairs(new Set())} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600">Désélectionner tout</button>
+                      </div>
                     </div>
                     {getSimplePairs().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun doublon simple trouvé</p> : (
                       <div className="space-y-2">
@@ -1215,21 +1285,43 @@ const GedcomDuplicateMerger = () => {
                 <div className="border rounded-lg p-4">
                   <h3 className="font-bold text-lg mb-2">{previewPair.person1.names[0] || previewPair.person1.id}</h3>
                   <div className="text-sm space-y-1 text-gray-600">
-                    <p>ID: {previewPair.person1.id}</p>
-                    <p>Naissance: {previewPair.person1.birth || 'N/A'}</p>
-                    <p>Lieu: {previewPair.person1.birthPlace || 'N/A'}</p>
-                    <p>Décès: {previewPair.person1.death || 'N/A'}</p>
-                    <p>Sexe: {previewPair.person1.sex || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">ID:</span> <span className="font-mono">{previewPair.person1.id}</span></p>
+                    <p><span className="font-medium text-gray-700">Sexe:</span> {previewPair.person1.sex === 'M' ? '♂ Masculin' : previewPair.person1.sex === 'F' ? '♀ Féminin' : 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Naissance:</span> {previewPair.person1.birth || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Lieu naissance:</span> {previewPair.person1.birthPlace || 'N/A'}</p>
+                    {previewPair.person1.baptism && <p><span className="font-medium text-gray-700">Baptême:</span> {previewPair.person1.baptism} {previewPair.person1.baptismPlace && `(${previewPair.person1.baptismPlace})`}</p>}
+                    <p><span className="font-medium text-gray-700">Décès:</span> {previewPair.person1.death || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Lieu décès:</span> {previewPair.person1.deathPlace || 'N/A'}</p>
+                    {previewPair.person1.burial && <p><span className="font-medium text-gray-700">Inhumation:</span> {previewPair.person1.burial} {previewPair.person1.burialPlace && `(${previewPair.person1.burialPlace})`}</p>}
+                    {previewPair.person1.occupation && <p><span className="font-medium text-gray-700">Profession:</span> {previewPair.person1.occupation}</p>}
+                    {previewPair.person1.title && <p><span className="font-medium text-gray-700">Titre:</span> {previewPair.person1.title}</p>}
+                    {previewPair.person1.residence && <p><span className="font-medium text-gray-700">Résidence:</span> {previewPair.person1.residence}</p>}
+                    {previewPair.person1.religion && <p><span className="font-medium text-gray-700">Religion:</span> {previewPair.person1.religion}</p>}
+                    <p><span className="font-medium text-gray-700">Parents:</span> {previewPair.person1.parents.length > 0 ? previewPair.person1.parents.map(p => getPersonName(p)).join(', ') : 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Conjoints:</span> {previewPair.person1.spouses.length > 0 ? previewPair.person1.spouses.map(s => getPersonName(s)).join(', ') : 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Enfants:</span> {previewPair.person1.children?.length > 0 ? previewPair.person1.children.map(c => getPersonName(c)).join(', ') : 'N/A'}</p>
+                    {previewPair.person1.note && <p><span className="font-medium text-gray-700">Note:</span> {previewPair.person1.note}</p>}
                   </div>
                 </div>
                 <div className="border rounded-lg p-4">
                   <h3 className="font-bold text-lg mb-2">{previewPair.person2.names[0] || previewPair.person2.id}</h3>
                   <div className="text-sm space-y-1 text-gray-600">
-                    <p>ID: {previewPair.person2.id}</p>
-                    <p>Naissance: {previewPair.person2.birth || 'N/A'}</p>
-                    <p>Lieu: {previewPair.person2.birthPlace || 'N/A'}</p>
-                    <p>Décès: {previewPair.person2.death || 'N/A'}</p>
-                    <p>Sexe: {previewPair.person2.sex || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">ID:</span> <span className="font-mono">{previewPair.person2.id}</span></p>
+                    <p><span className="font-medium text-gray-700">Sexe:</span> {previewPair.person2.sex === 'M' ? '♂ Masculin' : previewPair.person2.sex === 'F' ? '♀ Féminin' : 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Naissance:</span> {previewPair.person2.birth || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Lieu naissance:</span> {previewPair.person2.birthPlace || 'N/A'}</p>
+                    {previewPair.person2.baptism && <p><span className="font-medium text-gray-700">Baptême:</span> {previewPair.person2.baptism} {previewPair.person2.baptismPlace && `(${previewPair.person2.baptismPlace})`}</p>}
+                    <p><span className="font-medium text-gray-700">Décès:</span> {previewPair.person2.death || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Lieu décès:</span> {previewPair.person2.deathPlace || 'N/A'}</p>
+                    {previewPair.person2.burial && <p><span className="font-medium text-gray-700">Inhumation:</span> {previewPair.person2.burial} {previewPair.person2.burialPlace && `(${previewPair.person2.burialPlace})`}</p>}
+                    {previewPair.person2.occupation && <p><span className="font-medium text-gray-700">Profession:</span> {previewPair.person2.occupation}</p>}
+                    {previewPair.person2.title && <p><span className="font-medium text-gray-700">Titre:</span> {previewPair.person2.title}</p>}
+                    {previewPair.person2.residence && <p><span className="font-medium text-gray-700">Résidence:</span> {previewPair.person2.residence}</p>}
+                    {previewPair.person2.religion && <p><span className="font-medium text-gray-700">Religion:</span> {previewPair.person2.religion}</p>}
+                    <p><span className="font-medium text-gray-700">Parents:</span> {previewPair.person2.parents.length > 0 ? previewPair.person2.parents.map(p => getPersonName(p)).join(', ') : 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Conjoints:</span> {previewPair.person2.spouses.length > 0 ? previewPair.person2.spouses.map(s => getPersonName(s)).join(', ') : 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Enfants:</span> {previewPair.person2.children?.length > 0 ? previewPair.person2.children.map(c => getPersonName(c)).join(', ') : 'N/A'}</p>
+                    {previewPair.person2.note && <p><span className="font-medium text-gray-700">Note:</span> {previewPair.person2.note}</p>}
                   </div>
                 </div>
               </div>

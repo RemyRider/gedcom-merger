@@ -41,9 +41,11 @@ const GedcomDuplicateMerger = () => {
         'NOUVEAU: rawLinesByTag{} indexe les lignes par tag (SOUR, NOTE, OBJE, EVEN...)',
         'NOUVEAU: Fusion SOUR/NOTE/OBJE combine les sources des 2 personnes',
         'NOUVEAU: Les tags inconnus (_TAG, EVEN, etc.) sont préservés',
+        'CORRECTION: Comparaison parents/conjoints/enfants par NOM si IDs différents',
+        'AMÉLIORATION: Score 100% quand toutes données comparables sont identiques',
         'AMÉLIORATION: generateMergedIndiLines utilise rawLines → zéro perte',
         'Base solide pour Phase 2 (choix meilleure valeur, conflits)',
-        '284 tests (22 niveaux + 6 bonus)'
+        '295 tests (22 niveaux + 6 bonus)'
       ]
     },
     {
@@ -346,7 +348,7 @@ const GedcomDuplicateMerger = () => {
     return { people, families };
   };
 
-  const calculateSimilarity = (person1, person2) => {
+  const calculateSimilarity = (person1, person2, allPeople = []) => {
     const details = [];
     let matchScore = 0;
     let maxPossibleScore = 0;
@@ -404,7 +406,21 @@ const GedcomDuplicateMerger = () => {
         const common = person1.parents.filter(p => person2.parents.includes(p));
         if (common.length === 2) { matchScore += 20; sufficientCriteria.push('parents_2'); details.push('✓ 2 parents communs (+20/20)'); }
         else if (common.length === 1) { matchScore += 10; sufficientCriteria.push('parent_1'); details.push('≈ 1 parent commun (+10/20)'); }
-        else details.push('✗ Parents différents (0/20)');
+        else {
+          // v2.0.0: Comparer par nom si les IDs sont différents (cas doublons)
+          const parentNames1 = person1.parents.map(id => {
+            const parent = allPeople.find(p => p.id === id);
+            return parent?.names[0]?.toLowerCase() || '';
+          }).filter(n => n);
+          const parentNames2 = person2.parents.map(id => {
+            const parent = allPeople.find(p => p.id === id);
+            return parent?.names[0]?.toLowerCase() || '';
+          }).filter(n => n);
+          const commonNames = parentNames1.filter(n => parentNames2.includes(n));
+          if (commonNames.length === 2) { matchScore += 20; sufficientCriteria.push('parents_2_nom'); details.push('✓ 2 parents communs (même nom) (+20/20)'); }
+          else if (commonNames.length === 1) { matchScore += 10; sufficientCriteria.push('parent_1_nom'); details.push('≈ 1 parent commun (même nom) (+10/20)'); }
+          else details.push('✗ Parents différents (0/20)');
+        }
       }
     }
 
@@ -433,7 +449,20 @@ const GedcomDuplicateMerger = () => {
       if (person1.spouses.length > 0 && person2.spouses.length > 0) {
         const common = person1.spouses.filter(s => person2.spouses.includes(s));
         if (common.length > 0) { matchScore += 8; sufficientCriteria.push('conjoints'); details.push('✓ Conjoints communs (+8/8)'); }
-        else details.push('✗ Conjoints différents (0/8)');
+        else {
+          // v2.0.0: Comparer par nom si les IDs sont différents (cas doublons)
+          const spouseNames1 = person1.spouses.map(id => {
+            const spouse = allPeople.find(p => p.id === id);
+            return spouse?.names[0]?.toLowerCase() || '';
+          }).filter(n => n);
+          const spouseNames2 = person2.spouses.map(id => {
+            const spouse = allPeople.find(p => p.id === id);
+            return spouse?.names[0]?.toLowerCase() || '';
+          }).filter(n => n);
+          const commonNames = spouseNames1.filter(n => spouseNames2.includes(n));
+          if (commonNames.length > 0) { matchScore += 8; sufficientCriteria.push('conjoints_nom'); details.push('✓ Conjoints communs (même nom) (+8/8)'); }
+          else details.push('✗ Conjoints différents (0/8)');
+        }
       }
     }
 
@@ -474,7 +503,21 @@ const GedcomDuplicateMerger = () => {
         const commonChildren = person1.children.filter(c => person2.children.includes(c));
         if (commonChildren.length >= 2) { matchScore += 15; sufficientCriteria.push('enfants_2+'); details.push('✓ 2+ enfants communs (+15/15)'); }
         else if (commonChildren.length === 1) { matchScore += 10; sufficientCriteria.push('enfant_1'); details.push('≈ 1 enfant commun (+10/15)'); }
-        else details.push('✗ Enfants différents (0/15)');
+        else {
+          // v2.0.0: Comparer par nom si les IDs sont différents (cas doublons)
+          const childNames1 = person1.children.map(id => {
+            const child = allPeople.find(p => p.id === id);
+            return child?.names[0]?.toLowerCase() || '';
+          }).filter(n => n);
+          const childNames2 = person2.children.map(id => {
+            const child = allPeople.find(p => p.id === id);
+            return child?.names[0]?.toLowerCase() || '';
+          }).filter(n => n);
+          const commonNames = childNames1.filter(n => childNames2.includes(n));
+          if (commonNames.length >= 2) { matchScore += 15; sufficientCriteria.push('enfants_2+_nom'); details.push('✓ 2+ enfants communs (même nom) (+15/15)'); }
+          else if (commonNames.length === 1) { matchScore += 10; sufficientCriteria.push('enfant_1_nom'); details.push('≈ 1 enfant commun (même nom) (+10/15)'); }
+          else details.push('✗ Enfants différents (0/15)');
+        }
       }
     }
 
@@ -526,7 +569,7 @@ const GedcomDuplicateMerger = () => {
       if (person1.sex && person2.sex && person1.sex !== person2.sex) return;
       const y1 = person1.birth?.match(/\d{4}/)?.[0], y2 = person2.birth?.match(/\d{4}/)?.[0];
       if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 10) return;
-      const sim = calculateSimilarity(person1, person2);
+      const sim = calculateSimilarity(person1, person2, people);
       if (sim.rejected) return;
       if (sim.score >= 80) {
         result.push({ person1, person2, similarity: Math.round(sim.score), details: sim.details, sufficientCriteria: sim.sufficientCriteria, id: pairKey });

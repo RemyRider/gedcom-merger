@@ -521,6 +521,86 @@ const GedcomDuplicateMerger = () => {
       }
     }
 
+    // v2.0.0: Baptême
+    if (person1.baptism || person2.baptism) {
+      maxPossibleScore += 5;
+      if (person1.baptism && person2.baptism) {
+        if (person1.baptism === person2.baptism) { matchScore += 5; details.push('✓ Dates baptême identiques (+5/5)'); }
+        else {
+          const by1 = person1.baptism.match(/\d{4}/), by2 = person2.baptism.match(/\d{4}/);
+          if (by1 && by2 && by1[0] === by2[0]) { matchScore += 3; details.push('≈ Années baptême identiques (+3/5)'); }
+          else details.push('✗ Dates baptême différentes (0/5)');
+        }
+      }
+    }
+
+    // v2.0.0: Lieu baptême
+    if (person1.baptismPlace || person2.baptismPlace) {
+      maxPossibleScore += 4;
+      const bpl1 = normalizePlace(person1.baptismPlace)?.toLowerCase();
+      const bpl2 = normalizePlace(person2.baptismPlace)?.toLowerCase();
+      if (bpl1 && bpl2) {
+        if (bpl1 === bpl2) { matchScore += 4; details.push('✓ Lieux baptême identiques (+4/4)'); }
+        else if (bpl1.includes(bpl2) || bpl2.includes(bpl1)) { matchScore += 2; details.push('≈ Lieux baptême similaires (+2/4)'); }
+        else details.push('✗ Lieux baptême différents (0/4)');
+      }
+    }
+
+    // v2.0.0: Inhumation
+    if (person1.burial || person2.burial) {
+      maxPossibleScore += 5;
+      if (person1.burial && person2.burial) {
+        if (person1.burial === person2.burial) { matchScore += 5; details.push('✓ Dates inhumation identiques (+5/5)'); }
+        else {
+          const bury1 = person1.burial.match(/\d{4}/), bury2 = person2.burial.match(/\d{4}/);
+          if (bury1 && bury2 && bury1[0] === bury2[0]) { matchScore += 3; details.push('≈ Années inhumation identiques (+3/5)'); }
+          else details.push('✗ Dates inhumation différentes (0/5)');
+        }
+      }
+    }
+
+    // v2.0.0: Lieu inhumation
+    if (person1.burialPlace || person2.burialPlace) {
+      maxPossibleScore += 4;
+      const bupl1 = normalizePlace(person1.burialPlace)?.toLowerCase();
+      const bupl2 = normalizePlace(person2.burialPlace)?.toLowerCase();
+      if (bupl1 && bupl2) {
+        if (bupl1 === bupl2) { matchScore += 4; details.push('✓ Lieux inhumation identiques (+4/4)'); }
+        else if (bupl1.includes(bupl2) || bupl2.includes(bupl1)) { matchScore += 2; details.push('≈ Lieux inhumation similaires (+2/4)'); }
+        else details.push('✗ Lieux inhumation différents (0/4)');
+      }
+    }
+
+    // v2.0.0: Résidence
+    if (person1.residence || person2.residence) {
+      maxPossibleScore += 4;
+      const res1 = normalizePlace(person1.residence)?.toLowerCase();
+      const res2 = normalizePlace(person2.residence)?.toLowerCase();
+      if (res1 && res2) {
+        if (res1 === res2) { matchScore += 4; details.push('✓ Résidences identiques (+4/4)'); }
+        else if (res1.includes(res2) || res2.includes(res1)) { matchScore += 2; details.push('≈ Résidences similaires (+2/4)'); }
+        else details.push('✗ Résidences différentes (0/4)');
+      }
+    }
+
+    // v2.0.0: Titre
+    if (person1.title || person2.title) {
+      maxPossibleScore += 3;
+      if (person1.title && person2.title) {
+        if (person1.title.toLowerCase() === person2.title.toLowerCase()) { matchScore += 3; details.push('✓ Titres identiques (+3/3)'); }
+        else details.push('✗ Titres différents (0/3)');
+      }
+    }
+
+    // v2.0.0: Religion
+    if (person1.religion || person2.religion) {
+      maxPossibleScore += 3;
+      if (person1.religion && person2.religion) {
+        if (person1.religion.toLowerCase() === person2.religion.toLowerCase()) { matchScore += 3; details.push('✓ Religions identiques (+3/3)'); }
+        else details.push('✗ Religions différentes (0/3)');
+      }
+    }
+
     const finalScore = maxPossibleScore > 0 ? Math.round((matchScore / maxPossibleScore) * 100) : 0;
     
     if (nameMatches && sufficientCriteria.length === 0) {
@@ -1278,10 +1358,6 @@ const GedcomDuplicateMerger = () => {
                   <p className="text-gray-400 text-sm mt-1">ou glissez-déposez ici</p>
                 </div>
               </label>
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="font-semibold text-blue-800 flex items-center gap-2"><AlertCircle className="w-5 h-5" />Nouveauté v1.9.3</h3>
-                <p className="text-blue-700 text-sm mt-1">Nouvel onglet "À supprimer" avec critères stricts : individus totalement isolés (sans famille) ou sans identité. Bouton flottant pour actions rapides.</p>
-              </div>
             </div>
           </div>
         )}
@@ -1649,18 +1725,18 @@ const GedcomDuplicateMerger = () => {
                     <p><span className="font-medium text-gray-700">Sexe:</span> {previewPair.person1.sex === 'M' ? '♂ Masculin' : previewPair.person1.sex === 'F' ? '♀ Féminin' : 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Naissance:</span> {previewPair.person1.birth || 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Lieu naissance:</span> {previewPair.person1.birthPlace || 'N/A'}</p>
-                    {previewPair.person1.baptism && <p><span className="font-medium text-gray-700">Baptême:</span> {previewPair.person1.baptism} {previewPair.person1.baptismPlace && `(${previewPair.person1.baptismPlace})`}</p>}
+                    <p><span className="font-medium text-gray-700">Baptême:</span> {previewPair.person1.baptism || 'N/A'} {previewPair.person1.baptismPlace && `(${previewPair.person1.baptismPlace})`}</p>
                     <p><span className="font-medium text-gray-700">Décès:</span> {previewPair.person1.death || 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Lieu décès:</span> {previewPair.person1.deathPlace || 'N/A'}</p>
-                    {previewPair.person1.burial && <p><span className="font-medium text-gray-700">Inhumation:</span> {previewPair.person1.burial} {previewPair.person1.burialPlace && `(${previewPair.person1.burialPlace})`}</p>}
-                    {previewPair.person1.occupation && <p><span className="font-medium text-gray-700">Profession:</span> {previewPair.person1.occupation}</p>}
-                    {previewPair.person1.title && <p><span className="font-medium text-gray-700">Titre:</span> {previewPair.person1.title}</p>}
-                    {previewPair.person1.residence && <p><span className="font-medium text-gray-700">Résidence:</span> {previewPair.person1.residence}</p>}
-                    {previewPair.person1.religion && <p><span className="font-medium text-gray-700">Religion:</span> {previewPair.person1.religion}</p>}
+                    <p><span className="font-medium text-gray-700">Inhumation:</span> {previewPair.person1.burial || 'N/A'} {previewPair.person1.burialPlace && `(${previewPair.person1.burialPlace})`}</p>
+                    <p><span className="font-medium text-gray-700">Profession:</span> {previewPair.person1.occupation || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Titre:</span> {previewPair.person1.title || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Résidence:</span> {previewPair.person1.residence || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Religion:</span> {previewPair.person1.religion || 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Parents:</span> {previewPair.person1.parents.length > 0 ? previewPair.person1.parents.map(p => getPersonName(p)).join(', ') : 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Conjoints:</span> {previewPair.person1.spouses.length > 0 ? previewPair.person1.spouses.map(s => getPersonName(s)).join(', ') : 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Enfants:</span> {previewPair.person1.children?.length > 0 ? previewPair.person1.children.map(c => getPersonName(c)).join(', ') : 'N/A'}</p>
-                    {previewPair.person1.note && <p><span className="font-medium text-gray-700">Note:</span> {previewPair.person1.note}</p>}
+                    <p><span className="font-medium text-gray-700">Note:</span> {previewPair.person1.note || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="border rounded-lg p-4">
@@ -1670,18 +1746,18 @@ const GedcomDuplicateMerger = () => {
                     <p><span className="font-medium text-gray-700">Sexe:</span> {previewPair.person2.sex === 'M' ? '♂ Masculin' : previewPair.person2.sex === 'F' ? '♀ Féminin' : 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Naissance:</span> {previewPair.person2.birth || 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Lieu naissance:</span> {previewPair.person2.birthPlace || 'N/A'}</p>
-                    {previewPair.person2.baptism && <p><span className="font-medium text-gray-700">Baptême:</span> {previewPair.person2.baptism} {previewPair.person2.baptismPlace && `(${previewPair.person2.baptismPlace})`}</p>}
+                    <p><span className="font-medium text-gray-700">Baptême:</span> {previewPair.person2.baptism || 'N/A'} {previewPair.person2.baptismPlace && `(${previewPair.person2.baptismPlace})`}</p>
                     <p><span className="font-medium text-gray-700">Décès:</span> {previewPair.person2.death || 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Lieu décès:</span> {previewPair.person2.deathPlace || 'N/A'}</p>
-                    {previewPair.person2.burial && <p><span className="font-medium text-gray-700">Inhumation:</span> {previewPair.person2.burial} {previewPair.person2.burialPlace && `(${previewPair.person2.burialPlace})`}</p>}
-                    {previewPair.person2.occupation && <p><span className="font-medium text-gray-700">Profession:</span> {previewPair.person2.occupation}</p>}
-                    {previewPair.person2.title && <p><span className="font-medium text-gray-700">Titre:</span> {previewPair.person2.title}</p>}
-                    {previewPair.person2.residence && <p><span className="font-medium text-gray-700">Résidence:</span> {previewPair.person2.residence}</p>}
-                    {previewPair.person2.religion && <p><span className="font-medium text-gray-700">Religion:</span> {previewPair.person2.religion}</p>}
+                    <p><span className="font-medium text-gray-700">Inhumation:</span> {previewPair.person2.burial || 'N/A'} {previewPair.person2.burialPlace && `(${previewPair.person2.burialPlace})`}</p>
+                    <p><span className="font-medium text-gray-700">Profession:</span> {previewPair.person2.occupation || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Titre:</span> {previewPair.person2.title || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Résidence:</span> {previewPair.person2.residence || 'N/A'}</p>
+                    <p><span className="font-medium text-gray-700">Religion:</span> {previewPair.person2.religion || 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Parents:</span> {previewPair.person2.parents.length > 0 ? previewPair.person2.parents.map(p => getPersonName(p)).join(', ') : 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Conjoints:</span> {previewPair.person2.spouses.length > 0 ? previewPair.person2.spouses.map(s => getPersonName(s)).join(', ') : 'N/A'}</p>
                     <p><span className="font-medium text-gray-700">Enfants:</span> {previewPair.person2.children?.length > 0 ? previewPair.person2.children.map(c => getPersonName(c)).join(', ') : 'N/A'}</p>
-                    {previewPair.person2.note && <p><span className="font-medium text-gray-700">Note:</span> {previewPair.person2.note}</p>}
+                    <p><span className="font-medium text-gray-700">Note:</span> {previewPair.person2.note || 'N/A'}</p>
                   </div>
                 </div>
               </div>

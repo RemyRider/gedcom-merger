@@ -35,14 +35,16 @@ const GedcomDuplicateMerger = () => {
       date: '31 décembre 2025',
       tag: 'ACTUELLE',
       color: 'green',
-      title: 'Détails complets + Boutons désélection + Parsing étendu',
+      title: 'Fusion intelligente + Parsing corrigé + Déduplication CHIL',
       items: [
-        'Affichage de TOUS les champs parsés (ID, sexe, profession, religion, lieux décès...)',
-        'Boutons "Désélectionner tout" sur onglets Clusters et Doublons',
-        'Parsing étendu: baptême, inhumation, résidence, titre, notes',
-        'Algo amélioré: lieu de décès, enfants communs comme critères',
-        'Sous-titre dynamique basé sur la version actuelle',
-        '236 tests anti-régression préservés'
+        'CRITIQUE: Correction parsing DATE/PLAC niveau 2 uniquement',
+        'NOUVEAU: Fusion intelligente combinant les données des 2 personnes',
+        'NOUVEAU: Fonction mergePersonData() - plus de perte de données',
+        'NOUVEAU: Déduplication automatique des CHIL dans les FAM',
+        'NOUVEAU: Note de traçabilité dans les INDI fusionnés',
+        'NOUVEAU: Support des clusters (fusion en chaîne)',
+        'Noms secondaires marqués TYPE aka',
+        '266 tests (22 niveaux + 5 bonus)'
       ]
     },
     {
@@ -721,6 +723,122 @@ const GedcomDuplicateMerger = () => {
     score += person.familiesAsSpouse.length * 3;
     return score;
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FONCTIONS DE FUSION DE DONNÉES v1.9.5
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Fonction de fusion des données de deux personnes
+  const mergePersonData = (person1, person2) => {
+    const quality1 = calculateDataQuality(person1);
+    const quality2 = calculateDataQuality(person2);
+    const primary = quality1 >= quality2 ? person1 : person2;
+    const secondary = quality1 >= quality2 ? person2 : person1;
+    
+    return {
+      id: primary.id,
+      removedId: secondary.id,
+      // Noms: garder tous les noms uniques
+      names: [...new Set([...primary.names, ...secondary.names])],
+      // Dates/lieux: préférer la donnée existante
+      birth: primary.birth || secondary.birth,
+      birthPlace: primary.birthPlace || secondary.birthPlace,
+      death: primary.death || secondary.death,
+      deathPlace: primary.deathPlace || secondary.deathPlace,
+      baptism: primary.baptism || secondary.baptism,
+      baptismPlace: primary.baptismPlace || secondary.baptismPlace,
+      burial: primary.burial || secondary.burial,
+      burialPlace: primary.burialPlace || secondary.burialPlace,
+      // Autres champs
+      sex: primary.sex || secondary.sex,
+      occupation: primary.occupation || secondary.occupation,
+      religion: primary.religion || secondary.religion,
+      title: primary.title || secondary.title,
+      residence: primary.residence || secondary.residence,
+      note: [primary.note, secondary.note].filter(Boolean).join(' | '),
+      // Relations: combiner et dédupliquer
+      parents: [...new Set([...primary.parents, ...secondary.parents])],
+      spouses: [...new Set([...primary.spouses, ...secondary.spouses])],
+      children: [...new Set([...(primary.children || []), ...(secondary.children || [])])],
+      familyAsChild: primary.familyAsChild || secondary.familyAsChild,
+      familiesAsSpouse: [...new Set([...primary.familiesAsSpouse, ...secondary.familiesAsSpouse])],
+      // Métadonnées fusion
+      mergedFrom: [primary.id, secondary.id],
+      qualityScore: Math.max(quality1, quality2)
+    };
+  };
+
+  // Générer les lignes GEDCOM pour une personne fusionnée
+  const generateMergedIndiLines = (merged) => {
+    const lines = [];
+    lines.push('0 @' + merged.id + '@ INDI');
+    
+    // Noms (premier = principal, autres = alias)
+    merged.names.forEach((name, idx) => {
+      lines.push('1 NAME ' + name);
+      if (idx > 0) lines.push('2 TYPE aka');
+    });
+    
+    if (merged.sex) lines.push('1 SEX ' + merged.sex);
+    
+    // Naissance
+    if (merged.birth || merged.birthPlace) {
+      lines.push('1 BIRT');
+      if (merged.birth) lines.push('2 DATE ' + merged.birth);
+      if (merged.birthPlace) lines.push('2 PLAC ' + merged.birthPlace);
+    }
+    
+    // Baptême
+    if (merged.baptism || merged.baptismPlace) {
+      lines.push('1 BAPM');
+      if (merged.baptism) lines.push('2 DATE ' + merged.baptism);
+      if (merged.baptismPlace) lines.push('2 PLAC ' + merged.baptismPlace);
+    }
+    
+    // Décès
+    if (merged.death || merged.deathPlace) {
+      lines.push('1 DEAT');
+      if (merged.death) lines.push('2 DATE ' + merged.death);
+      if (merged.deathPlace) lines.push('2 PLAC ' + merged.deathPlace);
+    }
+    
+    // Inhumation
+    if (merged.burial || merged.burialPlace) {
+      lines.push('1 BURI');
+      if (merged.burial) lines.push('2 DATE ' + merged.burial);
+      if (merged.burialPlace) lines.push('2 PLAC ' + merged.burialPlace);
+    }
+    
+    // Autres champs
+    if (merged.occupation) lines.push('1 OCCU ' + merged.occupation);
+    if (merged.religion) lines.push('1 RELI ' + merged.religion);
+    if (merged.title) lines.push('1 TITL ' + merged.title);
+    if (merged.residence) {
+      lines.push('1 RESI');
+      lines.push('2 PLAC ' + merged.residence);
+    }
+    
+    // Famille comme enfant
+    if (merged.familyAsChild) {
+      lines.push('1 FAMC @' + merged.familyAsChild + '@');
+    }
+    
+    // Familles comme conjoint (dédupliquées)
+    [...new Set(merged.familiesAsSpouse)].forEach(famId => {
+      lines.push('1 FAMS @' + famId + '@');
+    });
+    
+    // Note de fusion pour traçabilité
+    if (merged.mergedFrom && merged.mergedFrom.length > 1) {
+      lines.push('1 NOTE Fusionné par GedcomMerger depuis: ' + merged.mergedFrom.join(', '));
+    }
+    if (merged.note) {
+      lines.push('1 NOTE ' + merged.note);
+    }
+    
+    return lines;
+  };
+
   const openPreview = (pair) => setPreviewPair(pair);
   const closePreview = () => setPreviewPair(null);
   const togglePairSelection = (pairId) => {
@@ -799,41 +917,118 @@ const GedcomDuplicateMerger = () => {
 
   const downloadCleanedFile = () => {
     if (!originalGedcom) return;
+    
+    // ÉTAPE 1: Construire les données de fusion
     const idsToRemove = new Set();
     const mergeMap = new Map();
-    mergedIds.forEach((targetId, sourceId) => { if (sourceId !== targetId) { idsToRemove.add(sourceId); mergeMap.set(sourceId, targetId); } });
+    const mergedPersons = new Map();
+    
+    // Créer les personnes fusionnées à partir des paires sélectionnées
+    duplicates.forEach(pair => {
+      if (selectedPairs.has(pair.id)) {
+        const merged = mergePersonData(pair.person1, pair.person2);
+        idsToRemove.add(merged.removedId);
+        mergeMap.set(merged.removedId, merged.id);
+        
+        // Si on a déjà fusionné cette personne (cluster), combiner encore
+        if (mergedPersons.has(merged.id)) {
+          const existing = mergedPersons.get(merged.id);
+          const combined = mergePersonData(existing, merged);
+          combined.mergedFrom = [...new Set([...(existing.mergedFrom || []), ...(merged.mergedFrom || [])])];
+          mergedPersons.set(merged.id, combined);
+        } else {
+          mergedPersons.set(merged.id, merged);
+        }
+      }
+    });
+    
+    // Ajouter les suppressions manuelles
     selectedToDelete.forEach(id => idsToRemove.add(id));
+    
+    // ÉTAPE 2: Traiter le fichier GEDCOM
     const lines = originalGedcom.split('\n');
     const outputLines = [];
-    let skip = false;
-    let hasHead = lines.length > 0 && lines[0].trim().startsWith('0 HEAD');
+    let skipCurrentBlock = false;
+    let currentBlockId = null;
+    let inMergedIndi = false;
+    
+    // Vérifier si HEAD existe
+    const hasHead = lines.length > 0 && lines[0].trim().replace(/\r/g, '').startsWith('0 HEAD');
     if (!hasHead) {
       outputLines.push('0 HEAD', '1 SOUR GedcomMerger', '2 VERS ' + VERSION, '2 NAME Fusionneur de Doublons GEDCOM', '1 GEDC', '2 VERS 5.5.1', '2 FORM LINEAGE-LINKED', '1 CHAR UTF-8');
       const now = new Date();
       const dateStr = now.getDate() + ' ' + ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][now.getMonth()] + ' ' + now.getFullYear();
       outputLines.push('1 DATE ' + dateStr);
     }
+    
+    // Tracking pour dédupliquer les CHIL dans les FAM
+    const famChildrenSeen = new Map();
+    
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i], trimmed = line.trim();
+      const line = lines[i];
+      const trimmed = line.trim().replace(/\r/g, '');
+      
       if (trimmed.startsWith('0 TRLR')) continue;
+      
       if (trimmed.startsWith('0 ')) {
-        skip = false;
+        skipCurrentBlock = false;
+        inMergedIndi = false;
+        currentBlockId = null;
+        
         if (trimmed.includes('@')) {
           const match = trimmed.match(/@([^@]+)@/);
-          if (match && idsToRemove.has(match[1])) { skip = true; continue; }
+          if (match) {
+            currentBlockId = match[1];
+            
+            if (idsToRemove.has(currentBlockId)) {
+              skipCurrentBlock = true;
+              continue;
+            }
+            
+            if (trimmed.includes('INDI') && mergedPersons.has(currentBlockId)) {
+              const merged = mergedPersons.get(currentBlockId);
+              const mergedLines = generateMergedIndiLines(merged);
+              mergedLines.forEach(ml => outputLines.push(ml));
+              inMergedIndi = true;
+              continue;
+            }
+            
+            if (trimmed.includes('FAM')) {
+              famChildrenSeen.set(currentBlockId, new Set());
+            }
+          }
         }
       }
-      if (skip) continue;
+      
+      if (skipCurrentBlock || inMergedIndi) continue;
+      
       let processedLine = line;
-      mergeMap.forEach((targetId, sourceId) => { processedLine = processedLine.replace(new RegExp('@' + sourceId + '@', 'g'), '@' + targetId + '@'); });
+      mergeMap.forEach((targetId, sourceId) => {
+        processedLine = processedLine.replace(new RegExp('@' + sourceId + '@', 'g'), '@' + targetId + '@');
+      });
+      
+      // Dédupliquer les CHIL dans les FAM
+      const trimmedProcessed = processedLine.trim().replace(/\r/g, '');
+      if (trimmedProcessed.includes('CHIL') && currentBlockId && famChildrenSeen.has(currentBlockId)) {
+        const childMatch = trimmedProcessed.match(/@([^@]+)@/);
+        if (childMatch) {
+          const childId = childMatch[1];
+          const seen = famChildrenSeen.get(currentBlockId);
+          if (seen.has(childId)) continue;
+          seen.add(childId);
+        }
+      }
+      
       outputLines.push(processedLine);
     }
+    
     outputLines.push('0 TRLR');
+    
     const blob = new Blob([outputLines.join('\n')], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'gedcom_nettoye_' + new Date().toISOString().slice(0,10) + '.ged';
+    link.download = 'gedcom_fusionne_' + new Date().toISOString().slice(0,10) + '.ged';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

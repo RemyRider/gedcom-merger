@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS COMPLÈTE v1.9.5 - 254 TESTS (22 NIVEAUX + 4 BONUS)
+// SUITE DE TESTS COMPLÈTE v1.9.5 - 266 TESTS (22 NIVEAUX + 5 BONUS)
 // Basé sur v1.9.3 (187 tests) + 39 nouveaux tests v1.9.5
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -35,7 +35,7 @@ const changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8');
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                    SUITE DE TESTS COMPLÈTE v1.9.5');
-console.log('                    22 NIVEAUX + 4 BONUS = 254 TESTS');
+console.log('                    22 NIVEAUX + 5 BONUS = 266 TESTS');
 console.log('               (Base v1.9.3: 187 tests + 39 nouveaux tests)');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
@@ -482,6 +482,34 @@ check(appCode.includes("title:") || appCode.includes("title: ''"), 'v1.9.5: Cham
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// BONUS E: ALGORITHME DE FUSION AMÉLIORÉ (12 tests) ★ NOUVEAU v1.9.5
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ BONUS E: ALGORITHME DE FUSION AMÉLIORÉ (12 tests) ★ NOUVEAU                │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+
+// Fonction mergePersonData
+check(appCode.includes('const mergePersonData'), 'v1.9.5: Fonction mergePersonData existe');
+check(appCode.includes('mergePersonData(pair.person1, pair.person2)'), 'v1.9.5: mergePersonData appelée avec les 2 personnes');
+check(appCode.includes('primary.birth || secondary.birth'), 'v1.9.5: Fusion des dates de naissance');
+check(appCode.includes('primary.death || secondary.death'), 'v1.9.5: Fusion des dates de décès');
+check(appCode.includes('mergedFrom'), 'v1.9.5: Traçabilité des fusions (mergedFrom)');
+
+// Fonction generateMergedIndiLines
+check(appCode.includes('const generateMergedIndiLines'), 'v1.9.5: Fonction generateMergedIndiLines existe');
+check(appCode.includes('TYPE aka'), 'v1.9.5: Noms secondaires marqués TYPE aka');
+check(appCode.includes('Fusionné par GedcomMerger'), 'v1.9.5: Note de fusion ajoutée');
+
+// Déduplication CHIL dans FAM
+check(appCode.includes('famChildrenSeen'), 'v1.9.5: Tracking CHIL pour déduplication');
+check(appCode.includes('famChildrenSeen.has(currentBlockId)'), 'v1.9.5: Vérification CHIL dupliqués');
+check(appCode.includes('seen.has(childId)'), 'v1.9.5: Skip des CHIL dupliqués');
+
+// Gestion des clusters (fusion en chaîne)
+check(appCode.includes('mergedPersons.has(merged.id)'), 'v1.9.5: Support fusion en chaîne (clusters)');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // BONUS A: CHANGELOG ET DOCUMENTATION (17 tests) - +1 pour v1.9.5
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
@@ -553,7 +581,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 254;
+const expectedTotal = 266;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);

@@ -1,26 +1,63 @@
-# GEDCOM Merger
+# GEDCOM Merger v1.9.5
 
-Application de détection et fusion de doublons pour fichiers généalogiques GEDCOM.
+Application de fusion de doublons dans les fichiers GEDCOM pour la généalogie.
 
-## Fonctionnalités
+## Nouvelles fonctionnalités v1.9.5
 
-- Détection intelligente des doublons avec algorithme anti-faux-positifs
-- Parsing GEDCOM étendu (baptême, inhumation, résidence, etc.)
-- Interface responsive avec 4 onglets (Clusters, Doublons, À supprimer, IA)
-- Contrôle d'intégrité 8 types
-- Export GEDCOM fusionné
+### Fusion Intelligente
+- **mergePersonData()** : Combine les données des 2 personnes
+- Les informations complémentaires ne sont plus perdues
+- Traçabilité des fusions avec NOTE automatique
 
-## Déploiement
+### Corrections Critiques
+- Parser DATE/PLAC niveau 2 uniquement (évite bug SOURCE)
+- Déduplication des CHIL dans les FAM
 
-- Production: https://gedcom-merger.netlify.app
-- Développement: https://dev--gedcom-merger.netlify.app
+## Installation
+
+```bash
+# 1. Extraire le ZIP
+unzip gedcom-v1.9.5-fusion.zip
+
+# 2. Installer les dépendances
+npm install
+
+# 3. Lancer les tests
+npm test
+# Attendu: 266/266 tests passés (100%)
+
+# 4. Build production
+npm run build
+```
+
+## Déploiement Netlify
+
+Le fichier `netlify.toml` est configuré pour :
+1. Exécuter les tests
+2. Builder seulement si tous les tests passent
+3. Publier le dossier `dist`
 
 ## Tests
 
+- 266 tests répartis en 22 niveaux + 5 bonus
+- Nouveau BONUS E : 12 tests algorithme de fusion
+
+## Workflow Git
+
 ```bash
-npm test  # 246 tests
+# Développement
+git checkout dev
+# ... modifications ...
+git add . && git commit -m "..." && git push
+
+# Production
+git checkout main
+git merge dev
+git push
 ```
 
-## Version
+## Liens
 
-v1.9.5 - 31 décembre 2025
+- Production: https://gedcom-merger.netlify.app
+- Dev: https://dev--gedcom-merger.netlify.app
+- GitHub: https://github.com/RemyRider/gedcom-merger

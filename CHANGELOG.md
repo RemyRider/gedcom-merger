@@ -4,7 +4,24 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ---
 
-## [2.1.0] - 2 janvier 2026 - ACTUELLE
+## [2.1.1] - 2 janvier 2026 - ACTUELLE
+
+### Détails enrichis dans l'onglet "À supprimer"
+
+#### Améliorations
+- **Affichage des parents** : Noms complets des parents avec avertissement visuel
+- **Affichage des conjoints** : Noms complets des conjoints avec avertissement visuel
+- **Affichage des enfants** : Noms complets des enfants avec avertissement visuel
+- **Détails personne** : Sexe, naissance, décès, profession visibles directement
+- **Message d'avertissement** : Explication claire si la suppression créera des références orphelines
+
+#### Technique
+- 377 tests (8 catégories)
+- Stockage des IDs enfants dans detectToDeletePersons
+
+---
+
+## [2.1.0] - 2 janvier 2026 - PRÉCÉDENTE
 
 ### Contrôle qualité avancé et analyse généalogique
 

@@ -34,14 +34,30 @@ const GedcomDuplicateMerger = () => {
   const [genealogyStats, setGenealogyStats] = useState(null);
   const [orphanRefs, setOrphanRefs] = useState([]);
 
-  const VERSION = '2.1.0';
+  const VERSION = '2.1.1';
 
   const CHANGELOG = [
     {
-      version: '2.1.0',
+      version: '2.1.1',
       date: '2 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Détails enrichis dans l\'onglet "À supprimer"',
+      items: [
+        'AMÉLIORATION: Affichage des parents avec leurs noms dans l\'onglet À supprimer',
+        'AMÉLIORATION: Affichage des conjoints avec leurs noms',
+        'AMÉLIORATION: Affichage des enfants avec leurs noms',
+        'AMÉLIORATION: Détails personne (sexe, naissance, décès, profession)',
+        'AMÉLIORATION: Avertissements visuels ⚠️ si relations existantes',
+        'AMÉLIORATION: Message explicite sur les références orphelines potentielles',
+        'CORRECTION: Stockage des IDs enfants dans detectToDeletePersons'
+      ]
+    },
+    {
+      version: '2.1.0',
+      date: '2 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Contrôle qualité avancé et analyse généalogique',
       items: [
         'NOUVEAU: Rapport qualité affiché automatiquement après upload',
@@ -57,8 +73,8 @@ const GedcomDuplicateMerger = () => {
     {
       version: '2.0.0',
       date: '31 décembre 2025',
-      tag: 'PRÉCÉDENTE',
-      color: 'blue',
+      tag: null,
+      color: 'gray',
       title: 'Phase 1 - Préservation complète des données GEDCOM',
       items: [
         'NOUVEAU: rawLines[] stocke TOUTES les lignes GEDCOM originales par personne',
@@ -741,16 +757,35 @@ const GedcomDuplicateMerger = () => {
       const hasParents = person.parents.length > 0;
       const hasSpouses = person.spouses.length > 0;
       let hasChildren = false;
+      let childrenIds = [];
+      
+      // Trouver les enfants de cette personne
       families.forEach(family => {
-        if ((family.husband === person.id || family.wife === person.id) && family.children.length > 0) hasChildren = true;
+        if ((family.husband === person.id || family.wife === person.id) && family.children && family.children.length > 0) {
+          hasChildren = true;
+          childrenIds = [...childrenIds, ...family.children];
+        }
       });
+      childrenIds = [...new Set(childrenIds)]; // Dédupliquer
+      
       const isTotallyIsolated = !hasParents && !hasChildren && !hasSpouses;
       const fullName = person.names[0] || '';
       const nameParts = fullName.replace(/\//g, ' ').trim().split(/\s+/).filter(p => p.length > 0);
       const hasNoIdentity = nameParts.length === 0;
       if (isTotallyIsolated || hasNoIdentity) {
         let reason = isTotallyIsolated && hasNoIdentity ? 'Isolé + Sans identité' : isTotallyIsolated ? 'Totalement isolé' : 'Sans identité';
-        toDelete.push({ ...person, isTotallyIsolated, hasNoIdentity, reason, hasSpouses, hasParents, hasChildren });
+        toDelete.push({ 
+          ...person, 
+          isTotallyIsolated, 
+          hasNoIdentity, 
+          reason, 
+          hasSpouses, 
+          hasParents, 
+          hasChildren,
+          parentIds: person.parents || [],
+          spouseIds: person.spouses || [],
+          childrenIds: childrenIds
+        });
       }
     });
     return toDelete;
@@ -2125,18 +2160,88 @@ const GedcomDuplicateMerger = () => {
                       <p className="text-xs text-gray-500 mt-1">Critères: totalement isolé (sans parents, enfants, conjoints) OU sans nom/prénom</p>
                     </div>
                     {toDeletePersons.length === 0 ? <p className="text-center text-gray-500 py-8">Aucun individu à supprimer trouvé</p> : (
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                      <div className="space-y-2 max-h-[500px] overflow-y-auto">
                         {toDeletePersons.map((person) => (
                           <div key={person.id} className={`border rounded-lg p-3 ${selectedToDelete.has(person.id) ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
                             <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium">{person.names[0] || '[ID: ' + person.id + ']'}</div>
-                                <div className="flex gap-2 mt-1">
-                                  <span className={`text-xs px-2 py-0.5 rounded ${person.reason === 'Isolé + Sans identité' ? 'bg-purple-100 text-purple-800' : person.reason === 'Totalement isolé' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}`}>{person.reason}</span>
-                                </div>
+                              <div className="flex-1">
+                                <div className="font-medium">{person.names[0] || '[Sans nom]'}</div>
+                                <div className="text-xs text-gray-500 font-mono">{person.id}</div>
                               </div>
-                              <button onClick={() => { const newSelected = new Set(selectedToDelete); if (newSelected.has(person.id)) newSelected.delete(person.id); else newSelected.add(person.id); setSelectedToDelete(newSelected); }} className={`px-2 py-1 text-sm rounded ${selectedToDelete.has(person.id) ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{selectedToDelete.has(person.id) ? '✓' : 'Sélectionner'}</button>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded ${person.reason === 'Isolé + Sans identité' ? 'bg-purple-100 text-purple-800' : person.reason === 'Totalement isolé' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}`}>{person.reason}</span>
+                                <button onClick={() => { const newSelected = new Set(selectedToDelete); if (newSelected.has(person.id)) newSelected.delete(person.id); else newSelected.add(person.id); setSelectedToDelete(newSelected); }} className={`px-2 py-1 text-sm rounded ${selectedToDelete.has(person.id) ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{selectedToDelete.has(person.id) ? '✓' : 'Sélectionner'}</button>
+                              </div>
                             </div>
+                            
+                            {/* Détails de la personne */}
+                            <div className="mt-2 pt-2 border-t border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                              <div>
+                                <span className="text-gray-500">Sexe:</span>
+                                <span className="ml-1 font-medium">{person.sex === 'M' ? '♂ Homme' : person.sex === 'F' ? '♀ Femme' : '? Inconnu'}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Naissance:</span>
+                                <span className="ml-1 font-medium">{person.birth || '-'}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Décès:</span>
+                                <span className="ml-1 font-medium">{person.death || '-'}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Profession:</span>
+                                <span className="ml-1 font-medium">{person.occupation || '-'}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Relations - Avertissements */}
+                            <div className="mt-2 pt-2 border-t border-gray-100 space-y-1 text-xs">
+                              {/* Parents */}
+                              <div className={`flex items-start gap-1 ${person.hasParents ? 'text-amber-700 bg-amber-50 p-1 rounded' : 'text-gray-400'}`}>
+                                <span className="font-medium min-w-[70px]">👨‍👩 Parents:</span>
+                                {person.hasParents ? (
+                                  <span className="flex-1">
+                                    <span className="font-medium">⚠️ </span>
+                                    {person.parentIds.map(pid => getPersonName(pid)).join(', ')}
+                                  </span>
+                                ) : (
+                                  <span>Aucun</span>
+                                )}
+                              </div>
+                              
+                              {/* Conjoints */}
+                              <div className={`flex items-start gap-1 ${person.hasSpouses ? 'text-amber-700 bg-amber-50 p-1 rounded' : 'text-gray-400'}`}>
+                                <span className="font-medium min-w-[70px]">💑 Conjoints:</span>
+                                {person.hasSpouses ? (
+                                  <span className="flex-1">
+                                    <span className="font-medium">⚠️ </span>
+                                    {person.spouseIds.map(sid => getPersonName(sid)).join(', ')}
+                                  </span>
+                                ) : (
+                                  <span>Aucun</span>
+                                )}
+                              </div>
+                              
+                              {/* Enfants */}
+                              <div className={`flex items-start gap-1 ${person.hasChildren ? 'text-amber-700 bg-amber-50 p-1 rounded' : 'text-gray-400'}`}>
+                                <span className="font-medium min-w-[70px]">👶 Enfants:</span>
+                                {person.hasChildren ? (
+                                  <span className="flex-1">
+                                    <span className="font-medium">⚠️ </span>
+                                    {person.childrenIds.map(cid => getPersonName(cid)).join(', ')}
+                                  </span>
+                                ) : (
+                                  <span>Aucun</span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Message d'avertissement si relations */}
+                            {(person.hasParents || person.hasSpouses || person.hasChildren) && (
+                              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                                ⚠️ <strong>Attention:</strong> Cette personne a des relations familiales. La supprimer créera des références orphelines.
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

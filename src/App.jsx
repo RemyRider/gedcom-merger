@@ -40,12 +40,15 @@ const GedcomDuplicateMerger = () => {
         'NOUVEAU: rawLines[] stocke TOUTES les lignes GEDCOM originales par personne',
         'NOUVEAU: rawLinesByTag{} indexe les lignes par tag (SOUR, NOTE, OBJE, EVEN...)',
         'NOUVEAU: Fusion SOUR/NOTE/OBJE combine les sources des 2 personnes',
-        'NOUVEAU: Les tags inconnus (_TAG, EVEN, etc.) sont préservés',
+        'NOUVEAU: 18 critères de comparaison (vs 11 avant) - ajout baptême, inhumation, résidence, titre, religion',
+        'NOUVEAU: Affichage systématique des 16 champs dans la prévisualisation',
+        'NOUVEAU: Contrôles intégrité AVANT fusion (sexe, écart dates, lieux)',
+        'NOUVEAU: Contrôles intégrité AVANT suppression (enfants, conjoints, références)',
         'CORRECTION: Comparaison parents/conjoints/enfants par NOM si IDs différents',
-        'AMÉLIORATION: Score 100% quand toutes données comparables sont identiques',
-        'AMÉLIORATION: generateMergedIndiLines utilise rawLines → zéro perte',
-        'Base solide pour Phase 2 (choix meilleure valeur, conflits)',
-        '295 tests (22 niveaux + 6 bonus)'
+        'CORRECTION: Score 100% quand toutes données comparables sont identiques',
+        'CORRECTION: Sélection clusters ajoute les paires pour fusion effective',
+        'SUPPRESSION: Encart "Nouveauté v1.9.3" sur la page d\'accueil',
+        '325 tests (7 catégories)'
       ]
     },
     {
@@ -866,9 +869,23 @@ const GedcomDuplicateMerger = () => {
   const getClusterAverageScore = (cluster) => cluster.avgScore || 0;
   const getFilteredClusters = () => clusters.filter(cluster => getClusterAverageScore(cluster) >= clusterScoreFilter);
   const autoSelectHighConfidenceClusters = () => {
-    const newSelected = new Set();
-    clusters.forEach((cluster, idx) => { if (getClusterAverageScore(cluster) >= clusterScoreFilter) newSelected.add(idx); });
-    setSelectedClusters(newSelected);
+    const newSelectedClusters = new Set();
+    const newSelectedPairs = new Set(selectedPairs);
+    
+    clusters.forEach((cluster, idx) => {
+      if (getClusterAverageScore(cluster) >= clusterScoreFilter) {
+        newSelectedClusters.add(idx);
+        // Ajouter toutes les paires de doublons qui font partie de ce cluster
+        duplicates.forEach(dup => {
+          if (cluster.ids.includes(dup.person1.id) && cluster.ids.includes(dup.person2.id)) {
+            newSelectedPairs.add(dup.id);
+          }
+        });
+      }
+    });
+    
+    setSelectedClusters(newSelectedClusters);
+    setSelectedPairs(newSelectedPairs);
   };
   const selectCluster = (clusterIds) => {
     const newSelected = new Set(selectedPairs);
@@ -1132,6 +1149,67 @@ const GedcomDuplicateMerger = () => {
 
   const handleMerge = () => {
     if (selectedPairs.size === 0) return;
+    
+    // CONTRÔLES D'INTÉGRITÉ PRÉ-FUSION
+    const warnings = [];
+    const errors = [];
+    
+    duplicates.forEach(pair => {
+      if (!selectedPairs.has(pair.id)) return;
+      
+      const p1 = pair.person1, p2 = pair.person2;
+      
+      // Erreur: même personne
+      if (p1.id === p2.id) {
+        errors.push(`Impossible de fusionner ${p1.names[0] || p1.id} avec lui-même`);
+        return;
+      }
+      
+      // Erreur: sexes différents
+      if (p1.sex && p2.sex && p1.sex !== p2.sex) {
+        errors.push(`Sexes incompatibles: ${p1.names[0]} (${p1.sex}) ≠ ${p2.names[0]} (${p2.sex})`);
+      }
+      
+      // Warning: dates de naissance très différentes
+      if (p1.birth && p2.birth) {
+        const y1 = p1.birth.match(/\d{4}/)?.[0], y2 = p2.birth.match(/\d{4}/)?.[0];
+        if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 5) {
+          warnings.push(`Écart naissance >5 ans: ${p1.names[0]} (${y1}) vs ${p2.names[0]} (${y2})`);
+        }
+      }
+      
+      // Warning: lieux de naissance différents
+      if (p1.birthPlace && p2.birthPlace && 
+          normalizePlace(p1.birthPlace).toLowerCase() !== normalizePlace(p2.birthPlace).toLowerCase()) {
+        warnings.push(`Lieux naissance différents: ${p1.names[0]} - "${p1.birthPlace}" vs "${p2.birthPlace}"`);
+      }
+      
+      // Warning: dates de décès très différentes
+      if (p1.death && p2.death) {
+        const dy1 = p1.death.match(/\d{4}/)?.[0], dy2 = p2.death.match(/\d{4}/)?.[0];
+        if (dy1 && dy2 && Math.abs(parseInt(dy1) - parseInt(dy2)) > 5) {
+          warnings.push(`Écart décès >5 ans: ${p1.names[0]} (${dy1}) vs ${p2.names[0]} (${dy2})`);
+        }
+      }
+    });
+    
+    // Bloquer si erreurs critiques
+    if (errors.length > 0) {
+      alert('❌ ERREURS BLOQUANTES:\n\n' + errors.join('\n') + '\n\nFusion annulée.');
+      return;
+    }
+    
+    // Demander confirmation si warnings
+    if (warnings.length > 0) {
+      const proceed = window.confirm(
+        '⚠️ ATTENTION - ' + warnings.length + ' avertissement(s):\n\n' + 
+        warnings.slice(0, 5).join('\n') + 
+        (warnings.length > 5 ? '\n... et ' + (warnings.length - 5) + ' autres' : '') +
+        '\n\nVoulez-vous continuer la fusion ?'
+      );
+      if (!proceed) return;
+    }
+    
     const idsToMerge = new Map();
     duplicates.forEach(pair => {
       if (selectedPairs.has(pair.id)) {
@@ -1154,7 +1232,46 @@ const GedcomDuplicateMerger = () => {
 
   const handleDeleteToDelete = () => {
     if (selectedToDelete.size === 0) return;
-    if (!window.confirm('⚠️ Vous allez SUPPRIMER définitivement ' + selectedToDelete.size + ' individu(s) de votre arbre.\n\nCette action est irréversible. Continuer ?')) return;
+    
+    // CONTRÔLES D'INTÉGRITÉ PRÉ-SUPPRESSION
+    const warnings = [];
+    
+    toDeletePersons.forEach(person => {
+      if (!selectedToDelete.has(person.id)) return;
+      
+      // Warning: personne avec des enfants
+      if (person.children && person.children.length > 0) {
+        warnings.push(`${person.names[0] || person.id} a ${person.children.length} enfant(s) - ils perdront leur lien parental`);
+      }
+      
+      // Warning: personne avec conjoints
+      if (person.spouses && person.spouses.length > 0) {
+        warnings.push(`${person.names[0] || person.id} a ${person.spouses.length} conjoint(s) - ils perdront leur lien conjugal`);
+      }
+      
+      // Warning: personne référencée comme parent par d'autres
+      const referencedBy = individuals.filter(ind => 
+        ind.parents.includes(person.id) && !selectedToDelete.has(ind.id)
+      );
+      if (referencedBy.length > 0) {
+        warnings.push(`${person.names[0] || person.id} est parent de ${referencedBy.length} personne(s) non supprimée(s)`);
+      }
+    });
+    
+    // Message de confirmation enrichi
+    let confirmMessage = '⚠️ Vous allez SUPPRIMER définitivement ' + selectedToDelete.size + ' individu(s) de votre arbre.';
+    
+    if (warnings.length > 0) {
+      confirmMessage += '\n\n🔶 AVERTISSEMENTS:\n' + warnings.slice(0, 5).join('\n');
+      if (warnings.length > 5) {
+        confirmMessage += '\n... et ' + (warnings.length - 5) + ' autres avertissements';
+      }
+    }
+    
+    confirmMessage += '\n\nCette action est irréversible. Continuer ?';
+    
+    if (!window.confirm(confirmMessage)) return;
+    
     setMergedIds(new Map());
     setValidationResults({ totalIndividuals: individuals.length, mergedCount: 0, deletedCount: selectedToDelete.size, remainingCount: individuals.length - selectedToDelete.size });
     setStep('merged');

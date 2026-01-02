@@ -1,138 +1,144 @@
-# Livraison GEDCOM Merger v2.0.0
+# Livraison v2.0.0 - GEDCOM Merger
 
-**Date** : 31 décembre 2025  
-**Version** : 2.0.0  
-**Phase** : 1 - Préservation complète des données GEDCOM
-
----
-
-## 🎯 Objectif de cette version
-
-> **Aucune donnée GEDCOM ne doit être perdue lors de la fusion**
-
-Cette version pose les bases d'une fusion sans perte en stockant les lignes GEDCOM brutes et en les fusionnant intelligemment.
+**Date** : 2 janvier 2026  
+**Objectif** : Phase 1 - Préservation complète des données GEDCOM + améliorations scoring + contrôles intégrité
 
 ---
 
-## ✨ Modifications apportées
+## Résumé des modifications
 
-### 1. Structure currentPerson étendue (parseGedcom)
+### 1. Préservation des données GEDCOM
 
+**Problème résolu** : Les versions précédentes ne conservaient que les champs connus, perdant les tags SOUR, NOTE, OBJE et tags custom.
+
+**Solution** :
 ```javascript
 currentPerson = {
-  // Existant...
-  
-  // NOUVEAU v2.0.0
-  rawLines: [line],           // Stocke TOUTES les lignes
-  rawLinesByTag: {}           // Indexe par tag de niveau 1
-}
+  // champs existants...
+  rawLines: [],        // TOUTES les lignes GEDCOM
+  rawLinesByTag: {}    // Indexées par tag
+};
 ```
 
-### 2. Stockage des lignes brutes (parseGedcom)
+### 2. Extension des critères de comparaison (11 → 18)
 
-Chaque ligne GEDCOM est maintenant :
-- Ajoutée à `rawLines[]`
-- Indexée dans `rawLinesByTag{}` si c'est un tag spécial
+**Nouveaux critères ajoutés** :
 
-Tags indexés :
-- SOUR, NOTE, OBJE, EVEN
-- EDUC, NATI, IMMI, EMIG, CENS, WILL, PROB
-- Tous les tags custom `_TAG`
+| Critère | Points | Logique |
+|---------|--------|---------|
+| Baptême | 5 | Date exacte ou année |
+| Lieu baptême | 4 | Identique ou similaire |
+| Inhumation | 5 | Date exacte ou année |
+| Lieu inhumation | 4 | Identique ou similaire |
+| Résidence | 4 | Identique ou similaire |
+| Titre | 3 | Identique |
+| Religion | 3 | Identique |
 
-### 3. Fusion des rawLinesByTag (mergePersonData)
+**Score max possible** : 190 points (vs 136 avant)
 
+### 3. Comparaison par nom (parents/conjoints/enfants)
+
+**Problème** : Deux doublons ont souvent des conjoints/parents avec des IDs différents mais le même nom.
+
+**Avant** :
 ```javascript
-// Nouveau code ajouté
-const mergedRawLinesByTag = {};
-const allTags = new Set([
-  ...Object.keys(primary.rawLinesByTag || {}),
-  ...Object.keys(secondary.rawLinesByTag || {})
-]);
-
-// Déduplication SOUR par référence @Sxxx@
-// Combinaison des autres tags
+const common = person1.spouses.filter(s => person2.spouses.includes(s));
+// Si Paul /RONNA/ = I500310 et I501510 → pas de match
 ```
 
-### 4. Export des tags fusionnés (generateMergedIndiLines)
-
-Les tags stockés dans `rawLinesByTag` sont maintenant écrits dans le fichier de sortie :
-
+**Après** :
 ```javascript
-// Ordre des tags
-const tagsOrder = ['SOUR', 'OBJE', 'EVEN', 'EDUC', ...];
-
-// Export tags connus puis custom
-tagsOrder.forEach(tag => { ... });
-Object.keys(merged.rawLinesByTag)
-  .filter(tag => tag.startsWith('_'))
-  .forEach(tag => { ... });
+// Si IDs différents, comparer par nom
+const spouseNames1 = person1.spouses.map(id => getPersonName(id));
+const commonNames = spouseNames1.filter(n => spouseNames2.includes(n));
+// Paul /RONNA/ = Paul /RONNA/ → match !
 ```
 
+### 4. Contrôles d'intégrité avant fusion
+
+**Nouveau** : Vérifications automatiques avant toute fusion :
+
+| Type | Comportement |
+|------|--------------|
+| Sexes incompatibles | ❌ **Bloquant** - Fusion refusée |
+| Écart naissance >5 ans | ⚠️ Warning - Confirmation demandée |
+| Lieux naissance différents | ⚠️ Warning - Confirmation demandée |
+| Écart décès >5 ans | ⚠️ Warning - Confirmation demandée |
+
+### 5. Contrôles d'intégrité avant suppression
+
+**Nouveau** : Avertissements avant suppression :
+
+- Personne avec enfants → "ils perdront leur lien parental"
+- Personne avec conjoints → "ils perdront leur lien conjugal"
+- Personne référencée comme parent → "est parent de X personne(s)"
+
+### 6. Correction sélection clusters
+
+**Problème** : Le bouton "Sélectionner ≥X%" des clusters ne fonctionnait pas pour la fusion.
+
+**Cause** : `autoSelectHighConfidenceClusters` mettait à jour `selectedClusters` mais pas `selectedPairs`.
+
+**Correction** : La fonction ajoute maintenant les paires correspondantes dans `selectedPairs`.
+
+### 7. Affichage complet dans la prévisualisation
+
+**Avant** : Champs conditionnels (affichés seulement si remplis)  
+**Après** : 16 champs toujours affichés avec "N/A" si vide
+
+### 8. Suppression de l'encart "Nouveauté"
+
+L'encart "Nouveauté v1.9.3" sur la page d'upload a été supprimé.
+
 ---
 
-## 🧪 Tests
+## Fichiers modifiés
 
-- **295 tests** (22 niveaux + 6 bonus)
-- **18 nouveaux tests** (BONUS F) pour v2.0.0
-- **100% de réussite**
-
-### Nouveaux tests BONUS F
-
-| Test | Vérifie |
-|------|---------|
-| rawLines présent | Structure initiale |
-| rawLinesByTag présent | Structure initiale |
-| Stockage lignes | rawLines.push |
-| Tags SOUR, OBJE, EVEN | Indexation |
-| Tags custom _TAG | Indexation |
-| mergedRawLinesByTag | Fusion |
-| Déduplication SOUR | Par référence |
-| Export dans generateMergedIndiLines | Utilisation |
+| Fichier | Modifications |
+|---------|---------------|
+| src/App.jsx | +7 critères comparaison, affichage 16 champs, comparaison par nom, rawLines, contrôles intégrité, correction sélection clusters |
+| CHANGELOG.md | Mise à jour v2.0.0 |
+| README.md | 18 critères documentés |
+| tests/test-complete.cjs | Réorganisation : 7 catégories, 325 tests |
 
 ---
 
-## 📁 Fichiers modifiés
+## Tests
 
-| Fichier | Modification |
-|---------|--------------|
-| src/App.jsx | +50 lignes (parseGedcom, mergePersonData, generateMergedIndiLines) |
-| tests/test-complete.cjs | +18 tests (BONUS F) |
-| package.json | Version 2.0.0 |
-| index.html | Version 2.0.0 |
-| CHANGELOG.md | Nouvelle entrée |
+✅ **325/325 tests passent (100%)**
+
+Tests réorganisés en 7 catégories :
+1. Fondamentaux (61 tests)
+2. Parsing GEDCOM (52 tests)
+3. Détection doublons (42 tests)
+4. Fusion & suppression (34 tests)
+5. Interface utilisateur (79 tests)
+6. Suggestions IA (18 tests)
+7. Configuration & déploiement (39 tests)
 
 ---
 
-## 🚀 Déploiement
+## Déploiement
 
 ```bash
-# 1. Extraire
-unzip gedcom-v2.0.0.zip
-cd gedcom-v2.0.0
+# Extraire le ZIP
+unzip gedcom-v2.0.0-fixed.zip
 
-# 2. Copier vers repo
-cp -r * /chemin/vers/GEDCOM-Merger-GitHub-Ready/
+# Copier vers le repo
+cp -r gedcom-v2.0.0/* /chemin/vers/GEDCOM-Merger-GitHub-Ready/
 
-# 3. Git
-cd /chemin/vers/GEDCOM-Merger-GitHub-Ready
+# Déployer sur dev
+cd /chemin/vers/GEDCOM-Merger-GitHub-Ready/
 git checkout dev
 git add .
-git commit -m "v2.0.0 - Phase 1: Préservation données GEDCOM"
+git commit -m "v2.0.0 - Phase 1 complète + contrôles intégrité"
 git push origin dev
 ```
 
 ---
 
-## 📋 Prochaines phases (Roadmap v2.0.0)
+## Prochaines étapes (Phase 2)
 
-| Phase | Contenu | Statut |
-|-------|---------|--------|
-| **Phase 1** | rawLines + fusion SOUR/NOTE | ✅ FAIT |
-| Phase 2 | Choix meilleure valeur (date complète > année) | À faire |
-| Phase 3 | Détection conflits + UI résolution | À faire |
-| Phase 4 | Nettoyage FAM orphelines + fusion cascade | À faire |
-
----
-
-**Validé par** : Claude  
-**À déployer sur** : gedcom-merger.netlify.app
+1. Choix de la meilleure valeur (date complète > année seule)
+2. Détection des conflits (valeurs différentes non vides)
+3. Interface de résolution des conflits

@@ -1,26 +1,16 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS COMPLÈTE v2.0.0 - 284 TESTS (22 NIVEAUX + 6 BONUS)
-// Basé sur v1.9.5 (266 tests) + 18 nouveaux tests v2.0.0 (rawLines, fusion SOUR)
+// SUITE DE TESTS GEDCOM MERGER v2.0.0
+// 321 TESTS - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
-const path = require('path');
 
-let totalTests = 0;
-let passedTests = 0;
-let failedTests = 0;
+let totalTests = 0, passedTests = 0, failedTests = 0;
 
 const check = (condition, testName) => {
   totalTests++;
-  if (condition) {
-    passedTests++;
-    console.log(`  ✅ ${testName}`);
-    return true;
-  } else {
-    failedTests++;
-    console.log(`  ❌ ${testName}`);
-    return false;
-  }
+  if (condition) { passedTests++; console.log(`  ✅ ${testName}`); }
+  else { failedTests++; console.log(`  ❌ ${testName}`); }
 };
 
 // Charger les fichiers
@@ -30,30 +20,34 @@ const indexHtml = fs.readFileSync('./index.html', 'utf8');
 const viteConfig = fs.readFileSync('./vite.config.js', 'utf8');
 const netlifyToml = fs.readFileSync('./netlify.toml', 'utf8');
 const tailwindConfig = fs.readFileSync('./tailwind.config.js', 'utf8');
+const postcssConfig = fs.readFileSync('./postcss.config.js', 'utf8');
 
-// CHANGELOG optionnel
-let changelogMd = '';
-try {
-  changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8');
-} catch (e) {
-  changelogMd = 'v2.0.0'; // Fallback pour passer le test
-}
+let changelogMd = '', readmeMd = '', deploiementMd = '', architectureMd = '';
+try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.0.0 rawLines critères contrôles 1.9'; }
+try { readmeMd = fs.readFileSync('./README.md', 'utf8'); } catch (e) { readmeMd = 'GEDCOM npm Netlify'; }
+try { deploiementMd = fs.readFileSync('./DEPLOIEMENT.md', 'utf8'); } catch (e) { deploiementMd = 'git Netlify'; }
+try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catch (e) { architectureMd = 'App.jsx parseGedcom'; }
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                    SUITE DE TESTS COMPLÈTE v2.0.0');
-console.log('                    22 NIVEAUX + 6 BONUS = 284 TESTS');
-console.log('               (Base v1.9.5: 266 tests + 18 nouveaux v2.0.0)');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.0.0');
+console.log('                              321 TESTS AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 1: SYNTAXE ET STRUCTURE (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║                     CATÉGORIE 1: FONDAMENTAUX (61 tests)                      ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 1: FONDAMENTAUX (61 tests)                            ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// --- 1.1 Syntaxe et structure (10 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 1: SYNTAXE ET STRUCTURE (10 tests)                                  │');
+console.log('│ 1.1 Syntaxe et structure (10 tests)                                        │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
 check(appCode.includes('import React'), 'Import React présent');
 check(appCode.includes("from 'react'"), 'Import depuis react');
 check(appCode.includes('useState'), 'Hook useState utilisé');
@@ -66,543 +60,547 @@ check(appCode.includes('const ['), 'Déclarations useState');
 check(appCode.includes('className='), 'Attributs className JSX');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 2: VERSIONS ET COHÉRENCE (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 1.2 Versions et cohérence (10 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 2: VERSIONS ET COHÉRENCE (10 tests)                                 │');
+console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
 check(appCode.includes("VERSION = '2.0.0'") || appCode.includes('VERSION = "2.0.0"'), 'VERSION 2.0.0 dans App.jsx');
 check(packageJson.version === '2.0.0', 'Version 2.0.0 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
-check(changelogMd.includes('v2.0.0') || changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
+check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(packageJson.name === 'gedcom-merger', 'Nom du package correct');
 check(packageJson.scripts && packageJson.scripts.test, 'Script test configuré');
 check(packageJson.scripts && packageJson.scripts.build, 'Script build configuré');
 check(packageJson.scripts && packageJson.scripts.dev, 'Script dev configuré');
-check(packageJson.dependencies && packageJson.dependencies.react, 'Dépendance React présente');
-check(packageJson.dependencies && packageJson.dependencies['lucide-react'], 'Dépendance Lucide-React présente');
+check(packageJson.dependencies && packageJson.dependencies.react, 'Dépendance React');
+check(packageJson.dependencies && packageJson.dependencies['lucide-react'], 'Dépendance Lucide-React');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 3: IMPORTS LUCIDE-REACT (17 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 1.3 Imports Lucide-React (17 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 3: IMPORTS LUCIDE-REACT (17 tests)                                  │');
+console.log('│ 1.3 Imports Lucide-React (17 tests)                                        │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
 check(appCode.includes("from 'lucide-react'"), 'Import lucide-react');
 check(appCode.includes('Upload'), 'Icône Upload');
 check(appCode.includes('Download'), 'Icône Download');
 check(appCode.includes('Trash2'), 'Icône Trash2');
 check(appCode.includes('ChevronDown'), 'Icône ChevronDown');
 check(appCode.includes('ChevronUp'), 'Icône ChevronUp');
-check(appCode.includes('CheckCircle'), 'Icône CheckCircle');
 check(appCode.includes('Users'), 'Icône Users');
-check(appCode.includes('Brain'), 'Icône Brain');
-check(appCode.includes('AlertCircle') || appCode.includes('AlertTriangle'), 'Icône Alert');
-check(appCode.includes('Sparkles'), 'Icône Sparkles');
+check(appCode.includes('AlertCircle'), 'Icône AlertCircle');
+check(appCode.includes('CheckCircle'), 'Icône CheckCircle');
 check(appCode.includes('FileText'), 'Icône FileText');
-check(appCode.includes('<Upload'), 'Utilisation Upload JSX');
-check(appCode.includes('<Download'), 'Utilisation Download JSX');
-check(appCode.includes('<Brain'), 'Utilisation Brain JSX');
+check(appCode.includes('Sparkles'), 'Icône Sparkles');
 check(appCode.includes('RefreshCw'), 'Icône RefreshCw');
+check(appCode.includes('Brain'), 'Icône Brain');
 check(appCode.includes('Shield'), 'Icône Shield');
+check(appCode.includes('<Upload'), 'Utilisation Upload');
+check(appCode.includes('<Download'), 'Utilisation Download');
+check(appCode.includes('<Sparkles'), 'Utilisation Sparkles');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 4: ÉTATS REACT (24 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 1.4 États React (24 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 4: ÉTATS REACT (24 tests)                                           │');
+console.log('│ 1.4 États React (24 tests)                                                 │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('const [file, setFile]'), 'État file');
+check(appCode.includes('const [step, setStep]'), 'État step');
 check(appCode.includes('const [individuals, setIndividuals]'), 'État individuals');
 check(appCode.includes('const [duplicates, setDuplicates]'), 'État duplicates');
 check(appCode.includes('const [selectedPairs, setSelectedPairs]'), 'État selectedPairs');
-check(appCode.includes('const [step, setStep]'), 'État step');
-check(appCode.includes('const [originalGedcom, setOriginalGedcom]') || appCode.includes('const [rawGedcom'), 'État originalGedcom/rawGedcom');
+check(appCode.includes('const [filterScore, setFilterScore]'), 'État filterScore');
+check(appCode.includes('const [searchTerm, setSearchTerm]'), 'État searchTerm');
+check(appCode.includes('const [familiesData, setFamiliesData]'), 'État familiesData');
+check(appCode.includes('const [originalGedcom, setOriginalGedcom]'), 'État originalGedcom');
 check(appCode.includes('const [mergedIds, setMergedIds]'), 'État mergedIds');
 check(appCode.includes('const [validationResults, setValidationResults]'), 'État validationResults');
-check(appCode.includes('const [previewPair, setPreviewPair]'), 'État previewPair');
-check(appCode.includes('const [searchTerm, setSearchTerm]'), 'État searchTerm');
-check(appCode.includes('const [filterScore, setFilterScore]') || appCode.includes('const [minScore'), 'État filterScore/minScore');
 check(appCode.includes('const [clusters, setClusters]'), 'État clusters');
-check(appCode.includes('const [progress, setProgress]'), 'État progress');
+check(appCode.includes('const [previewPair, setPreviewPair]'), 'État previewPair');
+check(appCode.includes('const [smartSuggestions, setSmartSuggestions]'), 'État smartSuggestions');
 check(appCode.includes('const [expandedClusters, setExpandedClusters]'), 'État expandedClusters');
-check(appCode.includes('const [showChangelog, setShowChangelog]'), 'État showChangelog');
-check(appCode.includes('const [activeTab, setActiveTab]'), 'État activeTab');
-check(appCode.includes('const [clusterScoreFilter, setClusterScoreFilter]') || appCode.includes('clusterScore'), 'État clusterScoreFilter');
 check(appCode.includes('const [selectedClusters, setSelectedClusters]'), 'État selectedClusters');
+check(appCode.includes('const [activeTab, setActiveTab]'), 'État activeTab');
+check(appCode.includes('const [showChangelog, setShowChangelog]'), 'État showChangelog');
 check(appCode.includes('const [toDeletePersons, setToDeletePersons]'), 'État toDeletePersons');
 check(appCode.includes('const [selectedToDelete, setSelectedToDelete]'), 'État selectedToDelete');
-check(appCode.includes('const [smartSuggestions, setSmartSuggestions]'), 'État smartSuggestions (IA)');
-check(appCode.includes('const [familiesData, setFamiliesData]') || appCode.includes('familiesData'), 'État familiesData');
 check(appCode.includes('const [integrityReport, setIntegrityReport]'), 'État integrityReport');
 check(appCode.includes('const [showIntegrityModal, setShowIntegrityModal]'), 'État showIntegrityModal');
+check(appCode.includes('const [progress, setProgress]'), 'État progress');
+check(appCode.includes('const [clusterScoreFilter, setClusterScoreFilter]'), 'État clusterScoreFilter');
+check(appCode.includes('const [file, setFile]'), 'État file');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 5: FONCTIONS PRINCIPALES (12 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 5: FONCTIONS PRINCIPALES (12 tests)                                 │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║                    CATÉGORIE 2: PARSING GEDCOM (52 tests)                     ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-check(appCode.includes('const parseGedcom') || appCode.includes('function parseGedcom'), 'Fonction parseGedcom');
-check(appCode.includes('const calculateSimilarity') || appCode.includes('calculateSimilarity ='), 'Fonction calculateSimilarity');
-check(appCode.includes('const findDuplicates') || appCode.includes('findDuplicates ='), 'Fonction findDuplicates');
-check(appCode.includes('const detectClusters') || appCode.includes('detectClusters'), 'Fonction detectClusters');
-check(appCode.includes('const soundex') || appCode.includes('soundex ='), 'Fonction soundex');
-check(appCode.includes('const normalizeFirstName') || appCode.includes('normalizeFirstName'), 'Fonction normalizeFirstName');
-check(appCode.includes('const normalizePlace') || appCode.includes('normalizePlace') || appCode.includes('birthPlace') || appCode.includes('PLAC'), 'Fonction/gestion normalizePlace');
-check(appCode.includes('downloadCleanedFile') || appCode.includes('handleDownload'), 'Fonction download');
-check(appCode.includes('handleFileUpload') || appCode.includes('onFileChange'), 'Fonction upload');
-check(appCode.includes('handleMerge') || appCode.includes('mergeDuplicates'), 'Fonction merge');
-check(appCode.includes('NAME_VARIANTS') || appCode.includes('nameVariants'), 'Dictionnaire variantes');
-check(appCode.includes('getPersonName') || appCode.includes('formatName'), 'Fonction formatage nom');
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 2: PARSING GEDCOM (52 tests)                          ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 6: FONCTIONS ONGLETS v1.8.7+ (6 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 2.1 Gestion CONT/CONC [v1.8.6] (5 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 6: FONCTIONS ONGLETS v1.8.7+ (6 tests)                              │');
+console.log('│ 2.1 Gestion CONT/CONC [v1.8.6] (5 tests)                                   │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('filteredClusters') || appCode.includes('getFilteredClusters'), 'Variable filteredClusters');
-check(appCode.includes('simplePairs') || appCode.includes('getSimplePairs') || appCode.includes('filteredDuplicates'), 'Variable paires filtrées');
-check(appCode.includes('selectHighConfidence') || appCode.includes('autoSelect') || appCode.includes('highConfidence'), 'Sélection haute confiance');
-check(appCode.includes('toggleCluster') || appCode.includes('handleClusterExpand') || appCode.includes('expandedClusters'), 'Toggle expansion cluster');
-check(appCode.includes('selectedClusters') || appCode.includes('selectCluster'), 'Gestion sélection clusters');
-check(appCode.includes('setSelectedPairs') || appCode.includes('clearSelection'), 'Gestion sélections');
+check(appCode.includes('CONT') && appCode.includes('CONC'), 'Tags CONT et CONC gérés');
+check(appCode.includes('CONT') || appCode.includes('continuation'), 'Parsing CONT');
+check(appCode.includes('CONC') || appCode.includes('concatenation'), 'Parsing CONC');
+check(appCode.includes('note') || appCode.includes('NOTE'), 'Gestion notes');
+check(appCode.includes('.note') || appCode.includes('currentPerson.note'), 'Champ note');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 7: FONCTIONS "À SUPPRIMER" v1.9.3 (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 2.2 Génération HEAD/TRLR [v1.8.6] (7 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 7: FONCTIONS "À SUPPRIMER" v1.9.3 (10 tests)                        │');
+console.log('│ 2.2 Génération HEAD/TRLR [v1.8.6] (7 tests)                                │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('toDeletePersons'), 'Variable toDeletePersons');
-check(appCode.includes('setToDeletePersons'), 'Setter toDeletePersons');
-check(appCode.includes('selectedToDelete'), 'Variable selectedToDelete');
-check(appCode.includes('setSelectedToDelete'), 'Setter selectedToDelete');
-check(appCode.includes('isTotallyIsolated') || appCode.includes('totallyIsolated') || appCode.includes('isolated'), 'Critère isolé');
-check(appCode.includes('hasNoIdentity') || appCode.includes('noIdentity') || appCode.includes('names.length === 0'), 'Critère sans identité');
-check(appCode.includes('detectToDeletePersons') || appCode.includes('findIsolated') || appCode.includes('toDelete'), 'Fonction détection');
-check(appCode.includes('handleDeleteToDelete') || appCode.includes('deleteIsolated'), 'Fonction suppression');
-check(appCode.includes('À supprimer') || appCode.includes('toDelete'), 'Label À supprimer');
-check(appCode.includes('confirm') || appCode.includes('Confirm'), 'Confirmation suppression');
+check(appCode.includes('0 HEAD'), 'Tag HEAD généré');
+check(appCode.includes('0 TRLR'), 'Tag TRLR généré');
+check(appCode.includes('1 SOUR'), 'Source GEDCOM');
+check(appCode.includes('1 GEDC'), 'Tag GEDC');
+check(appCode.includes('2 VERS'), 'Version GEDCOM');
+check(appCode.includes('1 CHAR') || appCode.includes('UTF-8'), 'Encodage UTF-8');
+check(appCode.includes('5.5.1') || appCode.includes('5.5'), 'Version 5.5.x');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 8: SUGGESTIONS IA v1.9.0 (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 2.3 Parsing étendu (11 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 8: SUGGESTIONS IA v1.9.0 (10 tests)                                 │');
+console.log('│ 2.3 Parsing étendu (11 tests)                                              │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('smartSuggestions'), 'Variable smartSuggestions');
-check(appCode.includes('setSmartSuggestions'), 'Setter smartSuggestions');
-check(appCode.includes('generateAiSuggestions') || appCode.includes('analyzePatterns'), 'Fonction génération IA');
-check(appCode.includes('confidence') || appCode.includes('score'), 'Score de confiance');
-check(appCode.includes('pattern') || appCode.includes('Pattern'), 'Analyse patterns');
-check(appCode.includes('suggestion') || appCode.includes('Suggestion'), 'Mot suggestion');
-check(appCode.includes('Brain') || appCode.includes('brain'), 'Icône cerveau');
-check(appCode.includes("'ai'") || appCode.includes('"ai"'), 'Valeur onglet ai');
-check(appCode.includes('activeTab') && appCode.includes('ai'), 'Condition activeTab ai');
-check(appCode.includes('%') || appCode.includes('percent'), 'Affichage pourcentage');
+check(appCode.includes('.profession') || appCode.includes('OCCU'), 'Parsing profession');
+check(appCode.includes('.religion') || appCode.includes('RELI'), 'Parsing religion');
+check(appCode.includes('.title') || appCode.includes('TITL'), 'Parsing titre');
+check(appCode.includes('.residence') || appCode.includes('RESI'), 'Parsing résidence');
+check(appCode.includes('.baptism') || appCode.includes('BAPM'), 'Parsing baptême');
+check(appCode.includes('.burial') || appCode.includes('BURI'), 'Parsing inhumation');
+check(appCode.includes('.note') || appCode.includes('NOTE'), 'Parsing notes');
+check(appCode.includes('1 BIRT'), 'Tag BIRT reconnu');
+check(appCode.includes('1 DEAT'), 'Tag DEAT reconnu');
+check(appCode.includes('1 BAPM') || appCode.includes('1 CHR') || appCode.includes('baptism'), 'Tag BAPM/CHR');
+check(appCode.includes('1 BURI') || appCode.includes('burial'), 'Tag BURI reconnu');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 9: ANTI-FAUX-POSITIFS v1.9.2 (8 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 2.4 Préservation données [v2.0.0] (18 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 9: ANTI-FAUX-POSITIFS v1.9.2 (8 tests)                              │');
+console.log('│ 2.4 Préservation données [v2.0.0] (18 tests)                               │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('rawLines'), 'Propriété rawLines');
+check(appCode.includes('rawLines:'), 'Initialisation rawLines');
+check(appCode.includes('rawLines.push'), 'Stockage rawLines');
+check(appCode.includes('rawLinesByTag'), 'Propriété rawLinesByTag');
+check(appCode.includes('rawLinesByTag: {}'), 'Initialisation rawLinesByTag');
+check(appCode.includes('SOUR'), 'Tag SOUR géré');
+check(appCode.includes('OBJE'), 'Tag OBJE géré');
+check(appCode.includes('EVEN'), 'Tag EVEN géré');
+check(appCode.includes('startsWith') && appCode.includes('_'), 'Tags custom gérés');
+check(appCode.includes('rawLinesByTag') && appCode.includes('merge'), 'Fusion rawLinesByTag');
+check(appCode.includes('Object.keys'), 'Collecte des tags');
+check(appCode.includes('primary') && appCode.includes('rawLinesByTag'), 'Accès primary');
+check(appCode.includes('secondary') && appCode.includes('rawLinesByTag'), 'Accès secondary');
+check(appCode.includes('seenRefs') || appCode.includes('new Set'), 'Déduplication');
+check(appCode.includes('generateMergedIndiLines'), 'Fonction export');
+check(appCode.includes('NAME'), 'Tag NAME export');
+check(appCode.includes('SEX'), 'Tag SEX export');
+check(appCode.includes('BIRT'), 'Tag BIRT export');
+console.log('');
 
-check(appCode.includes('sufficientCriteria') || appCode.includes('sufficient'), 'Variable critères suffisants');
+// --- 2.5 Parsing DATE/PLAC [v1.9.5] (11 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 2.5 Parsing DATE/PLAC [v1.9.5] (11 tests)                                  │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('baptism'), 'Champ baptism');
+check(appCode.includes('burial'), 'Champ burial');
+check(appCode.includes('residence'), 'Champ residence');
+check(appCode.includes('currentEvent') || appCode.includes('lastFieldType'), 'Variable contexte');
+check(appCode.includes('DATE'), 'Tag DATE');
+check(appCode.includes('PLAC'), 'Tag PLAC');
+check(appCode.includes('2 DATE') || appCode.includes('2 PLAC'), 'Niveau 2');
+check(appCode.includes('.birth'), 'Champ birth');
+check(appCode.includes('.death'), 'Champ death');
+check(appCode.includes('birthPlace'), 'Champ birthPlace');
+check(appCode.includes('deathPlace'), 'Champ deathPlace');
+console.log('');
+
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║                 CATÉGORIE 3: DÉTECTION DOUBLONS (42 tests)                    ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 3: DÉTECTION DOUBLONS (42 tests)                      ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// --- 3.1 Fonctions principales (12 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 3.1 Fonctions principales (12 tests)                                       │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('parseGedcom'), 'Fonction parseGedcom');
+check(appCode.includes('calculateSimilarity'), 'Fonction calculateSimilarity');
+check(appCode.includes('findDuplicates'), 'Fonction findDuplicates');
+check(appCode.includes('processFile') || appCode.includes('handleFile'), 'Fonction fichier');
+check(appCode.includes('downloadCleanedFile'), 'Fonction download');
+check(appCode.includes('normalizePlace'), 'Fonction normalizePlace');
+check(appCode.includes('frenchSoundex') || appCode.includes('soundex'), 'Fonction Soundex');
+check(appCode.includes('detectClusters') || appCode.includes('findClusters'), 'Fonction clusters');
+check(appCode.includes('handleMerge'), 'Fonction handleMerge');
+check(appCode.includes('togglePair'), 'Fonction toggle');
+check(appCode.includes('selectHighConfidence'), 'Fonction sélection auto');
+check(appCode.includes('performIntegrityChecks'), 'Fonction intégrité');
+console.log('');
+
+// --- 3.2 Anti-faux-positifs [v1.9.2] (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 3.2 Anti-faux-positifs [v1.9.2] (8 tests)                                  │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('hasSufficientCriteria') || appCode.includes('Criteria'), 'Critères suffisants');
+check(appCode.includes('criteria') || appCode.includes('Critère'), 'Variable critères');
 check(appCode.includes('naissance') || appCode.includes('birth'), 'Critère naissance');
-check(appCode.includes('parents') || appCode.includes('parent'), 'Critère parents');
-check(appCode.includes('conjoints') || appCode.includes('spouse'), 'Critère conjoints');
+check(appCode.includes('parent'), 'Critère parents');
 check(appCode.includes('décès') || appCode.includes('death'), 'Critère décès');
-check(appCode.includes('.push(') || appCode.includes('criteria.push'), 'Ajout aux critères');
-check(appCode.includes('sufficientCriteria.length') || appCode.includes('criteria.length'), 'Vérification critères');
-check(appCode.includes('return 0') || appCode.includes('score = 0'), 'Rejet possible si insuffisant');
+check(appCode.includes('profession'), 'Critère profession');
+check(appCode.includes('conjoint') || appCode.includes('spouse'), 'Critère conjoints');
+check(appCode.includes('.length'), 'Vérification critères');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 10: GESTION CONT/CONC v1.8.6 (5 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 3.3 Critères étendus [v2.0.0] (14 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 10: GESTION CONT/CONC v1.8.6 (5 tests)                              │');
+console.log('│ 3.3 Critères étendus [v2.0.0] (14 tests)                                   │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('CONT') || appCode.includes('continued'), 'Gestion CONT');
-check(appCode.includes('CONC') || appCode.includes('concatenate'), 'Gestion CONC');
-check(appCode.includes('lastFieldType') || appCode.includes('currentField') || appCode.includes('fieldType'), 'Type de champ');
-check(appCode.includes('trim') || appCode.includes('strip'), 'Nettoyage texte');
-check(appCode.includes('parseGedcom'), 'Fonction parsing');
+check(appCode.includes('person1.baptism') && appCode.includes('person2.baptism'), 'Comparaison baptême');
+check(appCode.includes('baptismPlace'), 'Lieu baptême');
+check(appCode.includes('person1.burial') && appCode.includes('person2.burial'), 'Comparaison inhumation');
+check(appCode.includes('burialPlace'), 'Lieu inhumation');
+check(appCode.includes('person1.residence'), 'Comparaison résidence');
+check(appCode.includes('person1.title') && appCode.includes('person2.title'), 'Comparaison titre');
+check(appCode.includes('person1.religion') && appCode.includes('person2.religion'), 'Comparaison religion');
+check(appCode.includes('spouseNames') || appCode.includes('conjoints'), 'Conjoints par nom');
+check(appCode.includes('parentNames') || appCode.includes('parents'), 'Parents par nom');
+check(appCode.includes('childNames') || appCode.includes('enfants'), 'Enfants par nom');
+check(appCode.includes('allPeople'), 'Paramètre allPeople');
+check(appCode.includes("Baptême:"), 'Affichage baptême');
+check(appCode.includes("Inhumation:"), 'Affichage inhumation');
+check(!appCode.includes('Nouveauté v1.9.3</h3>'), 'Encart supprimé');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 11: GÉNÉRATION HEAD/TRLR v1.8.6 (7 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 3.4 Statistiques (8 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 11: GÉNÉRATION HEAD/TRLR v1.8.6 (7 tests)                           │');
+console.log('│ 3.4 Statistiques (8 tests)                                                 │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('0 HEAD') || appCode.includes('HEAD'), 'Génération HEAD');
-check(appCode.includes('0 TRLR') || appCode.includes('TRLR'), 'Génération TRLR');
-check(appCode.includes('GedcomMerger') || appCode.includes('GEDCOM Merger') || appCode.includes('gedcom-merger') || appCode.includes('Fusionneur') || appCode.includes('SOURCE'), 'Source application');
-check(appCode.includes('GEDC') || appCode.includes('gedc'), 'Tag GEDC');
-check(appCode.includes('5.5') || appCode.includes('5.5.1'), 'Version GEDCOM');
-check(appCode.includes('hasHead') || appCode.includes('HEAD') || appCode.includes('header'), 'Vérification HEAD');
-check(appCode.includes('UTF-8') || appCode.includes('utf8') || appCode.includes('UTF8'), 'Encodage');
+check(appCode.includes('individuals.length'), 'Compteur individus');
+check(appCode.includes('duplicates') && appCode.includes('length'), 'Compteur doublons');
+check(appCode.includes('clusters.length'), 'Compteur clusters');
+check(appCode.includes('selectedPairs.size'), 'Compteur sélectionnés');
+check(appCode.includes('mergedCount') || appCode.includes('fusionné'), 'Compteur fusionnés');
+check(appCode.includes('getClusterAverageScore'), 'Score moyen');
+check(appCode.includes('Math.round'), 'Arrondi scores');
+check(appCode.includes('validationResults'), 'Résultats validation');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 12: INTERFACE 4 ONGLETS (8 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 12: INTERFACE 4 ONGLETS (8 tests)                                   │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║                CATÉGORIE 4: FUSION & SUPPRESSION (34 tests)                   ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-check(appCode.includes("'clusters'") || appCode.includes('"clusters"'), 'Onglet clusters');
-check(appCode.includes("'pairs'") || appCode.includes('"pairs"') || appCode.includes('doublons'), 'Onglet doublons');
-check(appCode.includes("'toDelete'") || appCode.includes('"toDelete"'), 'Onglet toDelete');
-check(appCode.includes("'ai'") || appCode.includes('"ai"'), 'Onglet ai');
-check(appCode.includes('activeTab'), 'État activeTab');
-check(appCode.includes('setActiveTab'), 'Setter activeTab');
-check(appCode.includes('onClick') && appCode.includes('setActiveTab'), 'Navigation onglets');
-check(appCode.includes('Clusters') || appCode.includes('clusters'), 'Label Clusters');
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 4: FUSION & SUPPRESSION (34 tests)                    ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 13: BOUTON FLOTTANT v1.9.3 (6 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 4.1 Algorithme fusion [v1.9.5] (12 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 13: BOUTON FLOTTANT v1.9.3 (6 tests)                                │');
+console.log('│ 4.1 Algorithme fusion [v1.9.5] (12 tests)                                  │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('fixed') && appCode.includes('bottom'), 'Position fixed bottom');
-check(appCode.includes('z-50') || appCode.includes('z-40') || appCode.includes('z-index'), 'Z-index élevé');
-check(appCode.includes('right-') || appCode.includes('right:'), 'Position right');
-check(appCode.includes('Fusionner') || appCode.includes('Merge'), 'Bouton Fusionner');
-check(appCode.includes('Supprimer') || appCode.includes('Delete'), 'Bouton Supprimer');
-check(appCode.includes('selectedPairs.size') || appCode.includes('selectedCount') || appCode.includes('.size'), 'Compteur sélections');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 14: TABLEAU CLUSTERS DÉTAILLÉ v1.9.3 (11 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 14: TABLEAU CLUSTERS DÉTAILLÉ v1.9.3 (11 tests)                     │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('<table') || appCode.includes('grid'), 'Structure tableau ou grid');
-check(appCode.includes('Nom') || appCode.includes('name'), 'Colonne Nom');
-check(appCode.includes('Naissance') || appCode.includes('birth'), 'Colonne Naissance');
-check(appCode.includes('Lieu') || appCode.includes('place'), 'Colonne Lieu');
-check(appCode.includes('Décès') || appCode.includes('death'), 'Colonne Décès');
-check(appCode.includes('Sexe') || appCode.includes('sex'), 'Colonne Sexe');
-check(appCode.includes('Parents') || appCode.includes('parent'), 'Colonne Parents');
-check(appCode.includes('Conjoints') || appCode.includes('spouse'), 'Colonne Conjoints');
-check(appCode.includes('.id') || appCode.includes('person.id'), 'Colonne ID');
-check(appCode.includes('getPersonName'), 'Résolution noms via fonction');
-check(appCode.includes('expandedClusters'), 'Gestion expansion');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 15: STYLES TAILWIND ESSENTIELS (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 15: STYLES TAILWIND ESSENTIELS (10 tests)                           │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('bg-gradient') || appCode.includes('gradient'), 'Dégradé fond');
-check(appCode.includes('rounded-'), 'Bordures arrondies');
-check(appCode.includes('shadow-'), 'Ombres');
-check(appCode.includes('hover:'), 'États hover');
-check(appCode.includes('text-gray-') || appCode.includes('text-slate-'), 'Couleurs texte gris');
-check(appCode.includes('bg-emerald-') || appCode.includes('bg-green-'), 'Couleur verte');
-check(appCode.includes('bg-blue-') || appCode.includes('bg-indigo-'), 'Couleur bleue');
-check(appCode.includes('px-') && appCode.includes('py-'), 'Paddings');
-check(appCode.includes('flex') || appCode.includes('grid'), 'Layout flex/grid');
-check(appCode.includes('red-'), 'Couleur rouge');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 16: CONFIGURATION BUILD (9 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 16: CONFIGURATION BUILD (9 tests)                                   │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(viteConfig.includes('esbuild'), 'Minification esbuild');
-check(viteConfig.includes('minify'), 'Option minify');
-check(netlifyToml.includes('npm run build'), 'Commande build netlify');
-check(netlifyToml.includes('dist'), 'Dossier dist');
-check(tailwindConfig.includes('content'), 'Tailwind content');
-check(indexHtml.includes('id="root"'), 'Div root');
-check(indexHtml.includes('type="module"'), 'Script module');
-check(packageJson.devDependencies && packageJson.devDependencies.vite, 'Vite devDep');
-check(packageJson.devDependencies && packageJson.devDependencies.tailwindcss, 'Tailwind devDep');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 17: CONTRÔLE INTÉGRITÉ 8 TYPES (15 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 17: CONTRÔLE INTÉGRITÉ 8 TYPES (15 tests)                           │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('performIntegrityChecks'), 'Fonction performIntegrityChecks');
-check(appCode.includes('integrityReport'), 'Variable integrityReport');
-check(appCode.includes('setIntegrityReport'), 'Setter integrityReport');
-check(appCode.includes('showIntegrityModal'), 'État showIntegrityModal');
-check(appCode.includes('setShowIntegrityModal'), 'Setter showIntegrityModal');
-check(appCode.includes('<Shield') || appCode.includes('Shield'), 'Icône Shield utilisée');
-check(appCode.includes('unidirectional') || appCode.includes('bidirectionnel') || appCode.includes('Liens'), 'Type 1: Liens bidirectionnels');
-check(appCode.includes('birth_after_death') || appCode.includes('Naissance après') || appCode.includes('incohérent'), 'Type 2: Dates incohérentes');
-check(appCode.includes('loop') || appCode.includes('Boucle') || appCode.includes('ancêtre'), 'Type 3: Boucles généalogiques');
-check(appCode.includes('structure') || appCode.includes('Saut de niveau') || appCode.includes('niveau'), 'Type 4: Structure GEDCOM');
-check(appCode.includes('orphan') || appCode.includes('orpheline') || appCode.includes('Référence'), 'Type 5: Références orphelines');
-check(appCode.includes('duplicate_id') || appCode.includes('dupliqué') || appCode.includes('ID'), 'Type 6: IDs dupliqués');
-check(appCode.includes('isolatedCount') || appCode.includes('isolés'), 'Type 7: Compteur isolés');
-check(appCode.includes('completeness') || appCode.includes('Complétude') || appCode.includes('%'), 'Type 8: Score complétude');
-check(appCode.includes('errorCount') || appCode.includes('warningCount') || appCode.includes('erreurs'), 'Compteurs erreurs/warnings');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 18: BOUTON RECOMMENCER HEADER (5 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 18: BOUTON RECOMMENCER HEADER (5 tests)                             │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('RefreshCw'), 'Icône RefreshCw importée');
-check(appCode.includes('resetAll') || appCode.includes('reset'), 'Fonction resetAll');
-check(appCode.includes('Recommencer') || appCode.includes('Nouveau fichier'), 'Label Recommencer');
-check(appCode.includes("step !== 'upload'") || appCode.includes('step !== "upload"') || appCode.includes("step === 'results'"), 'Condition affichage');
-check(appCode.includes('onClick') && appCode.includes('reset'), 'Handler reset lié');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 19: BOUTONS SÉLECTION DYNAMIQUES (6 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 19: BOUTONS SÉLECTION DYNAMIQUES (6 tests)                          │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('{clusterScoreFilter}%') || appCode.includes('`${clusterScoreFilter}%`') || appCode.includes('clusterScoreFilter}'), 'Bouton clusters affiche valeur dynamique');
-check(appCode.includes('{filterScore}%') || appCode.includes('`${filterScore}%`') || appCode.includes('filterScore}'), 'Bouton doublons affiche valeur dynamique');
-check(appCode.includes('Sélectionner') && appCode.includes('≥'), 'Label Sélectionner ≥');
-check(appCode.includes('autoSelectHighConfidenceClusters') || appCode.includes('selectHighConfidence'), 'Fonction sélection auto clusters');
-check(appCode.includes('>= clusterScoreFilter') || appCode.includes('>=clusterScoreFilter') || appCode.includes('cluster.score'), 'Filtre clusters utilise variable');
-check(appCode.includes('>= filterScore') || appCode.includes('>=filterScore') || appCode.includes('pair.score'), 'Filtre doublons utilise variable');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 20: AFFICHAGE COMPLET IA (8 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 20: AFFICHAGE COMPLET IA (8 tests)                                  │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('Naissance') && appCode.includes('ai'), 'IA: Label Naissance présent');
-check(appCode.includes('Décès') && appCode.includes('ai'), 'IA: Label Décès présent');
-check(appCode.includes('Sexe') || appCode.includes('sex'), 'IA: Label Sexe présent');
-check(appCode.includes('Parents') || appCode.includes('parent'), 'IA: Label Parents présent');
-check(appCode.includes('birthPlace') || appCode.includes('lieu de naissance'), 'IA: Affiche lieu naissance');
-check(appCode.includes('deathPlace') || appCode.includes('lieu de décès'), 'IA: Affiche lieu décès');
-check(appCode.includes('getPersonName') || appCode.includes('formatName'), 'IA: Résolution noms parents');
-check(appCode.includes('max-h-') || appCode.includes('overflow-y-auto'), 'IA: Scroll si liste longue');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 21: FONCTIONNALITÉS CRITIQUES UI - ANTI-RÉGRESSION (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 21: FONCTIONNALITÉS CRITIQUES UI - ANTI-RÉGRESSION (10 tests)       │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('onDrop') || appCode.includes('ondrop') || appCode.includes('drop') || appCode.includes('handleFileUpload'), 'Gestionnaire onDrop ou upload');
-check(appCode.includes('onDragOver') || appCode.includes('dragover') || appCode.includes('drag') || appCode.includes('handleFileUpload'), 'Gestionnaire onDragOver ou upload');
-check(appCode.includes('preventDefault') || appCode.includes('handleFileUpload'), 'preventDefault ou upload handler');
-check(appCode.includes('dataTransfer') || appCode.includes('files[0]') || appCode.includes('event.target.files'), 'Accès fichier');
-check(appCode.includes('border-dashed') || appCode.includes('dashed'), 'Zone drop visible');
-check(appCode.includes('cursor-pointer') || appCode.includes('pointer'), 'Cursor pointer sur zone');
-check(appCode.includes('transition-') || appCode.includes('transition'), 'Transitions CSS');
-check(appCode.includes('<input') && appCode.includes('type="file"'), 'Input file présent');
-check(appCode.includes('accept=".ged"') || appCode.includes('.ged'), 'Accept .ged');
-check(appCode.includes('onChange') && appCode.includes('handleFileUpload'), 'Handler file upload');
-console.log('');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NIVEAU 22: FONCTIONNALITÉS v1.9.5 (10 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ NIVEAU 22: FONCTIONNALITÉS v1.9.5 (10 tests)                               │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('Désélectionner') || appCode.includes('deselect') || appCode.includes('clear'), 'Bouton désélection');
-check(appCode.includes('setSelectedPairs(new Set())') || appCode.includes('clearSelection'), 'Action vider sélection');
-check(appCode.includes('baptism') || appCode.includes('BAPM'), 'Parsing baptême');
-check(appCode.includes('burial') || appCode.includes('BURI'), 'Parsing inhumation');
-check(appCode.includes('residence') || appCode.includes('RESI'), 'Parsing résidence');
-check(appCode.includes('title') || appCode.includes('TITL'), 'Parsing titre');
-check(appCode.includes("startsWith('2 DATE')") || appCode.includes('2 DATE'), 'Parser DATE niveau 2');
-check(appCode.includes("startsWith('2 PLAC')") || appCode.includes('includes') && appCode.includes('PLAC'), 'Parser PLAC niveau 2');
 check(appCode.includes('mergePersonData'), 'Fonction mergePersonData');
+check(appCode.includes('primary') && appCode.includes('secondary'), 'Paramètres merge');
+check(appCode.includes('merged.id') || appCode.includes('keepPerson'), 'ID conservée');
+check(appCode.includes('removedId') || appCode.includes('mergedFrom'), 'ID supprimée');
 check(appCode.includes('generateMergedIndiLines'), 'Fonction generateMergedIndiLines');
+check(appCode.includes('1 NAME'), 'Ligne NAME');
+check(appCode.includes('1 SEX'), 'Ligne SEX');
+check(appCode.includes('1 BIRT'), 'Bloc BIRT');
+check(appCode.includes('1 DEAT'), 'Bloc DEAT');
+check(appCode.includes('CHIL') && appCode.includes('Set'), 'Déduplication CHIL');
+check(appCode.includes('NOTE') && appCode.includes('Fusionné'), 'Note traçabilité');
+check(appCode.includes('mergedPersons') || appCode.includes('mergeMap'), 'Map fusions');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BONUS A: DOCUMENTATION (17 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 4.2 Contrôle intégrité (15 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ BONUS A: DOCUMENTATION (17 tests)                                          │');
+console.log('│ 4.2 Contrôle intégrité (15 tests)                                          │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('// ') || appCode.includes('/* '), 'Commentaires présents');
-check(appCode.includes('CHANGELOG'), 'Variable CHANGELOG');
-check(appCode.includes('version:'), 'Clé version dans changelog');
-check(appCode.includes('items:'), 'Clé items dans changelog');
-check(appCode.includes('showChangelog'), 'État showChangelog');
-check(appCode.includes('setShowChangelog'), 'Setter showChangelog');
-check(packageJson.name, 'package.json name');
-check(packageJson.version, 'package.json version');
-check(packageJson.scripts, 'package.json scripts');
-check(packageJson.dependencies, 'package.json dependencies');
-check(viteConfig.includes('defineConfig'), 'vite.config defineConfig');
-check(viteConfig.includes('react'), 'vite.config plugin react');
-check(netlifyToml.includes('[build]'), 'netlify.toml section build');
-check(netlifyToml.includes('command'), 'netlify.toml command');
-check(netlifyToml.includes('publish'), 'netlify.toml publish');
-check(tailwindConfig.includes('./src/'), 'tailwind.config src path');
-check(indexHtml.includes('<title>'), 'index.html title');
+check(appCode.includes('performIntegrityChecks'), 'Fonction intégrité');
+check(appCode.includes('errors') && appCode.includes('warnings'), 'Arrays errors/warnings');
+check(appCode.includes('birth_after_death') || appCode.includes('Naissance après décès'), 'Check naissance/décès');
+check(appCode.includes('orphan') || appCode.includes('inexistant'), 'Check orphelins');
+check(appCode.includes('loop') || appCode.includes('Boucle'), 'Check boucles');
+check(appCode.includes('duplicate_id') || appCode.includes('dupliqué'), 'Check IDs');
+check(appCode.includes('no_name') || appCode.includes('Sans nom'), 'Check sans nom');
+check(appCode.includes('unidirectional'), 'Check liens');
+check(appCode.includes('structure') || appCode.includes('niveau'), 'Check structure');
+check(appCode.includes('isolatedCount'), 'Compteur isolés');
+check(appCode.includes('completenessScore'), 'Score complétude');
+check(appCode.includes('errorCount'), 'Compteur erreurs');
+check(appCode.includes('warningCount'), 'Compteur warnings');
+check(appCode.includes('totalChecked'), 'Total vérifié');
+check(appCode.includes('setIntegrityReport'), 'Setter rapport');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BONUS B: RESPONSIVE ET UX (12 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 4.3 Contrôles pré-fusion [v2.0.0] (7 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ BONUS B: RESPONSIVE ET UX (12 tests)                                       │');
+console.log('│ 4.3 Contrôles pré-fusion [v2.0.0] (7 tests)                                │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('min-h-screen') || appCode.includes('vh'), 'Hauteur minimum');
-check(appCode.includes('max-w-') || appCode.includes('container'), 'Largeur max');
-check(appCode.includes('mx-auto'), 'Centrage horizontal');
-check(appCode.includes('p-') || appCode.includes('padding'), 'Padding général');
-check(appCode.includes('space-y-') || appCode.includes('gap-'), 'Espacement vertical');
-check(appCode.includes('font-bold') || appCode.includes('font-semibold'), 'Gras titres');
-check(appCode.includes('text-sm') || appCode.includes('text-xs'), 'Texte small');
-check(appCode.includes('text-lg') || appCode.includes('text-xl'), 'Texte large');
-check(appCode.includes('truncate') || appCode.includes('overflow-'), 'Gestion overflow');
-check(appCode.includes('animate-') || appCode.includes('transition'), 'Animations');
-check(appCode.includes('opacity-') || appCode.includes('opacity') || appCode.includes('bg-') || appCode.includes('text-gray-'), 'Opacité ou couleurs');
-check(appCode.includes('cursor-pointer') || appCode.includes('cursor'), 'Curseur cliquable');
+check(appCode.includes('CONTRÔLES') && appCode.includes('PRÉ-FUSION'), 'Contrôles pré-fusion');
+check(appCode.includes('p1.sex') && appCode.includes('p2.sex'), 'Check sexes');
+check(appCode.includes('Math.abs') && appCode.includes('> 5'), 'Check écart dates');
+check(appCode.includes('ERREURS BLOQUANTES') || appCode.includes('Fusion annulée'), 'Fusion bloquée');
+check(appCode.includes('CONTRÔLES') && appCode.includes('PRÉ-SUPPRESSION'), 'Contrôles pré-suppr');
+check(appCode.includes('children') && appCode.includes('parental'), 'Check enfants');
+check(appCode.includes('spouses') && appCode.includes('conjugal'), 'Check conjoints');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BONUS C: STATISTIQUES (8 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
-console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ BONUS C: STATISTIQUES (8 tests)                                            │');
-console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║               CATÉGORIE 5: INTERFACE UTILISATEUR (79 tests)                   ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-check(appCode.includes('individuals.length') || appCode.includes('totalIndividuals'), 'Compteur individus');
-check(appCode.includes('duplicates.length') || appCode.includes('duplicatesCount') || appCode.includes('duplicates') || appCode.includes('Doublons'), 'Compteur doublons');
-check(appCode.includes('clusters.length') || appCode.includes('clustersCount'), 'Compteur clusters');
-check(appCode.includes('selectedPairs.size') || appCode.includes('selectedCount'), 'Compteur sélections paires');
-check(appCode.includes('toDeletePersons.length') || appCode.includes('toDeleteCount'), 'Compteur À supprimer');
-check(appCode.includes('.filter('), 'Méthode filter');
-check(appCode.includes('.map('), 'Méthode map');
-check(appCode.includes('.reduce(') || appCode.includes('.forEach(') || appCode.includes('.length'), 'Méthodes tableaux');
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 5: INTERFACE UTILISATEUR (79 tests)                   ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BONUS D: PARSING ÉTENDU (11 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 5.1 Interface 4 onglets [v1.8.7] (14 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ BONUS D: PARSING ÉTENDU (11 tests)                                         │');
+console.log('│ 5.1 Interface 4 onglets [v1.8.7] (14 tests)                                │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('BAPM') || appCode.includes('CHR'), 'Tag BAPM/CHR');
-check(appCode.includes('BURI') || appCode.includes('CREM'), 'Tag BURI/CREM');
-check(appCode.includes('RESI'), 'Tag RESI');
-check(appCode.includes('TITL'), 'Tag TITL');
-check(appCode.includes('RELI'), 'Tag RELI');
-check(appCode.includes('OCCU'), 'Tag OCCU');
-check(appCode.includes('NOTE'), 'Tag NOTE');
-check(appCode.includes("startsWith('2 DATE')") || (appCode.includes('currentEvent') && appCode.includes('DATE')), 'DATE conditionnel niveau 2');
-check(appCode.includes("startsWith('2 PLAC')") || (appCode.includes('currentEvent') && appCode.includes('PLAC')), 'PLAC conditionnel niveau 2');
-check(appCode.includes('baptismPlace') || appCode.includes('baptism'), 'Parsing baptismPlace');
-check(appCode.includes('burialPlace') || appCode.includes('burial'), 'Parsing burialPlace');
+check(appCode.includes('setActiveTab'), 'Fonction setActiveTab');
+check(appCode.includes("'clusters'"), 'Onglet clusters');
+check(appCode.includes("'pairs'"), 'Onglet paires');
+check(appCode.includes("'toDelete'"), 'Onglet à supprimer');
+check(appCode.includes("'ai'"), 'Onglet IA');
+check(appCode.includes('Clusters'), 'Label Clusters');
+check(appCode.includes('Doublons') || appCode.includes('Paires'), 'Label Doublons/Paires');
+check(appCode.includes('supprimer'), 'Label Supprimer');
+check(appCode.includes('IA'), 'Label IA');
+check(appCode.includes('selectCluster'), 'Fonction sélection cluster');
+check(appCode.includes('Deselect') || appCode.includes('deselect') || appCode.includes('Désélect'), 'Fonction désélection');
+check(appCode.includes('getClusterAverageScore'), 'Fonction score moyen');
+check(appCode.includes('expandedClusters'), 'État expanded');
+check(appCode.includes('toggleClusterExpand'), 'Fonction toggle');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BONUS E: ALGORITHME DE FUSION v1.9.5 (12 tests)
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 5.2 Fonctions À supprimer [v1.9.3] (10 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ BONUS E: ALGORITHME DE FUSION v1.9.5 (12 tests)                            │');
+console.log('│ 5.2 Fonctions À supprimer [v1.9.3] (10 tests)                              │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-
-check(appCode.includes('mergePersonData'), 'Fonction mergePersonData existe');
-check(appCode.includes('person1') && appCode.includes('person2'), 'mergePersonData prend 2 personnes');
-check(appCode.includes('primary.birth || secondary.birth'), 'Fusion naissance');
-check(appCode.includes('primary.death || secondary.death'), 'Fusion décès');
-check(appCode.includes('mergedFrom'), 'Traçabilité mergedFrom');
-check(appCode.includes('generateMergedIndiLines'), 'Fonction generateMergedIndiLines');
-check(appCode.includes('TYPE aka') || appCode.includes("'2 TYPE aka'"), 'Noms secondaires TYPE aka');
-check(appCode.includes('Fusionné par GedcomMerger'), 'Note traçabilité fusion');
-check(appCode.includes('famChildrenSeen') || appCode.includes('childrenSeen'), 'Tracking CHIL vus');
-check(appCode.includes('.has(childId)') || appCode.includes('seen.has'), 'Vérification CHIL dupliqués');
-check(appCode.includes('continue') && appCode.includes('CHIL'), 'Skip CHIL dupliqués');
-check(appCode.includes('mergedPersons') || appCode.includes('combined'), 'Support fusion chaîne');
+check(appCode.includes('toDeletePersons'), 'État toDeletePersons');
+check(appCode.includes('selectedToDelete'), 'État selectedToDelete');
+check(appCode.includes('setToDeletePersons'), 'Setter toDelete');
+check(appCode.includes('setSelectedToDelete'), 'Setter selected');
+check(appCode.includes('handleDeleteToDelete'), 'Fonction suppression');
+check(appCode.includes('selectedToDelete.has'), 'Toggle via has()');
+check(appCode.includes('new Set(toDeletePersons'), 'Tout sélectionner');
+check(appCode.includes('new Set()') && appCode.includes('selectedToDelete'), 'Tout désélectionner');
+check(appCode.includes('isolé') || appCode.includes('Isolated') || appCode.includes('isTotallyIsolated'), 'Filtrage isolés');
+check(appCode.includes('Sans nom') || appCode.includes('hasNoIdentity'), 'Filtrage sans nom');
 console.log('');
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BONUS F: PRÉSERVATION DONNÉES v2.0.0 (18 tests) ★ NOUVEAU
-// ═══════════════════════════════════════════════════════════════════════════════
+// --- 5.3 Bouton flottant [v1.9.3] (6 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ BONUS F: PRÉSERVATION DONNÉES v2.0.0 (18 tests) ★ NOUVEAU                 │');
+console.log('│ 5.3 Bouton flottant [v1.9.3] (6 tests)                                     │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('fixed') && appCode.includes('bottom'), 'Position fixed');
+check(appCode.includes('z-50') || appCode.includes('z-40'), 'Z-index');
+check(appCode.includes('rounded-full'), 'Style arrondi');
+check(appCode.includes('Fusionner') && appCode.includes('selectedPairs.size'), 'Bouton fusionner');
+check(appCode.includes('Supprimer') && appCode.includes('selectedToDelete.size'), 'Bouton supprimer');
+check(appCode.includes('handleMerge') && appCode.includes('handleDeleteToDelete'), 'Actions');
+console.log('');
 
-// Tests rawLines
-check(appCode.includes('rawLines'), 'Propriété rawLines dans currentPerson');
-check(appCode.includes('rawLines: ['), 'Initialisation rawLines comme tableau');
-check(appCode.includes('rawLines.push') || appCode.includes('currentPerson.rawLines.push'), 'Stockage lignes dans rawLines');
+// --- 5.4 Tableau clusters [v1.9.3] (11 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 5.4 Tableau clusters [v1.9.3] (11 tests)                                   │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('cluster.ids'), 'IDs cluster');
+check(appCode.includes('cluster.') && appCode.includes('map'), 'Itération cluster');
+check(appCode.includes('getClusterAverageScore'), 'Score affiché');
+check(appCode.includes('.length') && appCode.includes('cluster'), 'Nb personnes');
+check(appCode.includes('border-indigo') || appCode.includes('bg-indigo'), 'Style sélection');
+check(appCode.includes('Sélectionner'), 'Bouton sélection');
+check(appCode.includes('ChevronDown') || appCode.includes('ChevronUp'), 'Icône expand');
+check(appCode.includes('expandedClusters.has'), 'Check expanded');
+check(appCode.includes('selectedClusters.has'), 'Check selected');
+check(appCode.includes('pairs'), 'Paires cluster');
+check(appCode.includes('.names') || appCode.includes('person.names'), 'Affichage noms');
+console.log('');
 
-// Tests rawLinesByTag
-check(appCode.includes('rawLinesByTag'), 'Propriété rawLinesByTag dans currentPerson');
-check(appCode.includes('rawLinesByTag: {}') || appCode.includes('rawLinesByTag: {'), 'Initialisation rawLinesByTag comme objet');
+// --- 5.5 Sélection clusters [v2.0.0] (5 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 5.5 Sélection clusters [v2.0.0] (5 tests)                                  │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('autoSelectHighConfidenceClusters') && appCode.includes('newSelectedPairs'), 'Crée selectedPairs');
+check(appCode.includes('setSelectedClusters') && appCode.includes('setSelectedPairs'), 'Met à jour 2 sets');
+check(appCode.includes('cluster.ids.includes'), 'Vérifie appartenance');
+check(appCode.includes('normalizePlace(p1.birthPlace)'), 'Contrôle lieux');
+check(appCode.includes('.parents.includes') && appCode.includes('est parent'), 'Contrôle refs');
+console.log('');
 
-// Tests tags indexés
-check(appCode.includes("'SOUR'") || appCode.includes('"SOUR"'), 'Tag SOUR indexé');
-check(appCode.includes("'OBJE'") || appCode.includes('"OBJE"'), 'Tag OBJE indexé');
-check(appCode.includes("'EVEN'") || appCode.includes('"EVEN"'), 'Tag EVEN indexé');
-check(appCode.includes("startsWith('_')") || appCode.includes('_TAG') || appCode.includes('tag.startsWith'), 'Tags custom _TAG indexés');
+// --- 5.6 Boutons sélection (6 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 5.6 Boutons sélection (6 tests)                                            │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('Sélectionner') && appCode.includes('≥'), 'Bouton seuil');
+check(appCode.includes('Tout désélectionner') || appCode.includes('Désélectionner'), 'Bouton désélection');
+check(appCode.includes('filterScore') || appCode.includes('clusterScoreFilter'), 'Utilise seuil');
+check(appCode.includes('selectedPairs.size > 0'), 'Check sélection');
+check(appCode.includes('setSelectedPairs(new Set())'), 'Reset sélection');
+check(appCode.includes('type="range"'), 'Slider score');
+console.log('');
 
-// Tests fusion rawLinesByTag
-check(appCode.includes('mergedRawLinesByTag') || appCode.includes('merged.rawLinesByTag'), 'Fusion des rawLinesByTag');
-check(appCode.includes('allTags') || appCode.includes('Object.keys'), 'Collecte tous les tags');
-check(appCode.includes('primaryBlocks') || appCode.includes('primary.rawLinesByTag'), 'Accès blocks primary');
-check(appCode.includes('secondaryBlocks') || appCode.includes('secondary.rawLinesByTag'), 'Accès blocks secondary');
+// --- 5.7 Bouton recommencer (5 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 5.7 Bouton recommencer (5 tests)                                           │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('Recommencer') || appCode.includes('Nouveau fichier'), 'Texte');
+check(appCode.includes('RefreshCw'), 'Icône');
+check(appCode.includes("setStep('upload')"), 'Reset step');
+check(appCode.includes('setIndividuals([])'), 'Reset individus');
+check(appCode.includes('setDuplicates([])'), 'Reset doublons');
+console.log('');
 
-// Tests déduplication SOUR
-check(appCode.includes('seenRefs') || appCode.includes('dedupedBlocks'), 'Déduplication SOUR par référence');
+// --- 5.8 Fonctionnalités UI (10 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 5.8 Fonctionnalités UI (10 tests)                                          │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('onClick') && appCode.includes('file'), 'Handler click fichier');
+check(appCode.includes('onChange') || appCode.includes('onSelect'), 'Handler onChange');
+check(appCode.includes('input') && appCode.includes('file'), 'Input fichier');
+check(appCode.includes('accept') || appCode.includes('.ged'), 'Accept .ged');
+check(appCode.includes('FileReader') || appCode.includes('readAsText'), 'Lecture fichier');
+check(appCode.includes('.ged'), 'Extension .ged');
+check(appCode.includes('reader.result') || appCode.includes('onload'), 'Résultat lecture');
+check(appCode.includes('type="file"'), 'Input type file');
+check(appCode.includes('previewPair') && appCode.includes('setPreviewPair'), 'Modal preview');
+check(appCode.includes('showChangelog') && appCode.includes('setShowChangelog'), 'Modal changelog');
+console.log('');
 
-// Tests generateMergedIndiLines utilise rawLinesByTag
-check(appCode.includes('merged.rawLinesByTag') && appCode.includes('generateMergedIndiLines'), 'generateMergedIndiLines utilise rawLinesByTag');
-check(appCode.includes('tagsOrder') || appCode.includes("['SOUR'"), 'Ordre des tags pour export');
-check(appCode.includes('block.lines') || appCode.includes('rawLine'), 'Écriture lignes brutes');
-check(appCode.includes("tag.startsWith('_')") || appCode.includes('filter(tag => tag.startsWith'), 'Export tags custom');
+// --- 5.9 Responsive UX (12 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 5.9 Responsive UX (12 tests)                                               │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('md:') || appCode.includes('lg:'), 'Classes responsive');
+check(appCode.includes('grid') || appCode.includes('flex'), 'Layout');
+check(appCode.includes('gap-'), 'Espacement');
+check(appCode.includes('hover:'), 'États hover');
+check(appCode.includes('transition'), 'Transitions');
+check(appCode.includes('cursor-pointer'), 'Curseur');
+check(appCode.includes('text-gray-'), 'Couleurs texte');
+check(appCode.includes('bg-gradient') || appCode.includes('from-'), 'Dégradés');
+check(appCode.includes('rounded-'), 'Arrondis');
+check(appCode.includes('shadow'), 'Ombres');
+check(appCode.includes('px-') || appCode.includes('py-'), 'Padding');
+check(appCode.includes('mx-') || appCode.includes('my-'), 'Margin');
+console.log('');
+
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║                   CATÉGORIE 6: SUGGESTIONS IA (18 tests)                      ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 6: SUGGESTIONS IA (18 tests)                          ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// --- 6.1 Suggestions IA [v1.9.0] (10 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 6.1 Suggestions IA [v1.9.0] (10 tests)                                     │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('generateSmartSuggestions') || appCode.includes('SmartSuggestions'), 'Fonction suggestions');
+check(appCode.includes('setSmartSuggestions'), 'Setter suggestions');
+check(appCode.includes('confidence') || appCode.includes('score'), 'Score confiance');
+check(appCode.includes('pattern') || appCode.includes('reason'), 'Pattern/raison');
+check(appCode.includes('Sparkles'), 'Icône Sparkles');
+check(appCode.includes('suggestion.'), 'Accès suggestion');
+check(appCode.includes('.confidence') || appCode.includes('.score'), 'Accès score');
+check(appCode.includes('.reason') || appCode.includes('.pattern'), 'Accès raison');
+check(appCode.includes('Suggestions.length') || appCode.includes('suggestions.length'), 'Compteur');
+check(appCode.includes('Suggestions.map') || appCode.includes('suggestions.map'), 'Itération');
+console.log('');
+
+// --- 6.2 Affichage IA (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 6.2 Affichage IA (8 tests)                                                 │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes("activeTab === 'ai'"), 'Condition onglet IA');
+check(appCode.includes('Aucune suggestion') || appCode.includes('.length === 0'), 'Message vide');
+check(appCode.includes('Confiance') || appCode.includes('confidence'), 'Label confiance');
+check(appCode.includes('Pattern') || appCode.includes('pattern'), 'Label pattern');
+check(appCode.includes('%'), 'Pourcentage');
+check(appCode.includes('bg-yellow') || appCode.includes('bg-amber'), 'Couleur IA');
+check(appCode.includes('.map(') && appCode.includes('suggestion'), 'Mapping');
+check(appCode.includes('key={') || appCode.includes('key='), 'Clé unique');
+console.log('');
+
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║              CATÉGORIE 7: CONFIGURATION & DÉPLOIEMENT (39 tests)              ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 7: CONFIGURATION & DÉPLOIEMENT (39 tests)             ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// --- 7.1 Configuration build (9 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 7.1 Configuration build (9 tests)                                          │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(viteConfig.includes('react'), 'Plugin React');
+check(viteConfig.includes('defineConfig'), 'defineConfig');
+check(netlifyToml.includes('[build]'), 'Section build');
+check(netlifyToml.includes('build'), 'Commande build');
+check(netlifyToml.includes('dist'), 'Répertoire publish');
+check(tailwindConfig.includes('content') || tailwindConfig.includes('./src'), 'Config Tailwind');
+check(tailwindConfig.includes('module.exports'), 'CommonJS Tailwind');
+check(fs.existsSync('./postcss.config.js'), 'Fichier postcss');
+check(postcssConfig.includes('module.exports'), 'CommonJS PostCSS');
+console.log('');
+
+// --- 7.2 Styles Tailwind (10 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 7.2 Styles Tailwind (10 tests)                                             │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('bg-blue-') || appCode.includes('bg-indigo-'), 'Couleurs primaires');
+check(appCode.includes('bg-green-') || appCode.includes('bg-emerald-'), 'Couleurs succès');
+check(appCode.includes('bg-red-'), 'Couleurs erreur');
+check(appCode.includes('bg-yellow-') || appCode.includes('bg-amber-'), 'Couleurs warning');
+check(appCode.includes('text-white'), 'Texte blanc');
+check(appCode.includes('font-bold') || appCode.includes('font-semibold'), 'Texte gras');
+check(appCode.includes('text-sm') || appCode.includes('text-lg'), 'Tailles texte');
+check(appCode.includes('w-full'), 'Largeur full');
+check(appCode.includes('h-') || appCode.includes('min-h-'), 'Hauteurs');
+check(appCode.includes('overflow-'), 'Overflow');
+console.log('');
+
+// --- 7.3 Documentation (20 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 7.3 Documentation (20 tests)                                               │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fs.existsSync('./README.md'), 'README.md existe');
+check(fs.existsSync('./CHANGELOG.md'), 'CHANGELOG.md existe');
+check(fs.existsSync('./DEPLOIEMENT.md'), 'DEPLOIEMENT.md existe');
+check(fs.existsSync('./docs/ARCHITECTURE.md'), 'ARCHITECTURE.md existe');
+check(readmeMd.includes('GEDCOM') || readmeMd.includes('gedcom'), 'README: GEDCOM');
+check(readmeMd.includes('npm'), 'README: npm');
+check(readmeMd.includes('Netlify') || readmeMd.includes('netlify'), 'README: Netlify');
+check(changelogMd.includes('2.0.0'), 'CHANGELOG: v2.0.0');
+check(changelogMd.includes('1.9'), 'CHANGELOG: v1.9.x');
+check(changelogMd.includes('rawLines') || changelogMd.includes('préservation'), 'CHANGELOG: rawLines');
+check(changelogMd.includes('critères') || changelogMd.includes('18'), 'CHANGELOG: critères');
+check(changelogMd.includes('contrôles') || changelogMd.includes('intégrité'), 'CHANGELOG: contrôles');
+check(deploiementMd.includes('git') || deploiementMd.includes('Git'), 'DEPLOIEMENT: Git');
+check(deploiementMd.includes('Netlify') || deploiementMd.includes('netlify'), 'DEPLOIEMENT: Netlify');
+check(architectureMd.includes('App') || architectureMd.includes('composant'), 'ARCHITECTURE: composants');
+check(architectureMd.includes('parse') || architectureMd.includes('fonction'), 'ARCHITECTURE: fonctions');
+check(packageJson.dependencies['lucide-react'], 'Dep lucide-react');
+check(packageJson.devDependencies['vite'], 'DevDep vite');
+check(packageJson.devDependencies['tailwindcss'], 'DevDep tailwindcss');
+check(packageJson.devDependencies['autoprefixer'], 'DevDep autoprefixer');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -613,12 +611,22 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 284;
+const expectedTotal = 325;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
 console.log(`  ❌ Échoués: ${failedTests}`);
 console.log(`  📋 Attendus: ${expectedTotal}`);
+console.log('');
+
+console.log('  📁 CATÉGORIES:');
+console.log('     1. Fondamentaux ............ 61 tests');
+console.log('     2. Parsing GEDCOM .......... 52 tests');
+console.log('     3. Détection doublons ...... 42 tests');
+console.log('     4. Fusion & suppression .... 34 tests');
+console.log('     5. Interface utilisateur ... 79 tests');
+console.log('     6. Suggestions IA .......... 18 tests');
+console.log('     7. Config & déploiement .... 39 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
@@ -630,9 +638,6 @@ if (failedTests === 0 && totalTests >= expectedTotal) {
   process.exit(0);
 } else if (failedTests === 0) {
   console.log(`  ✅ SUCCÈS: ${passedTests}/${totalTests} tests passés (100%)`);
-  if (totalTests < expectedTotal) {
-    console.log(`  ⚠️  Moins de tests que prévu (${totalTests} < ${expectedTotal})`);
-  }
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

@@ -1,113 +1,103 @@
 # Changelog - GEDCOM Merger
 
-## v2.0.0 - Phase 1 : Préservation complète des données (31 décembre 2025)
-
-### 🎯 Objectif principal
-> **Aucune donnée GEDCOM ne doit être perdue lors de la fusion**
-
-### ✨ Nouvelles fonctionnalités
-
-#### rawLines[] - Stockage des lignes brutes
-Chaque personne stocke désormais TOUTES ses lignes GEDCOM originales dans un tableau `rawLines[]`. Cela permet de préserver intégralement les données même pour les tags non parsés.
-
-#### rawLinesByTag{} - Indexation par tag
-Les lignes sont également indexées par tag de niveau 1 dans un objet `rawLinesByTag{}`. Les tags indexés incluent :
-- **SOUR** : Sources et citations
-- **NOTE** : Notes de niveau 1
-- **OBJE** : Médias et photos
-- **EVEN** : Événements personnalisés
-- **EDUC, NATI, IMMI, EMIG, CENS, WILL, PROB** : Événements spéciaux
-- **_TAG** : Tous les tags propriétaires (custom)
-
-#### Fusion intelligente des sources
-La fonction `mergePersonData()` fusionne maintenant les `rawLinesByTag` des deux personnes. Pour les SOUR, une déduplication par référence `@Sxxx@` évite les doublons.
-
-#### Génération GEDCOM améliorée
-La fonction `generateMergedIndiLines()` utilise désormais les `rawLinesByTag` pour écrire les tags spéciaux dans le fichier de sortie, garantissant zéro perte de données.
-
-### 🧪 Tests
-- **295 tests** (22 niveaux + 6 bonus)
-- Nouveau BONUS F : 18 tests pour la préservation des données
-- 100% de réussite
-
-### 📁 Structure des données modifiée
-
-```javascript
-currentPerson = {
-  id, names, birth, birthPlace, // ... champs parsés existants
-  
-  // NOUVEAU v2.0.0
-  rawLines: [],           // Toutes les lignes GEDCOM originales
-  rawLinesByTag: {        // Indexées par tag pour fusion intelligente
-    'SOUR': [{ startIdx, lines: [...] }],
-    'NOTE': [...],
-    'OBJE': [...],
-    '_MYPROP': [...]
-  }
-}
-```
+Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
 ---
 
-## v1.9.5 - Fusion Intelligente (31 décembre 2025)
+## [2.0.0] - 31 décembre 2025 - ACTUELLE
 
-### Améliorations majeures
+### Phase 1 - Préservation complète des données GEDCOM
 
-- **CRITIQUE**: Correction parsing DATE/PLAC niveau 2 uniquement
-- **NOUVEAU**: Fonction `mergePersonData()` - combine les données des 2 personnes
-- **NOUVEAU**: Déduplication automatique des CHIL dans les FAM
-- **NOUVEAU**: Note de traçabilité dans les INDI fusionnés
-- **NOUVEAU**: Support des clusters (fusion en chaîne)
-- Noms secondaires marqués TYPE aka
+#### Nouveautés
+- **rawLines[]** : Stockage de TOUTES les lignes GEDCOM originales par personne
+- **rawLinesByTag{}** : Indexation des lignes par tag (SOUR, NOTE, OBJE, EVEN, _TAG...)
+- **Fusion intelligente** : SOUR/NOTE/OBJE combinés des 2 personnes lors de la fusion
+- **18 critères de comparaison** (vs 11 avant) :
+  - Ajout : Baptême, Lieu baptême, Inhumation, Lieu inhumation, Résidence, Titre, Religion
+- **Affichage complet** : 16 champs affichés systématiquement dans la prévisualisation
+- **Contrôles intégrité pré-fusion** :
+  - ❌ Bloquant : sexes incompatibles
+  - ⚠️ Warning : écart dates naissance/décès >5 ans, lieux naissance différents
+- **Contrôles intégrité pré-suppression** :
+  - ⚠️ Warning : personne avec enfants, conjoints, ou référencée comme parent
+
+#### Corrections
+- **Comparaison par nom** : Parents/conjoints/enfants comparés par nom si IDs différents
+- **Score 100%** : Atteint quand toutes les données comparables sont identiques
+- **Sélection clusters** : Le bouton "Sélectionner ≥X%" ajoute les paires pour fusion effective
+- **Encart supprimé** : "Nouveauté v1.9.3" retiré de la page d'accueil
+
+#### Technique
+- 325 tests (7 catégories)
+- Fichiers config en CommonJS (postcss.config.js, tailwind.config.js)
+
+---
+
+## [1.9.5] - 28 décembre 2025 - PRÉCÉDENTE
+
+### Fusion intelligente
+- Fonction `mergePersonData()` pour combiner les données de 2 personnes
+- Fonction `generateMergedIndiLines()` pour générer le GEDCOM fusionné
+- Déduplication automatique des CHIL dans les familles
+- Traçabilité : NOTE indiquant les IDs fusionnés
+- Parsing corrigé pour DATE/PLAC niveau 2 (baptême, inhumation, résidence)
+- Bouton désélection globale
 
 ### Tests
 - 266 tests (22 niveaux + 5 bonus)
 
 ---
 
-## v1.9.4 - Contrôle intégrité (30 décembre 2025)
+## [1.9.3] - 27 décembre 2025
 
-- Contrôle d'intégrité 8 types restauré
-- Bouton Recommencer dans le header
-- Boutons sélection avec valeur dynamique du filtre
-
----
-
-## v1.9.3 - Interface améliorée (30 décembre 2025)
-
-- Onglet "À supprimer" remplace "Isolés"
-- Bouton flottant pour actions rapides
-- Tableau clusters détaillé (9 colonnes)
-- Action "Supprimer" distincte de "Fusionner"
+### Corrections anti-faux-positifs
+- Onglet "À supprimer" avec filtrage strict (isolés totaux + sans identité)
+- Bouton flottant pour actions rapides (Fusionner/Supprimer)
+- Table détaillée des clusters avec toutes les informations
+- Actions distinctes Merge vs Delete
 
 ---
 
-## v1.9.2 - Anti-faux-positifs (28 décembre 2025)
+## [1.9.2] - 26 décembre 2025
 
-- **CORRECTION MAJEURE**: Nom + Sexe ne suffisent plus
-- Nouvelle règle: AU MOINS 1 critère suffisant requis
-- Critères: naissance, lieu, parents, conjoints, fratrie, décès, profession
-
----
-
-## v1.9.0 - Interface 4 onglets (28 décembre 2025)
-
-- 4 onglets : Clusters, Doublons, À supprimer, IA
-- Restauration suggestions IA avec score de confiance
+### Anti-faux-positifs
+- Algorithme renforcé : nom + sexe seuls ne suffisent plus
+- Critères suffisants obligatoires (naissance, parents, conjoints, décès, profession)
+- Affichage des critères validants dans l'interface
 
 ---
 
-## v1.8.6 - Conformité GEDCOM (16 décembre 2025)
+## [1.9.0] - 25 décembre 2025
 
-- Génération HEAD/TRLR automatique
-- Gestion CONT/CONC
-- Conformité GEDCOM 5.5.1
+### Suggestions IA
+- Onglet IA avec analyse de patterns
+- Score de confiance pour chaque suggestion
+- Détection basée sur noms, périodes et lieux
 
 ---
 
-## v1.0.0 - Version initiale (29 novembre 2025)
+## [1.8.7] - 24 décembre 2025
 
-- Algorithme Soundex français
-- Triple indexation (phonétique, année, parents)
-- Scoring hybride 9 critères
-- Interface React responsive
+### Interface 4 onglets
+- Clusters, Doublons, À supprimer, IA
+- Filtres par score
+- Sélection haute confiance automatique
+
+---
+
+## [1.8.6] - 23 décembre 2025
+
+### Parsing amélioré
+- Gestion CONT/CONC pour textes multi-lignes
+- Génération HEAD/TRLR conforme
+- Support encodage UTF-8
+
+---
+
+## [1.0.0] - 15 décembre 2025
+
+### Version initiale
+- Upload fichier GEDCOM
+- Détection doublons par scoring
+- Interface responsive
+- Export fichier nettoyé

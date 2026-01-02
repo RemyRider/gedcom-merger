@@ -1,111 +1,110 @@
 # GEDCOM Merger v2.0.0
 
-Application de fusion de doublons dans les fichiers GEDCOM pour la généalogie.
+Application web de fusion intelligente de fichiers GEDCOM pour nettoyer les arbres généalogiques.
 
-## 🎯 Nouveautés v2.0.0 : Préservation complète des données
+## Fonctionnalités
 
-### Le principe fondamental
-> **Aucune donnée GEDCOM ne doit être perdue lors de la fusion**
+### Détection de doublons
+- Algorithme de scoring avec **18 critères de comparaison**
+- Comparaison phonétique (Soundex) pour les noms
+- Variantes de prénoms reconnues (Jean/Johannes, Marie/Maria...)
+- Anti-faux-positifs : nom + sexe seuls ne suffisent pas
 
-### Ce qui change
+### 18 Critères de comparaison
 
-| Avant v2.0.0 | Après v2.0.0 |
-|--------------|--------------|
-| ~15 tags parsés | TOUS les tags préservés |
-| SOUR/NOTE perdues à la fusion | SOUR/NOTE combinées |
-| Tags custom ignorés | Tags _TAG préservés |
-| Événements EVEN perdus | EVEN conservés |
+| Critère | Points max | Description |
+|---------|------------|-------------|
+| Noms | 30 | Identiques, phonétiques ou partiels |
+| Naissance | 25 | Date exacte ou année |
+| Sexe | 15 | Éliminatoire si différent |
+| Parents | 20 | 1 ou 2 parents communs (par ID ou nom) |
+| Fratrie | 15 | Même famille comme enfant |
+| Lieu naissance | 10 | Identique ou similaire |
+| Conjoints | 8 | Communs (par ID ou nom) |
+| Décès | 15 | Date exacte ou année |
+| Lieu décès | 8 | Identique ou similaire |
+| Profession | 5 | Identique |
+| Enfants | 15 | 1 ou 2+ communs (par ID ou nom) |
+| Baptême | 5 | Date exacte ou année |
+| Lieu baptême | 4 | Identique ou similaire |
+| Inhumation | 5 | Date exacte ou année |
+| Lieu inhumation | 4 | Identique ou similaire |
+| Résidence | 4 | Identique ou similaire |
+| Titre | 3 | Identique |
+| Religion | 3 | Identique |
 
-### Nouvelles structures de données
+**Score maximum possible : 190 points** (si tous les champs renseignés)
 
-```javascript
-// Chaque personne stocke maintenant :
-{
-  // Champs parsés pour détection (inchangés)
-  id, names, birth, birthPlace, death, ...
-  
-  // NOUVEAU: Lignes brutes pour préservation totale
-  rawLines: [],           // Toutes les lignes GEDCOM
-  rawLinesByTag: {        // Indexées par tag
-    'SOUR': [...],        // Sources
-    'NOTE': [...],        // Notes
-    'OBJE': [...],        // Médias
-    '_MYPROP': [...]      // Tags custom
-  }
-}
-```
+### Interface 4 onglets
+- **Clusters** : Groupes de doublons interconnectés
+- **Doublons** : Paires simples de doublons
+- **À supprimer** : Individus isolés ou sans identité
+- **IA** : Suggestions basées sur l'analyse de patterns
 
-## 📦 Installation
+### Préservation des données (v2.0.0)
+- **rawLines[]** : Toutes les lignes GEDCOM originales conservées
+- **rawLinesByTag{}** : Indexation par tag (SOUR, NOTE, OBJE, EVEN...)
+- **Fusion intelligente** : Sources et notes combinées des 2 personnes
+- **Zéro perte** : Les tags inconnus (_TAG) sont préservés
+
+### Affichage complet
+16 champs affichés systématiquement dans la prévisualisation :
+- ID, Sexe, Naissance, Lieu naissance
+- Baptême, Décès, Lieu décès, Inhumation
+- Profession, Titre, Résidence, Religion
+- Parents, Conjoints, Enfants, Note
+
+## Installation
 
 ```bash
-# 1. Extraire le ZIP
-unzip gedcom-v2.0.0.zip
-cd gedcom-v2.0.0
-
-# 2. Installer les dépendances
 npm install
-
-# 3. Lancer les tests
-npm test
-# Attendu: 295/295 tests passés (100%)
-
-# 4. Build production
-npm run build
+npm run dev
 ```
 
-## 🚀 Déploiement Netlify
+## Tests
 
-Le fichier `netlify.toml` est configuré pour :
-1. Exécuter les 295 tests
-2. Builder seulement si tous les tests passent
-3. Publier le dossier `dist`
+```bash
+npm test
+```
 
-## 🧪 Tests
-
-- **295 tests** répartis en 22 niveaux + 6 bonus
-- Nouveau **BONUS F** : 18 tests pour la préservation des données v2.0.0
+**309 tests** répartis en :
+- 22 niveaux de tests (207 tests)
+- 7 bonus thématiques (88 tests)
 
 | Catégorie | Tests |
 |-----------|-------|
-| Niveaux 1-22 | 207 |
-| Bonus A-E (v1.9.5) | 60 |
-| **Bonus F (v2.0.0)** | **18** |
+| Syntaxe et structure | 10 |
+| Versions et cohérence | 10 |
+| Imports Lucide-React | 17 |
+| États React | 24 |
+| Fonctions principales | 12 |
+| Interface 4 onglets | 8 |
+| Anti-faux-positifs | 8 |
+| Contrôle intégrité | 15 |
+| ... | ... |
 | **Total** | **295** |
 
-## 📋 Workflow Git
+## Déploiement
 
+### Option A : Netlify Drag & Drop
 ```bash
-# Développement sur branche dev
-git checkout dev
-git add . && git commit -m "feat: description"
-git push origin dev
-
-# Production (après validation)
-git checkout main
-git merge dev
-git push origin main
+npm run build
+# Glisser le dossier dist/ sur Netlify
 ```
 
-## 🔗 Liens
+### Option B : GitHub Auto-deploy
+```bash
+git add .
+git commit -m "v2.0.0"
+git push origin dev
+```
+
+## Liens
 
 - **Production** : https://gedcom-merger.netlify.app
 - **Dev** : https://dev--gedcom-merger.netlify.app
 - **GitHub** : https://github.com/RemyRider/gedcom-merger
 
-## 📖 Documentation
+## Licence
 
-- `CHANGELOG.md` : Historique des versions
-- `DEPLOIEMENT.md` : Guide de déploiement
-- `LIVRAISON_V2_0_0.md` : Notes de cette version
-- `RAPPORT_TESTS_V2_0_0.md` : Résultats des tests
-
-## 🛠️ Stack technique
-
-| Composant | Technologie |
-|-----------|-------------|
-| Framework | React 18 |
-| Build | Vite 5 + esbuild |
-| CSS | Tailwind CSS 3.4 |
-| Icônes | Lucide React |
-| Tests | Node.js natif |
-| Hébergement | Netlify |
+MIT

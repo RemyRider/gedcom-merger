@@ -4,7 +4,40 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ---
 
-## [2.0.0] - 31 décembre 2025 - ACTUELLE
+## [2.1.0] - 2 janvier 2026 - ACTUELLE
+
+### Contrôle qualité avancé et analyse généalogique
+
+#### Nouveautés
+- **Rapport qualité à l'upload** : Affiché automatiquement après import du fichier
+  - Version GEDCOM et encodage détectés
+  - Statistiques : individus, familles, sources, notes, médias
+  - Taux de complétude (naissance, lieu, parents, conjoints)
+  - Individus isolés identifiés
+- **Détection incohérences chronologiques** (7 règles) :
+  - ❌ Naissance après décès
+  - ❌ Baptême avant naissance
+  - ❌ Parent né après enfant
+  - ❌ Mariage avant naissance / après décès
+  - ⚠️ Parent trop jeune (<12 ans) ou trop âgé (>80 ans)
+  - ⚠️ Longévité extrême (>120 ans)
+- **Normalisation intelligente des lieux** : Détection et groupement des variantes
+- **Statistiques généalogiques** : Répartition H/F, patronymes, périodes, enfants/famille
+- **Références orphelines** : FAMC/FAMS cassées, sources non utilisées
+- **Score de suspicion doublons** : 🔴 FORT / 🟡 MOYEN / 🟢 FAIBLE
+
+#### Interface
+- Bouton "Qualité" dans la barre d'outils
+- Modal rapport qualité complet
+- Emojis de niveau sur les doublons
+
+#### Technique
+- 371 tests (8 catégories)
+- Inspiré par compétence gedcom-5-5x-qa-and-analysis
+
+---
+
+## [2.0.0] - 31 décembre 2025 - PRÉCÉDENTE
 
 ### Phase 1 - Préservation complète des données GEDCOM
 
@@ -33,7 +66,7 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ---
 
-## [1.9.5] - 28 décembre 2025 - PRÉCÉDENTE
+## [1.9.5] - 28 décembre 2025
 
 ### Fusion intelligente
 - Fonction `mergePersonData()` pour combiner les données de 2 personnes

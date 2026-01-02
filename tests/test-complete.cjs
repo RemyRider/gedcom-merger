@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.0.0
-// 321 TESTS - Organisés par CATÉGORIE et VERSION
+// SUITE DE TESTS GEDCOM MERGER v2.1.0
+// 371 TESTS - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -23,15 +23,15 @@ const tailwindConfig = fs.readFileSync('./tailwind.config.js', 'utf8');
 const postcssConfig = fs.readFileSync('./postcss.config.js', 'utf8');
 
 let changelogMd = '', readmeMd = '', deploiementMd = '', architectureMd = '';
-try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.0.0 rawLines critères contrôles 1.9'; }
+try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.1.0 v2.0.0 rawLines critères contrôles 1.9'; }
 try { readmeMd = fs.readFileSync('./README.md', 'utf8'); } catch (e) { readmeMd = 'GEDCOM npm Netlify'; }
 try { deploiementMd = fs.readFileSync('./DEPLOIEMENT.md', 'utf8'); } catch (e) { deploiementMd = 'git Netlify'; }
 try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catch (e) { architectureMd = 'App.jsx parseGedcom'; }
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.0.0');
-console.log('                              321 TESTS AU TOTAL');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.1.0');
+console.log('                              371 TESTS AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -64,10 +64,11 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.0.0'") || appCode.includes('VERSION = "2.0.0"'), 'VERSION 2.0.0 dans App.jsx');
-check(packageJson.version === '2.0.0', 'Version 2.0.0 dans package.json');
+check(appCode.includes("VERSION = '2.1.0'") || appCode.includes('VERSION = "2.1.0"'), 'VERSION 2.1.0 dans App.jsx');
+check(packageJson.version === '2.1.0', 'Version 2.1.0 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
+check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
 check(packageJson.name === 'gedcom-merger', 'Nom du package correct');
 check(packageJson.scripts && packageJson.scripts.test, 'Script test configuré');
 check(packageJson.scripts && packageJson.scripts.build, 'Script build configuré');
@@ -603,6 +604,102 @@ check(packageJson.devDependencies['tailwindcss'], 'DevDep tailwindcss');
 check(packageJson.devDependencies['autoprefixer'], 'DevDep autoprefixer');
 console.log('');
 
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║              CATÉGORIE 8: QUALITÉ & ANALYSES v2.1.0 (45 tests)                ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║              CATÉGORIE 8: QUALITÉ & ANALYSES v2.1.0 (45 tests)               ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// --- 8.1 États v2.1.0 (6 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.1 États v2.1.0 (6 tests)                                                 │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('const [qualityReport, setQualityReport]'), 'État qualityReport');
+check(appCode.includes('const [showQualityReport, setShowQualityReport]'), 'État showQualityReport');
+check(appCode.includes('const [chronoIssues, setChronoIssues]'), 'État chronoIssues');
+check(appCode.includes('const [placeVariants, setPlaceVariants]'), 'État placeVariants');
+check(appCode.includes('const [genealogyStats, setGenealogyStats]'), 'État genealogyStats');
+check(appCode.includes('const [orphanRefs, setOrphanRefs]'), 'État orphanRefs');
+console.log('');
+
+// --- 8.2 Rapport qualité (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.2 Rapport qualité (8 tests)                                              │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('generateQualityReport'), 'Fonction generateQualityReport');
+check(appCode.includes('gedcomVersion'), 'Détection version GEDCOM');
+check(appCode.includes('1 VERS'), 'Parsing version');
+check(appCode.includes('1 CHAR'), 'Parsing encodage');
+check(appCode.includes('completeness'), 'Objet complétude');
+check(appCode.includes('withBirth') && appCode.includes('pct'), 'Pourcentage complétude');
+check(appCode.includes('customTags'), 'Tags custom détectés');
+check(appCode.includes('Rapport Qualité'), 'Modal rapport qualité');
+console.log('');
+
+// --- 8.3 Incohérences chronologiques (10 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.3 Incohérences chronologiques (10 tests)                                 │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('detectChronologicalIssues'), 'Fonction detectChronologicalIssues');
+check(appCode.includes('BIRTH_AFTER_DEATH'), 'Règle naissance après décès');
+check(appCode.includes('BAPTISM_BEFORE_BIRTH'), 'Règle baptême avant naissance');
+check(appCode.includes('BURIAL_BEFORE_DEATH'), 'Règle inhumation avant décès');
+check(appCode.includes('PARENT_BORN_AFTER_CHILD'), 'Règle parent après enfant');
+check(appCode.includes('PARENT_TOO_YOUNG'), 'Règle parent trop jeune');
+check(appCode.includes('PARENT_TOO_OLD'), 'Règle parent trop âgé');
+check(appCode.includes('MARRIAGE_BEFORE_BIRTH'), 'Règle mariage avant naissance');
+check(appCode.includes('MARRIAGE_AFTER_DEATH'), 'Règle mariage après décès');
+check(appCode.includes('EXTREME_LONGEVITY'), 'Règle longévité extrême');
+console.log('');
+
+// --- 8.4 Normalisation lieux (6 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.4 Normalisation lieux (6 tests)                                          │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('normalizePlaceFull'), 'Fonction normalizePlaceFull');
+check(appCode.includes('detectPlaceVariants'), 'Fonction detectPlaceVariants');
+check(appCode.includes('placeGroups'), 'Map groupes lieux');
+check(appCode.includes('variants.size > 1'), 'Filtre variantes multiples');
+check(appCode.includes('suggested') && appCode.includes('variants'), 'Structure résultat');
+check(appCode.includes('Lieux à normaliser'), 'Affichage dans modal');
+console.log('');
+
+// --- 8.5 Statistiques généalogiques (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.5 Statistiques généalogiques (8 tests)                                   │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('calculateGenealogyStats'), 'Fonction calculateGenealogyStats');
+check(appCode.includes('birthDecades'), 'Distribution décennies');
+check(appCode.includes('topSurnames'), 'Top patronymes');
+check(appCode.includes('avgChildren'), 'Moyenne enfants');
+check(appCode.includes('maxChildren'), 'Max enfants');
+check(appCode.includes('fullDates') && appCode.includes('partialDates'), 'Complétude dates');
+check(appCode.includes('gender') && appCode.includes('males') && appCode.includes('females'), 'Répartition sexe');
+check(appCode.includes('Statistiques généalogiques'), 'Affichage stats');
+console.log('');
+
+// --- 8.6 Références orphelines (4 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.6 Références orphelines (4 tests)                                        │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('detectOrphanReferences'), 'Fonction detectOrphanReferences');
+check(appCode.includes('FAMC_BROKEN') || appCode.includes('FAMS_BROKEN'), 'Détection FAMC/FAMS cassés');
+check(appCode.includes('HUSB_BROKEN') || appCode.includes('WIFE_BROKEN'), 'Détection HUSB/WIFE cassés');
+check(appCode.includes('SOURCE_ORPHAN'), 'Détection sources orphelines');
+console.log('');
+
+// --- 8.7 Score suspicion (3 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.7 Score suspicion (3 tests)                                              │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('getSuspicionLevel'), 'Fonction getSuspicionLevel');
+check(appCode.includes("level: 'FORT'") || appCode.includes("level: 'MOYEN'") || appCode.includes("level: 'FAIBLE'"), 'Niveaux suspicion');
+check(appCode.includes('suspicion.emoji') || appCode.includes('🔴') || appCode.includes('🟡') || appCode.includes('🟢'), 'Emojis niveaux');
+console.log('');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -611,7 +708,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 325;
+const expectedTotal = 371;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -627,12 +724,13 @@ console.log('     4. Fusion & suppression .... 34 tests');
 console.log('     5. Interface utilisateur ... 79 tests');
 console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
+console.log('     8. Qualité & analyses v2.1.0. 45 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.0.0 validée et prête pour déploiement');
+  console.log('  ✅ Version 2.1.0 validée et prête pour déploiement');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

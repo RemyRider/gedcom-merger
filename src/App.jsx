@@ -26,15 +26,39 @@ const GedcomDuplicateMerger = () => {
   const [integrityReport, setIntegrityReport] = useState(null);
   const [showIntegrityModal, setShowIntegrityModal] = useState(false);
   const [familiesData, setFamiliesData] = useState(new Map());
+  // v2.1.0 - États pour rapport qualité et analyses avancées
+  const [qualityReport, setQualityReport] = useState(null);
+  const [showQualityReport, setShowQualityReport] = useState(false);
+  const [chronoIssues, setChronoIssues] = useState({ errors: [], warnings: [] });
+  const [placeVariants, setPlaceVariants] = useState([]);
+  const [genealogyStats, setGenealogyStats] = useState(null);
+  const [orphanRefs, setOrphanRefs] = useState([]);
 
-  const VERSION = '2.0.0';
+  const VERSION = '2.1.0';
 
   const CHANGELOG = [
     {
-      version: '2.0.0',
-      date: '31 décembre 2025',
+      version: '2.1.0',
+      date: '2 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Contrôle qualité avancé et analyse généalogique',
+      items: [
+        'NOUVEAU: Rapport qualité affiché automatiquement après upload',
+        'NOUVEAU: Détection incohérences chronologiques (7 règles)',
+        'NOUVEAU: Normalisation intelligente des lieux + détection variantes',
+        'NOUVEAU: Statistiques généalogiques (répartition sexe, patronymes, périodes)',
+        'NOUVEAU: Détection des références orphelines (FAMC/FAMS/SOUR cassées)',
+        'NOUVEAU: Score de suspicion doublons (FORT/MOYEN/FAIBLE)',
+        'AMÉLIORATION: Interface enrichie avec modal rapport qualité complet',
+        'Inspiré par la compétence gedcom-5-5x-qa-and-analysis'
+      ]
+    },
+    {
+      version: '2.0.0',
+      date: '31 décembre 2025',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Phase 1 - Préservation complète des données GEDCOM',
       items: [
         'NOUVEAU: rawLines[] stocke TOUTES les lignes GEDCOM originales par personne',
@@ -54,8 +78,8 @@ const GedcomDuplicateMerger = () => {
     {
       version: '1.9.5',
       date: '31 décembre 2025',
-      tag: 'PRÉCÉDENTE',
-      color: 'blue',
+      tag: null,
+      color: 'gray',
       title: 'Fusion intelligente + Parsing corrigé + Déduplication CHIL',
       items: [
         'CRITIQUE: Correction parsing DATE/PLAC niveau 2 uniquement',
@@ -72,7 +96,7 @@ const GedcomDuplicateMerger = () => {
       version: '1.9.4',
       date: '30 décembre 2025',
       tag: null,
-      color: 'blue',
+      color: 'gray',
       title: 'Contrôle intégrité + Boutons dynamiques + Recommencer header',
       items: [
         'Contrôle d\'intégrité 8 types restauré (v1.6.1)',
@@ -866,6 +890,420 @@ const GedcomDuplicateMerger = () => {
     };
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // v2.1.0 - FONCTIONS P1 : RAPPORT QUALITÉ, INCOHÉRENCES CHRONO, NORMALISATION LIEUX
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // P1.1 - Générer le rapport qualité à l'upload
+  const generateQualityReport = (people, families, gedcomContent) => {
+    // Détection version GEDCOM
+    const versionMatch = gedcomContent.match(/1 VERS\s+(\d+\.\d+\.?\d*)/);
+    const gedcomVersion = versionMatch ? versionMatch[1] : 'Non spécifiée';
+    
+    // Détection encodage
+    const encodingMatch = gedcomContent.match(/1 CHAR\s+(\S+)/);
+    const encoding = encodingMatch ? encodingMatch[1] : 'Non spécifié';
+    
+    // Comptages
+    const sourceCount = (gedcomContent.match(/0 @S\d+@ SOUR/g) || []).length;
+    const noteCount = (gedcomContent.match(/0 @N\d+@ NOTE/g) || []).length;
+    const mediaCount = (gedcomContent.match(/0 @M\d+@ OBJE/g) || []).length;
+    
+    // Complétude
+    const withBirth = people.filter(p => p.birth).length;
+    const withBirthPlace = people.filter(p => p.birthPlace).length;
+    const withDeath = people.filter(p => p.death).length;
+    const withParent = people.filter(p => p.parents.length > 0).length;
+    const withSpouse = people.filter(p => p.spouses.length > 0).length;
+    const isolated = people.filter(p => p.parents.length === 0 && p.spouses.length === 0 && p.familiesAsSpouse.length === 0).length;
+    
+    // Tags non standard
+    const customTags = [...new Set((gedcomContent.match(/\d+ _\w+/g) || []).map(t => t.split(' ')[1]))];
+    
+    return {
+      gedcomVersion,
+      encoding,
+      stats: {
+        individuals: people.length,
+        families: families.size,
+        sources: sourceCount,
+        notes: noteCount,
+        medias: mediaCount
+      },
+      completeness: {
+        withBirth: { count: withBirth, pct: people.length ? Math.round((withBirth / people.length) * 100) : 0 },
+        withBirthPlace: { count: withBirthPlace, pct: people.length ? Math.round((withBirthPlace / people.length) * 100) : 0 },
+        withDeath: { count: withDeath, pct: people.length ? Math.round((withDeath / people.length) * 100) : 0 },
+        withParent: { count: withParent, pct: people.length ? Math.round((withParent / people.length) * 100) : 0 },
+        withSpouse: { count: withSpouse, pct: people.length ? Math.round((withSpouse / people.length) * 100) : 0 },
+        isolated: { count: isolated, pct: people.length ? Math.round((isolated / people.length) * 100) : 0 }
+      },
+      customTags
+    };
+  };
+
+  // P1.2 - Détecter les incohérences chronologiques
+  const detectChronologicalIssues = (people, families) => {
+    const errors = [];
+    const warnings = [];
+    
+    const extractYear = (dateStr) => {
+      if (!dateStr) return null;
+      const match = dateStr.match(/(\d{4})/);
+      return match ? parseInt(match[1]) : null;
+    };
+    
+    const getPersonById = (id) => people.find(p => p.id === id);
+    
+    people.forEach(person => {
+      const birthYear = extractYear(person.birth);
+      const deathYear = extractYear(person.death);
+      const baptismYear = extractYear(person.baptism);
+      const burialYear = extractYear(person.burial);
+      const name = person.names[0] || person.id;
+      
+      // Règle 1: Naissance après décès
+      if (birthYear && deathYear && birthYear > deathYear) {
+        errors.push({
+          type: 'BIRTH_AFTER_DEATH',
+          personId: person.id,
+          message: `${name} : naissance (${birthYear}) après décès (${deathYear})`
+        });
+      }
+      
+      // Règle 2: Baptême avant naissance
+      if (birthYear && baptismYear && baptismYear < birthYear - 1) {
+        errors.push({
+          type: 'BAPTISM_BEFORE_BIRTH',
+          personId: person.id,
+          message: `${name} : baptême (${baptismYear}) avant naissance (${birthYear})`
+        });
+      }
+      
+      // Règle 3: Inhumation avant décès
+      if (deathYear && burialYear && burialYear < deathYear) {
+        errors.push({
+          type: 'BURIAL_BEFORE_DEATH',
+          personId: person.id,
+          message: `${name} : inhumation (${burialYear}) avant décès (${deathYear})`
+        });
+      }
+      
+      // Règle 4: Parent né après enfant
+      if (birthYear && person.parents.length > 0) {
+        person.parents.forEach(parentId => {
+          const parent = getPersonById(parentId);
+          if (parent) {
+            const parentBirth = extractYear(parent.birth);
+            if (parentBirth && parentBirth >= birthYear) {
+              errors.push({
+                type: 'PARENT_BORN_AFTER_CHILD',
+                personId: person.id,
+                message: `${name} : parent ${parent.names[0] || parentId} né en ${parentBirth}, enfant né en ${birthYear}`
+              });
+            }
+            // Règle 5: Parent trop jeune (<12 ans)
+            if (parentBirth && birthYear - parentBirth < 12) {
+              warnings.push({
+                type: 'PARENT_TOO_YOUNG',
+                personId: person.id,
+                message: `${name} : parent ${parent.names[0] || parentId} avait ${birthYear - parentBirth} ans à la naissance`
+              });
+            }
+            // Règle 6: Parent très âgé (>80 ans)
+            if (parentBirth && birthYear - parentBirth > 80) {
+              warnings.push({
+                type: 'PARENT_TOO_OLD',
+                personId: person.id,
+                message: `${name} : parent ${parent.names[0] || parentId} avait ${birthYear - parentBirth} ans à la naissance`
+              });
+            }
+          }
+        });
+      }
+      
+      // Règle 7: Longévité suspecte (>120 ans)
+      if (birthYear && deathYear && deathYear - birthYear > 120) {
+        warnings.push({
+          type: 'EXTREME_LONGEVITY',
+          personId: person.id,
+          message: `${name} : longévité de ${deathYear - birthYear} ans (${birthYear}-${deathYear})`
+        });
+      }
+    });
+    
+    // Vérifications sur les familles (mariages)
+    families.forEach((fam, famId) => {
+      const husband = fam.husband ? getPersonById(fam.husband) : null;
+      const wife = fam.wife ? getPersonById(fam.wife) : null;
+      const marriageYear = extractYear(fam.marriage);
+      
+      // Mariage avant naissance
+      if (marriageYear) {
+        if (husband) {
+          const husbandBirth = extractYear(husband.birth);
+          if (husbandBirth && marriageYear < husbandBirth) {
+            errors.push({
+              type: 'MARRIAGE_BEFORE_BIRTH',
+              personId: husband.id,
+              message: `${husband.names[0] || husband.id} : mariage (${marriageYear}) avant naissance (${husbandBirth})`
+            });
+          }
+        }
+        if (wife) {
+          const wifeBirth = extractYear(wife.birth);
+          if (wifeBirth && marriageYear < wifeBirth) {
+            errors.push({
+              type: 'MARRIAGE_BEFORE_BIRTH',
+              personId: wife.id,
+              message: `${wife.names[0] || wife.id} : mariage (${marriageYear}) avant naissance (${wifeBirth})`
+            });
+          }
+        }
+        // Mariage après décès
+        if (husband) {
+          const husbandDeath = extractYear(husband.death);
+          if (husbandDeath && marriageYear > husbandDeath) {
+            errors.push({
+              type: 'MARRIAGE_AFTER_DEATH',
+              personId: husband.id,
+              message: `${husband.names[0] || husband.id} : mariage (${marriageYear}) après décès (${husbandDeath})`
+            });
+          }
+        }
+        if (wife) {
+          const wifeDeath = extractYear(wife.death);
+          if (wifeDeath && marriageYear > wifeDeath) {
+            errors.push({
+              type: 'MARRIAGE_AFTER_DEATH',
+              personId: wife.id,
+              message: `${wife.names[0] || wife.id} : mariage (${marriageYear}) après décès (${wifeDeath})`
+            });
+          }
+        }
+      }
+    });
+    
+    return { errors, warnings };
+  };
+
+  // P1.3 - Normalisation avancée des lieux et détection des variantes
+  const normalizePlaceFull = (place) => {
+    if (!place) return '';
+    return place
+      .toLowerCase()
+      .split(',')
+      .map(part => part.trim())
+      .filter(part => part.length > 0)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(', ');
+  };
+
+  const detectPlaceVariants = (people) => {
+    const placeGroups = new Map();
+    
+    people.forEach(p => {
+      [p.birthPlace, p.deathPlace, p.baptismPlace, p.burialPlace, p.residence]
+        .filter(Boolean)
+        .forEach(place => {
+          const normalized = normalizePlaceFull(place);
+          if (!placeGroups.has(normalized)) {
+            placeGroups.set(normalized, { variants: new Set(), count: 0 });
+          }
+          placeGroups.get(normalized).variants.add(place);
+          placeGroups.get(normalized).count++;
+        });
+    });
+    
+    // Retourner les groupes avec >1 variante
+    return [...placeGroups.entries()]
+      .filter(([_, data]) => data.variants.size > 1)
+      .map(([normalized, data]) => ({
+        suggested: normalized,
+        variants: [...data.variants],
+        occurrences: data.count
+      }))
+      .sort((a, b) => b.occurrences - a.occurrences);
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // v2.1.0 - FONCTIONS P2 : STATS, REFS ORPHELINES, SCORE SUSPICION
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // P2.1 - Statistiques généalogiques
+  const calculateGenealogyStats = (people, families) => {
+    const extractYear = (dateStr) => {
+      if (!dateStr) return null;
+      const match = dateStr.match(/(\d{4})/);
+      return match ? parseInt(match[1]) : null;
+    };
+    
+    // Répartition par sexe
+    const males = people.filter(p => p.sex === 'M').length;
+    const females = people.filter(p => p.sex === 'F').length;
+    const unknown = people.length - males - females;
+    
+    // Distribution des années de naissance par décennie
+    const birthDecades = {};
+    people.forEach(p => {
+      const year = extractYear(p.birth);
+      if (year) {
+        const decade = Math.floor(year / 10) * 10;
+        birthDecades[decade] = (birthDecades[decade] || 0) + 1;
+      }
+    });
+    
+    // Nb enfants par famille
+    let totalChildren = 0;
+    let familiesWithChildren = 0;
+    let maxChildren = 0;
+    let maxChildrenFamily = null;
+    
+    families.forEach((fam, famId) => {
+      const childCount = fam.children?.length || 0;
+      totalChildren += childCount;
+      if (childCount > 0) familiesWithChildren++;
+      if (childCount > maxChildren) {
+        maxChildren = childCount;
+        maxChildrenFamily = famId;
+      }
+    });
+    
+    // Dates complètes vs partielles
+    let fullDates = 0, partialDates = 0, noDates = 0;
+    people.forEach(p => {
+      if (p.birth) {
+        if (/\d{1,2}\s+\w+\s+\d{4}/.test(p.birth)) fullDates++;
+        else partialDates++;
+      } else {
+        noDates++;
+      }
+    });
+    
+    // Top 10 patronymes
+    const surnames = {};
+    people.forEach(p => {
+      const name = p.names[0] || '';
+      const match = name.match(/\/([^/]+)\//);
+      if (match) {
+        const surname = match[1].toUpperCase();
+        surnames[surname] = (surnames[surname] || 0) + 1;
+      }
+    });
+    const topSurnames = Object.entries(surnames)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }));
+    
+    // Période couverte
+    const years = people.map(p => extractYear(p.birth)).filter(Boolean);
+    const minYear = years.length ? Math.min(...years) : null;
+    const maxYear = years.length ? Math.max(...years) : null;
+    
+    return {
+      gender: { males, females, unknown, total: people.length },
+      families: {
+        total: families.size,
+        withChildren: familiesWithChildren,
+        avgChildren: familiesWithChildren ? (totalChildren / familiesWithChildren).toFixed(1) : 0,
+        maxChildren,
+        maxChildrenFamily
+      },
+      dates: {
+        full: fullDates,
+        partial: partialDates,
+        none: noDates,
+        fullPct: people.length ? Math.round((fullDates / people.length) * 100) : 0
+      },
+      period: { min: minYear, max: maxYear },
+      birthDecades,
+      topSurnames
+    };
+  };
+
+  // P2.2 - Détection des références orphelines
+  const detectOrphanReferences = (people, families, gedcomContent) => {
+    const issues = [];
+    const personIds = new Set(people.map(p => p.id));
+    const familyIds = new Set(families.keys());
+    
+    // Individus pointant vers familles inexistantes
+    people.forEach(person => {
+      if (person.familyAsChild && !familyIds.has(person.familyAsChild)) {
+        issues.push({
+          type: 'FAMC_BROKEN',
+          severity: 'error',
+          id: person.id,
+          message: `${person.names[0] || person.id} : FAMC ${person.familyAsChild} inexistante`
+        });
+      }
+      person.familiesAsSpouse.forEach(famId => {
+        if (!familyIds.has(famId)) {
+          issues.push({
+            type: 'FAMS_BROKEN',
+            severity: 'error',
+            id: person.id,
+            message: `${person.names[0] || person.id} : FAMS ${famId} inexistante`
+          });
+        }
+      });
+    });
+    
+    // Familles pointant vers individus inexistants
+    families.forEach((fam, famId) => {
+      if (fam.husband && !personIds.has(fam.husband)) {
+        issues.push({
+          type: 'HUSB_BROKEN',
+          severity: 'error',
+          id: famId,
+          message: `Famille ${famId} : HUSB ${fam.husband} inexistant`
+        });
+      }
+      if (fam.wife && !personIds.has(fam.wife)) {
+        issues.push({
+          type: 'WIFE_BROKEN',
+          severity: 'error',
+          id: famId,
+          message: `Famille ${famId} : WIFE ${fam.wife} inexistante`
+        });
+      }
+      (fam.children || []).forEach(childId => {
+        if (!personIds.has(childId)) {
+          issues.push({
+            type: 'CHIL_BROKEN',
+            severity: 'error',
+            id: famId,
+            message: `Famille ${famId} : CHIL ${childId} inexistant`
+          });
+        }
+      });
+    });
+    
+    // Sources orphelines (définies mais jamais référencées)
+    const definedSources = [...(gedcomContent.match(/@S\d+@/g) || [])];
+    const referencedSources = [...(gedcomContent.match(/SOUR @S\d+@/g) || [])].map(s => s.split(' ')[1]);
+    const orphanSources = [...new Set(definedSources)].filter(s => !referencedSources.includes(s) && gedcomContent.includes(`0 ${s} SOUR`));
+    orphanSources.forEach(src => {
+      issues.push({
+        type: 'SOURCE_ORPHAN',
+        severity: 'info',
+        id: src,
+        message: `Source ${src} définie mais jamais référencée`
+      });
+    });
+    
+    return issues;
+  };
+
+  // P2.3 - Score de suspicion des doublons (FORT/MOYEN/FAIBLE)
+  const getSuspicionLevel = (score, criteriaCount) => {
+    if (score >= 90 && criteriaCount >= 5) return { level: 'FORT', color: 'red', emoji: '🔴' };
+    if (score >= 80 && criteriaCount >= 3) return { level: 'FORT', color: 'red', emoji: '🔴' };
+    if (score >= 70 && criteriaCount >= 2) return { level: 'MOYEN', color: 'yellow', emoji: '🟡' };
+    if (score >= 60 && criteriaCount >= 4) return { level: 'MOYEN', color: 'yellow', emoji: '🟡' };
+    return { level: 'FAIBLE', color: 'green', emoji: '🟢' };
+  };
+
   const getClusterAverageScore = (cluster) => cluster.avgScore || 0;
   const getFilteredClusters = () => clusters.filter(cluster => getClusterAverageScore(cluster) >= clusterScoreFilter);
   const autoSelectHighConfidenceClusters = () => {
@@ -1129,11 +1567,40 @@ const GedcomDuplicateMerger = () => {
         setOriginalGedcom(content);
         setProgress(15);
         const { people, families } = parseGedcom(content);
-        setProgress(30);
+        setProgress(25);
         setIndividuals(people);
         setFamiliesData(families);
+        
+        // v2.1.0 - Rapport qualité
+        const qReport = generateQualityReport(people, families, content);
+        setQualityReport(qReport);
+        setProgress(35);
+        
+        // v2.1.0 - Incohérences chronologiques
+        const chrono = detectChronologicalIssues(people, families);
+        setChronoIssues(chrono);
+        setProgress(45);
+        
+        // v2.1.0 - Variantes de lieux
+        const variants = detectPlaceVariants(people);
+        setPlaceVariants(variants);
+        setProgress(50);
+        
+        // v2.1.0 - Statistiques généalogiques
+        const stats = calculateGenealogyStats(people, families);
+        setGenealogyStats(stats);
+        setProgress(55);
+        
+        // v2.1.0 - Références orphelines
+        const orphans = detectOrphanReferences(people, families, content);
+        setOrphanRefs(orphans);
+        setProgress(60);
+        
+        // Détection doublons existante
         const dups = findDuplicates(people);
         setDuplicates(dups);
+        setProgress(80);
+        
         const toDelete = detectToDeletePersons(people, families);
         setToDeletePersons(toDelete);
         const suggestions = generateAiSuggestions(people);
@@ -1142,6 +1609,7 @@ const GedcomDuplicateMerger = () => {
         setIntegrityReport(integrity);
         setProgress(100);
         setStep('review');
+        setShowQualityReport(true); // Afficher le rapport automatiquement
       };
       reader.readAsText(uploadedFile);
     }
@@ -1426,6 +1894,15 @@ const GedcomDuplicateMerger = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {step !== 'upload' && qualityReport && (
+              <button onClick={() => setShowQualityReport(true)} className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">Qualité</span>
+                {(chronoIssues.errors.length > 0 || orphanRefs.filter(r => r.severity === 'error').length > 0) && (
+                  <span className="px-1.5 py-0.5 bg-red-500 rounded-full text-xs">{chronoIssues.errors.length + orphanRefs.filter(r => r.severity === 'error').length}</span>
+                )}
+              </button>
+            )}
             {step !== 'upload' && integrityReport && (
               <button onClick={() => setShowIntegrityModal(true)} className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
                 <Shield className="w-4 h-4" />
@@ -1611,7 +2088,9 @@ const GedcomDuplicateMerger = () => {
                     </div>
                     {getSimplePairs().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun doublon simple trouvé</p> : (
                       <div className="space-y-2">
-                        {getSimplePairs().slice(0, 50).map((pair) => (
+                        {getSimplePairs().slice(0, 50).map((pair) => {
+                          const suspicion = getSuspicionLevel(pair.similarity, pair.sufficientCriteria?.length || 0);
+                          return (
                           <div key={pair.id} className={`border rounded-lg p-3 ${selectedPairs.has(pair.id) ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
@@ -1619,14 +2098,14 @@ const GedcomDuplicateMerger = () => {
                                 <div className="text-sm text-gray-500">↔ {pair.person2.names[0] || pair.person2.id}</div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded text-sm font-medium ${pair.similarity >= 95 ? 'bg-green-100 text-green-800' : pair.similarity >= 90 ? 'bg-yellow-100 text-yellow-800' : 'bg-orange-100 text-orange-800'}`}>{pair.similarity}%</span>
+                                <span className={`px-2 py-1 rounded text-sm font-medium ${suspicion.level === 'FORT' ? 'bg-red-100 text-red-800' : suspicion.level === 'MOYEN' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{suspicion.emoji} {pair.similarity}%</span>
                                 <button onClick={() => openPreview(pair)} className="px-2 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">Prévisualiser</button>
                                 <button onClick={() => togglePairSelection(pair.id)} className={`px-2 py-1 text-sm rounded ${selectedPairs.has(pair.id) ? 'bg-emerald-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{selectedPairs.has(pair.id) ? '✓' : 'Sélectionner'}</button>
                               </div>
                             </div>
                             {pair.sufficientCriteria && pair.sufficientCriteria.length > 0 && <div className="mt-2 text-xs text-emerald-600">Critères validants: {pair.sufficientCriteria.join(', ')}</div>}
                           </div>
-                        ))}
+                        );})}
                       </div>
                     )}
                   </div>
@@ -1819,6 +2298,170 @@ const GedcomDuplicateMerger = () => {
             </div>
             <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
               <button onClick={() => setShowIntegrityModal(false)} className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Rapport Qualité v2.1.0 */}
+      {showQualityReport && qualityReport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">📊 Rapport Qualité GEDCOM</h2>
+                <button onClick={() => setShowQualityReport(false)} className="p-2 hover:bg-white/20 rounded-lg">✕</button>
+              </div>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
+              {/* Infos fichier */}
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-700 mb-2">📁 Informations fichier</h3>
+                  <p className="text-sm"><span className="font-medium">Version GEDCOM:</span> {qualityReport.gedcomVersion}</p>
+                  <p className="text-sm"><span className="font-medium">Encodage:</span> {qualityReport.encoding}</p>
+                  {qualityReport.customTags.length > 0 && (
+                    <p className="text-sm"><span className="font-medium">Tags custom:</span> {qualityReport.customTags.slice(0, 5).join(', ')}{qualityReport.customTags.length > 5 ? '...' : ''}</p>
+                  )}
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-700 mb-2">📈 Statistiques</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <p><span className="font-medium">Individus:</span> {qualityReport.stats.individuals.toLocaleString()}</p>
+                    <p><span className="font-medium">Familles:</span> {qualityReport.stats.families.toLocaleString()}</p>
+                    <p><span className="font-medium">Sources:</span> {qualityReport.stats.sources.toLocaleString()}</p>
+                    <p><span className="font-medium">Notes:</span> {qualityReport.stats.notes.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Complétude */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-700 mb-3">📉 Complétude des données</h3>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Avec date naissance', data: qualityReport.completeness.withBirth, color: 'emerald' },
+                    { label: 'Avec lieu naissance', data: qualityReport.completeness.withBirthPlace, color: 'blue' },
+                    { label: 'Avec date décès', data: qualityReport.completeness.withDeath, color: 'purple' },
+                    { label: 'Avec parent(s)', data: qualityReport.completeness.withParent, color: 'orange' },
+                    { label: 'Avec conjoint(s)', data: qualityReport.completeness.withSpouse, color: 'pink' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <span className="text-sm w-36">{item.label}</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                        <div className={`h-full bg-${item.color}-500 transition-all`} style={{ width: `${item.data.pct}%` }}></div>
+                      </div>
+                      <span className="text-sm font-medium w-20 text-right">{item.data.pct}% ({item.data.count.toLocaleString()})</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
+                  <p className="text-sm text-yellow-800">⚠️ <strong>{qualityReport.completeness.isolated.count.toLocaleString()}</strong> individus isolés ({qualityReport.completeness.isolated.pct}%) - sans famille liée</p>
+                </div>
+              </div>
+              
+              {/* Incohérences chronologiques */}
+              {(chronoIssues.errors.length > 0 || chronoIssues.warnings.length > 0) && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-700 mb-3">⏱️ Incohérences chronologiques</h3>
+                  {chronoIssues.errors.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-red-600 mb-2">❌ {chronoIssues.errors.length} erreur(s) critique(s)</p>
+                      <div className="bg-red-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                        {chronoIssues.errors.slice(0, 10).map((err, idx) => (
+                          <p key={idx} className="text-xs text-red-700 mb-1">{err.message}</p>
+                        ))}
+                        {chronoIssues.errors.length > 10 && <p className="text-xs text-red-500 italic">... et {chronoIssues.errors.length - 10} autres</p>}
+                      </div>
+                    </div>
+                  )}
+                  {chronoIssues.warnings.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-yellow-600 mb-2">⚠️ {chronoIssues.warnings.length} avertissement(s)</p>
+                      <div className="bg-yellow-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                        {chronoIssues.warnings.slice(0, 10).map((warn, idx) => (
+                          <p key={idx} className="text-xs text-yellow-700 mb-1">{warn.message}</p>
+                        ))}
+                        {chronoIssues.warnings.length > 10 && <p className="text-xs text-yellow-500 italic">... et {chronoIssues.warnings.length - 10} autres</p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Variantes de lieux */}
+              {placeVariants.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-700 mb-3">📍 Lieux à normaliser ({placeVariants.length} groupes)</h3>
+                  <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
+                    {placeVariants.slice(0, 8).map((group, idx) => (
+                      <div key={idx} className="text-xs mb-2 pb-2 border-b last:border-0">
+                        <p className="font-medium text-gray-700">✓ "{group.suggested}"</p>
+                        <p className="text-gray-500 ml-4">← {group.variants.join(' | ')} ({group.occurrences} occ.)</p>
+                      </div>
+                    ))}
+                    {placeVariants.length > 8 && <p className="text-xs text-gray-500 italic">... et {placeVariants.length - 8} autres groupes</p>}
+                  </div>
+                </div>
+              )}
+              
+              {/* Références orphelines */}
+              {orphanRefs.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-700 mb-3">🔗 Références orphelines ({orphanRefs.length})</h3>
+                  <div className="bg-orange-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                    {orphanRefs.filter(r => r.severity === 'error').slice(0, 5).map((ref, idx) => (
+                      <p key={idx} className="text-xs text-orange-700 mb-1">❌ {ref.message}</p>
+                    ))}
+                    {orphanRefs.filter(r => r.severity === 'info').slice(0, 3).map((ref, idx) => (
+                      <p key={`info-${idx}`} className="text-xs text-orange-600 mb-1">ℹ️ {ref.message}</p>
+                    ))}
+                    {orphanRefs.length > 8 && <p className="text-xs text-orange-500 italic">... et {orphanRefs.length - 8} autres</p>}
+                  </div>
+                </div>
+              )}
+              
+              {/* Statistiques généalogiques */}
+              {genealogyStats && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-700 mb-3">🌳 Statistiques généalogiques</h3>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-indigo-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-indigo-700 mb-1">Répartition par sexe</p>
+                      <p className="text-sm">♂ {genealogyStats.gender.males.toLocaleString()} ({Math.round(genealogyStats.gender.males / genealogyStats.gender.total * 100)}%)</p>
+                      <p className="text-sm">♀ {genealogyStats.gender.females.toLocaleString()} ({Math.round(genealogyStats.gender.females / genealogyStats.gender.total * 100)}%)</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-purple-700 mb-1">Familles</p>
+                      <p className="text-sm">Moy. enfants: {genealogyStats.families.avgChildren}</p>
+                      <p className="text-sm">Max: {genealogyStats.families.maxChildren} enfants</p>
+                    </div>
+                    <div className="bg-teal-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-teal-700 mb-1">Période</p>
+                      <p className="text-sm">{genealogyStats.period.min || '?'} - {genealogyStats.period.max || '?'}</p>
+                      <p className="text-sm">Dates complètes: {genealogyStats.dates.fullPct}%</p>
+                    </div>
+                  </div>
+                  {genealogyStats.topSurnames.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs font-medium text-gray-600 mb-1">Top patronymes:</p>
+                      <p className="text-sm text-gray-700">{genealogyStats.topSurnames.map(s => `${s.name} (${s.count})`).join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Résumé doublons */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4">
+                <h3 className="font-semibold text-emerald-700 mb-2">🔍 Doublons détectés</h3>
+                <p className="text-lg font-bold text-emerald-600">{duplicates.length} paires de doublons probables</p>
+                <p className="text-sm text-emerald-600">{clusters.length} clusters identifiés</p>
+              </div>
+            </div>
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t flex gap-3">
+              <button onClick={() => setShowQualityReport(false)} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Continuer vers l'analyse des doublons →
+              </button>
             </div>
           </div>
         </div>

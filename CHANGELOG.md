@@ -4,7 +4,29 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ---
 
-## [2.1.1] - 2 janvier 2026 - ACTUELLE
+## [2.1.2] - 2 janvier 2026 - ACTUELLE
+
+### Performance, progression et statistiques enrichies
+
+#### Corrections
+- **Barres de couleur** : Toutes les barres de complétude sont maintenant colorées (classes Tailwind statiques)
+- **Progression** : Affichage fluide de 5% → 100% grâce à async/await
+
+#### Améliorations statistiques
+- **Âge au décès** : Moyenne, médiane, min, max calculés
+- **Top 5 prénoms** : Masculins et féminins séparés
+- **Top 5 lieux de naissance** : Avec nombre d'occurrences
+- **Top 5 professions** : Les métiers les plus fréquents
+- **Générations estimées** : Calcul basé sur la période couverte
+- **Remariages** : Nombre de personnes avec plusieurs conjoints
+
+#### Technique
+- 385 tests (8 catégories)
+- Progression async pour ne pas bloquer l'UI
+
+---
+
+## [2.1.1] - 2 janvier 2026 - PRÉCÉDENTE
 
 ### Détails enrichis dans l'onglet "À supprimer"
 

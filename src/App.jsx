@@ -34,14 +34,32 @@ const GedcomDuplicateMerger = () => {
   const [genealogyStats, setGenealogyStats] = useState(null);
   const [orphanRefs, setOrphanRefs] = useState([]);
 
-  const VERSION = '2.1.1';
+  const VERSION = '2.1.2';
 
   const CHANGELOG = [
     {
-      version: '2.1.1',
+      version: '2.1.2',
       date: '2 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Performance, progression et statistiques enrichies',
+      items: [
+        'CORRECTION: Barres de couleur complétude maintenant toutes visibles',
+        'AMÉLIORATION: Progression fluide de 5% à 100% (async/await)',
+        'AMÉLIORATION: Statistiques enrichies (âges, prénoms, lieux, professions)',
+        'NOUVEAU: Âge moyen/médian/min/max au décès',
+        'NOUVEAU: Top 5 prénoms masculins et féminins',
+        'NOUVEAU: Top 5 lieux de naissance',
+        'NOUVEAU: Top 5 professions',
+        'NOUVEAU: Nombre de générations estimé',
+        'NOUVEAU: Détection des remariages'
+      ]
+    },
+    {
+      version: '2.1.1',
+      date: '2 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Détails enrichis dans l\'onglet "À supprimer"',
       items: [
         'AMÉLIORATION: Affichage des parents avec leurs noms dans l\'onglet À supprimer',
@@ -56,8 +74,8 @@ const GedcomDuplicateMerger = () => {
     {
       version: '2.1.0',
       date: '2 janvier 2026',
-      tag: 'PRÉCÉDENTE',
-      color: 'blue',
+      tag: null,
+      color: 'gray',
       title: 'Contrôle qualité avancé et analyse généalogique',
       items: [
         'NOUVEAU: Rapport qualité affiché automatiquement après upload',
@@ -1180,12 +1198,42 @@ const GedcomDuplicateMerger = () => {
     
     // Distribution des années de naissance par décennie
     const birthDecades = {};
+    const deathDecades = {};
+    const ages = [];
+    
     people.forEach(p => {
-      const year = extractYear(p.birth);
-      if (year) {
-        const decade = Math.floor(year / 10) * 10;
+      const birthYear = extractYear(p.birth);
+      const deathYear = extractYear(p.death);
+      
+      if (birthYear) {
+        const decade = Math.floor(birthYear / 10) * 10;
         birthDecades[decade] = (birthDecades[decade] || 0) + 1;
       }
+      if (deathYear) {
+        const decade = Math.floor(deathYear / 10) * 10;
+        deathDecades[decade] = (deathDecades[decade] || 0) + 1;
+      }
+      // Calcul de l'âge au décès
+      if (birthYear && deathYear && deathYear >= birthYear) {
+        const age = deathYear - birthYear;
+        if (age <= 120) ages.push(age);
+      }
+    });
+    
+    // Statistiques d'âge
+    const avgAge = ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null;
+    const minAge = ages.length > 0 ? Math.min(...ages) : null;
+    const maxAge = ages.length > 0 ? Math.max(...ages) : null;
+    const medianAge = ages.length > 0 ? ages.sort((a, b) => a - b)[Math.floor(ages.length / 2)] : null;
+    
+    // Distribution des âges par tranche
+    const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '80+': 0 };
+    ages.forEach(age => {
+      if (age <= 20) ageRanges['0-20']++;
+      else if (age <= 40) ageRanges['21-40']++;
+      else if (age <= 60) ageRanges['41-60']++;
+      else if (age <= 80) ageRanges['61-80']++;
+      else ageRanges['80+']++;
     });
     
     // Nb enfants par famille
@@ -1193,6 +1241,7 @@ const GedcomDuplicateMerger = () => {
     let familiesWithChildren = 0;
     let maxChildren = 0;
     let maxChildrenFamily = null;
+    let childrenDistribution = { '0': 0, '1-2': 0, '3-5': 0, '6-10': 0, '10+': 0 };
     
     families.forEach((fam, famId) => {
       const childCount = fam.children?.length || 0;
@@ -1202,6 +1251,12 @@ const GedcomDuplicateMerger = () => {
         maxChildren = childCount;
         maxChildrenFamily = famId;
       }
+      // Distribution du nombre d'enfants
+      if (childCount === 0) childrenDistribution['0']++;
+      else if (childCount <= 2) childrenDistribution['1-2']++;
+      else if (childCount <= 5) childrenDistribution['3-5']++;
+      else if (childCount <= 10) childrenDistribution['6-10']++;
+      else childrenDistribution['10+']++;
     });
     
     // Dates complètes vs partielles
@@ -1230,19 +1285,83 @@ const GedcomDuplicateMerger = () => {
       .slice(0, 10)
       .map(([name, count]) => ({ name, count }));
     
+    // Top prénoms (Hommes et Femmes séparés)
+    const maleFirstNames = {};
+    const femaleFirstNames = {};
+    people.forEach(p => {
+      const name = p.names[0] || '';
+      const firstName = name.split('/')[0].trim().split(' ')[0];
+      if (firstName && firstName.length > 1) {
+        const normalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+        if (p.sex === 'M') {
+          maleFirstNames[normalizedName] = (maleFirstNames[normalizedName] || 0) + 1;
+        } else if (p.sex === 'F') {
+          femaleFirstNames[normalizedName] = (femaleFirstNames[normalizedName] || 0) + 1;
+        }
+      }
+    });
+    const topMaleNames = Object.entries(maleFirstNames).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count }));
+    const topFemaleNames = Object.entries(femaleFirstNames).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count }));
+    
+    // Top lieux de naissance
+    const birthPlaces = {};
+    people.forEach(p => {
+      if (p.birthPlace) {
+        const place = p.birthPlace.split(',')[0].trim();
+        if (place) {
+          birthPlaces[place] = (birthPlaces[place] || 0) + 1;
+        }
+      }
+    });
+    const topBirthPlaces = Object.entries(birthPlaces).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([place, count]) => ({ place, count }));
+    
+    // Professions les plus fréquentes
+    const occupations = {};
+    people.forEach(p => {
+      if (p.occupation) {
+        const occ = p.occupation.trim();
+        if (occ) {
+          occupations[occ] = (occupations[occ] || 0) + 1;
+        }
+      }
+    });
+    const topOccupations = Object.entries(occupations).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([occupation, count]) => ({ occupation, count }));
+    
     // Période couverte
-    const years = people.map(p => extractYear(p.birth)).filter(Boolean);
-    const minYear = years.length ? Math.min(...years) : null;
-    const maxYear = years.length ? Math.max(...years) : null;
+    const birthYears = people.map(p => extractYear(p.birth)).filter(Boolean);
+    const deathYears = people.map(p => extractYear(p.death)).filter(Boolean);
+    const minYear = birthYears.length ? Math.min(...birthYears) : null;
+    const maxYear = Math.max(
+      birthYears.length ? Math.max(...birthYears) : 0,
+      deathYears.length ? Math.max(...deathYears) : 0
+    ) || null;
+    
+    // Calcul du nombre de générations estimé
+    const generationSpan = 25; // Moyenne de 25 ans par génération
+    const estimatedGenerations = minYear && maxYear ? Math.round((maxYear - minYear) / generationSpan) : null;
+    
+    // Individus avec plusieurs mariages
+    const multipleMarriages = people.filter(p => p.spouses && p.spouses.length > 1).length;
     
     return {
       gender: { males, females, unknown, total: people.length },
       families: {
         total: families.size,
         withChildren: familiesWithChildren,
+        withoutChildren: families.size - familiesWithChildren,
         avgChildren: familiesWithChildren ? (totalChildren / familiesWithChildren).toFixed(1) : 0,
+        totalChildren,
         maxChildren,
-        maxChildrenFamily
+        maxChildrenFamily,
+        childrenDistribution
+      },
+      ages: {
+        count: ages.length,
+        avg: avgAge,
+        min: minAge,
+        max: maxAge,
+        median: medianAge,
+        distribution: ageRanges
       },
       dates: {
         full: fullDates,
@@ -1250,9 +1369,22 @@ const GedcomDuplicateMerger = () => {
         none: noDates,
         fullPct: people.length ? Math.round((fullDates / people.length) * 100) : 0
       },
-      period: { min: minYear, max: maxYear },
+      period: { 
+        min: minYear, 
+        max: maxYear,
+        span: minYear && maxYear ? maxYear - minYear : null,
+        estimatedGenerations
+      },
       birthDecades,
-      topSurnames
+      deathDecades,
+      topSurnames,
+      topMaleNames,
+      topFemaleNames,
+      topBirthPlaces,
+      topOccupations,
+      uniqueSurnames: Object.keys(surnames).length,
+      uniquePlaces: Object.keys(birthPlaces).length,
+      multipleMarriages
     };
   };
 
@@ -1597,51 +1729,68 @@ const GedcomDuplicateMerger = () => {
       setFile(uploadedFile);
       setProgress(5);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const content = e.target.result;
         setOriginalGedcom(content);
-        setProgress(15);
+        
+        // Helper pour permettre au navigateur de rafraîchir
+        const updateProgress = (value) => new Promise(resolve => {
+          setProgress(value);
+          setTimeout(resolve, 10);
+        });
+        
+        await updateProgress(10);
+        
+        // Parsing GEDCOM
         const { people, families } = parseGedcom(content);
-        setProgress(25);
+        await updateProgress(20);
+        
         setIndividuals(people);
         setFamiliesData(families);
+        await updateProgress(30);
         
         // v2.1.0 - Rapport qualité
         const qReport = generateQualityReport(people, families, content);
         setQualityReport(qReport);
-        setProgress(35);
+        await updateProgress(40);
         
         // v2.1.0 - Incohérences chronologiques
         const chrono = detectChronologicalIssues(people, families);
         setChronoIssues(chrono);
-        setProgress(45);
+        await updateProgress(50);
         
         // v2.1.0 - Variantes de lieux
         const variants = detectPlaceVariants(people);
         setPlaceVariants(variants);
-        setProgress(50);
+        await updateProgress(55);
         
         // v2.1.0 - Statistiques généalogiques
         const stats = calculateGenealogyStats(people, families);
         setGenealogyStats(stats);
-        setProgress(55);
+        await updateProgress(60);
         
         // v2.1.0 - Références orphelines
         const orphans = detectOrphanReferences(people, families, content);
         setOrphanRefs(orphans);
-        setProgress(60);
+        await updateProgress(65);
         
-        // Détection doublons existante
+        // Détection doublons (opération la plus longue)
         const dups = findDuplicates(people);
         setDuplicates(dups);
-        setProgress(80);
+        await updateProgress(85);
         
+        // Finalisation
         const toDelete = detectToDeletePersons(people, families);
         setToDeletePersons(toDelete);
+        await updateProgress(90);
+        
         const suggestions = generateAiSuggestions(people);
         setSmartSuggestions(suggestions);
+        await updateProgress(95);
+        
         const integrity = performIntegrityChecks(people, families);
         setIntegrityReport(integrity);
+        
         setProgress(100);
         setStep('review');
         setShowQualityReport(true); // Afficher le rapport automatiquement
@@ -2444,21 +2593,42 @@ const GedcomDuplicateMerger = () => {
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-700 mb-3">📉 Complétude des données</h3>
                 <div className="space-y-2">
-                  {[
-                    { label: 'Avec date naissance', data: qualityReport.completeness.withBirth, color: 'emerald' },
-                    { label: 'Avec lieu naissance', data: qualityReport.completeness.withBirthPlace, color: 'blue' },
-                    { label: 'Avec date décès', data: qualityReport.completeness.withDeath, color: 'purple' },
-                    { label: 'Avec parent(s)', data: qualityReport.completeness.withParent, color: 'orange' },
-                    { label: 'Avec conjoint(s)', data: qualityReport.completeness.withSpouse, color: 'pink' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <span className="text-sm w-36">{item.label}</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
-                        <div className={`h-full bg-${item.color}-500 transition-all`} style={{ width: `${item.data.pct}%` }}></div>
-                      </div>
-                      <span className="text-sm font-medium w-20 text-right">{item.data.pct}% ({item.data.count.toLocaleString()})</span>
+                  {/* Barres avec classes Tailwind statiques (évite la purge) */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm w-36">Avec date naissance</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-emerald-500 transition-all" style={{ width: `${qualityReport.completeness.withBirth.pct}%` }}></div>
                     </div>
-                  ))}
+                    <span className="text-sm font-medium w-24 text-right">{qualityReport.completeness.withBirth.pct}% ({qualityReport.completeness.withBirth.count.toLocaleString()})</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm w-36">Avec lieu naissance</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-blue-500 transition-all" style={{ width: `${qualityReport.completeness.withBirthPlace.pct}%` }}></div>
+                    </div>
+                    <span className="text-sm font-medium w-24 text-right">{qualityReport.completeness.withBirthPlace.pct}% ({qualityReport.completeness.withBirthPlace.count.toLocaleString()})</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm w-36">Avec date décès</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-purple-500 transition-all" style={{ width: `${qualityReport.completeness.withDeath.pct}%` }}></div>
+                    </div>
+                    <span className="text-sm font-medium w-24 text-right">{qualityReport.completeness.withDeath.pct}% ({qualityReport.completeness.withDeath.count.toLocaleString()})</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm w-36">Avec parent(s)</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-orange-500 transition-all" style={{ width: `${qualityReport.completeness.withParent.pct}%` }}></div>
+                    </div>
+                    <span className="text-sm font-medium w-24 text-right">{qualityReport.completeness.withParent.pct}% ({qualityReport.completeness.withParent.count.toLocaleString()})</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm w-36">Avec conjoint(s)</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-pink-500 transition-all" style={{ width: `${qualityReport.completeness.withSpouse.pct}%` }}></div>
+                    </div>
+                    <span className="text-sm font-medium w-24 text-right">{qualityReport.completeness.withSpouse.pct}% ({qualityReport.completeness.withSpouse.count.toLocaleString()})</span>
+                  </div>
                 </div>
                 <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
                   <p className="text-sm text-yellow-800">⚠️ <strong>{qualityReport.completeness.isolated.count.toLocaleString()}</strong> individus isolés ({qualityReport.completeness.isolated.pct}%) - sans famille liée</p>
@@ -2530,29 +2700,109 @@ const GedcomDuplicateMerger = () => {
               {genealogyStats && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-gray-700 mb-3">🌳 Statistiques généalogiques</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  
+                  {/* Ligne 1: Démographie + Période */}
+                  <div className="grid md:grid-cols-3 gap-4 mb-4">
                     <div className="bg-indigo-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-indigo-700 mb-1">Répartition par sexe</p>
-                      <p className="text-sm">♂ {genealogyStats.gender.males.toLocaleString()} ({Math.round(genealogyStats.gender.males / genealogyStats.gender.total * 100)}%)</p>
-                      <p className="text-sm">♀ {genealogyStats.gender.females.toLocaleString()} ({Math.round(genealogyStats.gender.females / genealogyStats.gender.total * 100)}%)</p>
-                    </div>
-                    <div className="bg-purple-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-purple-700 mb-1">Familles</p>
-                      <p className="text-sm">Moy. enfants: {genealogyStats.families.avgChildren}</p>
-                      <p className="text-sm">Max: {genealogyStats.families.maxChildren} enfants</p>
+                      <p className="text-xs font-medium text-indigo-700 mb-2">👥 Répartition par sexe</p>
+                      <p className="text-sm">♂ Hommes: <strong>{genealogyStats.gender.males.toLocaleString()}</strong> ({Math.round(genealogyStats.gender.males / genealogyStats.gender.total * 100)}%)</p>
+                      <p className="text-sm">♀ Femmes: <strong>{genealogyStats.gender.females.toLocaleString()}</strong> ({Math.round(genealogyStats.gender.females / genealogyStats.gender.total * 100)}%)</p>
+                      {genealogyStats.gender.unknown > 0 && <p className="text-sm text-gray-500">? Inconnu: {genealogyStats.gender.unknown.toLocaleString()}</p>}
                     </div>
                     <div className="bg-teal-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-teal-700 mb-1">Période</p>
-                      <p className="text-sm">{genealogyStats.period.min || '?'} - {genealogyStats.period.max || '?'}</p>
-                      <p className="text-sm">Dates complètes: {genealogyStats.dates.fullPct}%</p>
+                      <p className="text-xs font-medium text-teal-700 mb-2">📅 Période couverte</p>
+                      <p className="text-sm"><strong>{genealogyStats.period.min || '?'} - {genealogyStats.period.max || '?'}</strong></p>
+                      {genealogyStats.period.span && <p className="text-sm text-teal-600">{genealogyStats.period.span} ans d'histoire</p>}
+                      {genealogyStats.period.estimatedGenerations && <p className="text-sm text-teal-600">~{genealogyStats.period.estimatedGenerations} générations</p>}
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-amber-700 mb-2">📊 Qualité des dates</p>
+                      <p className="text-sm">Complètes (JJ/MM/AAAA): <strong>{genealogyStats.dates.fullPct}%</strong></p>
+                      <p className="text-sm text-amber-600">Partielles: {genealogyStats.dates.partial.toLocaleString()}</p>
+                      <p className="text-sm text-amber-600">Absentes: {genealogyStats.dates.none.toLocaleString()}</p>
                     </div>
                   </div>
-                  {genealogyStats.topSurnames.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs font-medium text-gray-600 mb-1">Top patronymes:</p>
-                      <p className="text-sm text-gray-700">{genealogyStats.topSurnames.map(s => `${s.name} (${s.count})`).join(', ')}</p>
+                  
+                  {/* Ligne 2: Familles + Âges */}
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-purple-700 mb-2">👨‍👩‍👧‍👦 Familles ({genealogyStats.families.total.toLocaleString()})</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p>Avec enfants: <strong>{genealogyStats.families.withChildren}</strong></p>
+                          <p>Sans enfant: {genealogyStats.families.withoutChildren}</p>
+                          <p>Moy. enfants: <strong>{genealogyStats.families.avgChildren}</strong></p>
+                        </div>
+                        <div>
+                          <p>Total enfants: {genealogyStats.families.totalChildren?.toLocaleString()}</p>
+                          <p>Max enfants: <strong>{genealogyStats.families.maxChildren}</strong></p>
+                          {genealogyStats.multipleMarriages > 0 && <p className="text-purple-600">Remariages: {genealogyStats.multipleMarriages}</p>}
+                        </div>
+                      </div>
                     </div>
-                  )}
+                    {genealogyStats.ages && genealogyStats.ages.count > 0 && (
+                      <div className="bg-rose-50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-rose-700 mb-2">⏱️ Âge au décès ({genealogyStats.ages.count.toLocaleString()} calculés)</p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p>Moyenne: <strong>{genealogyStats.ages.avg} ans</strong></p>
+                            <p>Médiane: {genealogyStats.ages.median} ans</p>
+                          </div>
+                          <div>
+                            <p>Min: {genealogyStats.ages.min} ans</p>
+                            <p>Max: {genealogyStats.ages.max} ans</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Ligne 3: Top patronymes + prénoms */}
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    {genealogyStats.topSurnames.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-gray-700 mb-2">👤 Top 10 patronymes ({genealogyStats.uniqueSurnames} uniques)</p>
+                        <div className="flex flex-wrap gap-1">
+                          {genealogyStats.topSurnames.map((s, i) => (
+                            <span key={i} className="text-xs px-2 py-1 bg-white rounded border">{s.name} <strong>({s.count})</strong></span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-gray-700 mb-2">✨ Top prénoms</p>
+                      {genealogyStats.topMaleNames && genealogyStats.topMaleNames.length > 0 && (
+                        <p className="text-sm mb-1">♂ {genealogyStats.topMaleNames.map(n => `${n.name} (${n.count})`).join(', ')}</p>
+                      )}
+                      {genealogyStats.topFemaleNames && genealogyStats.topFemaleNames.length > 0 && (
+                        <p className="text-sm">♀ {genealogyStats.topFemaleNames.map(n => `${n.name} (${n.count})`).join(', ')}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Ligne 4: Lieux + Professions */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {genealogyStats.topBirthPlaces && genealogyStats.topBirthPlaces.length > 0 && (
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-blue-700 mb-2">📍 Top lieux de naissance ({genealogyStats.uniquePlaces} uniques)</p>
+                        <div className="flex flex-wrap gap-1">
+                          {genealogyStats.topBirthPlaces.map((p, i) => (
+                            <span key={i} className="text-xs px-2 py-1 bg-white rounded border">{p.place} <strong>({p.count})</strong></span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {genealogyStats.topOccupations && genealogyStats.topOccupations.length > 0 && (
+                      <div className="bg-green-50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-green-700 mb-2">💼 Top professions</p>
+                        <div className="flex flex-wrap gap-1">
+                          {genealogyStats.topOccupations.map((o, i) => (
+                            <span key={i} className="text-xs px-2 py-1 bg-white rounded border">{o.occupation} <strong>({o.count})</strong></span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               

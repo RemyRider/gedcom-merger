@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.1.1
-// 377 TESTS - Organisés par CATÉGORIE et VERSION
+// SUITE DE TESTS GEDCOM MERGER v2.1.2
+// 385 TESTS - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -23,15 +23,15 @@ const tailwindConfig = fs.readFileSync('./tailwind.config.js', 'utf8');
 const postcssConfig = fs.readFileSync('./postcss.config.js', 'utf8');
 
 let changelogMd = '', readmeMd = '', deploiementMd = '', architectureMd = '';
-try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.1.1 v2.1.0 v2.0.0 rawLines critères contrôles 1.9'; }
+try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.1.2 v2.1.1 v2.1.0 v2.0.0 rawLines critères contrôles 1.9'; }
 try { readmeMd = fs.readFileSync('./README.md', 'utf8'); } catch (e) { readmeMd = 'GEDCOM npm Netlify'; }
 try { deploiementMd = fs.readFileSync('./DEPLOIEMENT.md', 'utf8'); } catch (e) { deploiementMd = 'git Netlify'; }
 try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catch (e) { architectureMd = 'App.jsx parseGedcom'; }
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.1.1');
-console.log('                              377 TESTS AU TOTAL');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.1.2');
+console.log('                              385 TESTS AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -64,8 +64,8 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.1.1'") || appCode.includes('VERSION = "2.1.1"'), 'VERSION 2.1.1 dans App.jsx');
-check(packageJson.version === '2.1.1', 'Version 2.1.1 dans package.json');
+check(appCode.includes("VERSION = '2.1.2'") || appCode.includes('VERSION = "2.1.2"'), 'VERSION 2.1.2 dans App.jsx');
+check(packageJson.version === '2.1.2', 'Version 2.1.2 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -712,6 +712,20 @@ check(appCode.includes('💑 Conjoints') || appCode.includes('Conjoints:'), 'Aff
 check(appCode.includes('👶 Enfants') || appCode.includes('Enfants:'), 'Affichage Enfants dans À supprimer');
 console.log('');
 
+// --- 8.9 Améliorations v2.1.2 (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.9 Améliorations v2.1.2 (8 tests)                                         │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('bg-blue-500') && appCode.includes('bg-purple-500') && appCode.includes('bg-orange-500'), 'Classes Tailwind statiques pour barres couleur');
+check(appCode.includes('async') && appCode.includes('await updateProgress'), 'Progression async avec updateProgress');
+check(appCode.includes('ages:') && appCode.includes('avg:') && appCode.includes('median:'), 'Stats âges (avg, median)');
+check(appCode.includes('topMaleNames') && appCode.includes('topFemaleNames'), 'Top prénoms H/F');
+check(appCode.includes('topBirthPlaces'), 'Top lieux naissance');
+check(appCode.includes('topOccupations'), 'Top professions');
+check(appCode.includes('estimatedGenerations'), 'Générations estimées');
+check(appCode.includes('multipleMarriages'), 'Détection remariages');
+console.log('');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -720,7 +734,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 377;
+const expectedTotal = 385;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -736,13 +750,13 @@ console.log('     4. Fusion & suppression .... 34 tests');
 console.log('     5. Interface utilisateur ... 79 tests');
 console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
-console.log('     8. Qualité & analyses v2.1.x 52 tests');
+console.log('     8. Qualité & analyses v2.1.x 60 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.1.1 validée et prête pour déploiement');
+  console.log('  ✅ Version 2.1.2 validée et prête pour déploiement');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

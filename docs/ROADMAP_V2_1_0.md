@@ -1,331 +1,161 @@
-# 🚀 ROADMAP GEDCOM Merger v2.1.0
+# 🚀 ROADMAP GEDCOM Merger v2.1.x → v2.2.0
 
 ## Contexte
 
-Version axée sur le **contrôle qualité avancé** et l'**analyse généalogique** grâce à l'intégration des bonnes pratiques GEDCOM 5.5.x.
+Ce document trace l'évolution de la v2.1.0 à la v2.1.4 et définit les prochaines étapes.
 
-**Base de départ** : v2.0.0 (325 tests, 18 critères, rawLines/rawLinesByTag)
-
-**Date de création** : 2 janvier 2026
-
-**Inspiré par** : Compétence "gedcom-5-5x-qa-and-analysis"
-
----
-
-## ✅ Rappel v2.0.0 (FAIT)
-
-| Fonctionnalité | Statut |
-|----------------|--------|
-| rawLines / rawLinesByTag | ✅ |
-| 18 critères de comparaison | ✅ |
-| Comparaison par nom (parents/conjoints/enfants) | ✅ |
-| Contrôles pré-fusion (sexes, dates, lieux) | ✅ |
-| Contrôles pré-suppression (enfants, conjoints) | ✅ |
-| Sélection clusters → selectedPairs | ✅ |
-| 325 tests (7 catégories) | ✅ |
+**Version actuelle** : v2.1.4 (3 janvier 2026)  
+**Base de départ** : v2.0.0 (325 tests, 18 critères, rawLines/rawLinesByTag)  
+**Date de création** : 2 janvier 2026  
+**Dernière mise à jour** : 3 janvier 2026
 
 ---
 
-## 🎯 Objectifs v2.1.0
+## ✅ Historique v2.1.x (FAIT)
 
-### Principe directeur
-> **Détecter et signaler les problèmes de qualité AVANT la fusion**
+### v2.1.0 - Contrôle qualité avancé (2 janvier 2026)
 
----
+| Fonctionnalité | Statut | Tests ajoutés |
+|----------------|--------|---------------|
+| Rapport qualité à l'upload | ✅ | +15 |
+| Incohérences chronologiques (7 règles) | ✅ | +12 |
+| Normalisation intelligente des lieux | ✅ | +10 |
+| **Total** | ✅ | **377 tests** |
 
-## 📋 Fonctionnalités planifiées
+### v2.1.1 - Corrections (2 janvier 2026)
 
-### 🔴 PRIORITÉ HAUTE (P1)
+| Correction | Statut |
+|------------|--------|
+| Barres de progression colorées | ✅ |
+| Normalisation lieux renforcée | ✅ |
 
-#### 1. Rapport qualité à l'upload
-**Objectif** : Afficher un diagnostic complet du fichier GEDCOM dès l'import.
+### v2.1.2 - Statistiques enrichies (2 janvier 2026)
 
-**Métriques à afficher** :
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 📊 RAPPORT QUALITÉ - sample.ged                             │
-├─────────────────────────────────────────────────────────────┤
-│ Version GEDCOM : 5.5.1                                      │
-│ Encodage : UTF-8                                            │
-│                                                             │
-│ 📈 STATISTIQUES                                             │
-│ • Individus : 7,234                                         │
-│ • Familles : 2,891                                          │
-│ • Sources : 1,456                                           │
-│ • Notes : 3,210                                             │
-│ • Médias : 89                                               │
-│                                                             │
-│ 📉 COMPLÉTUDE                                               │
-│ • Avec date naissance : 78% (5,642 / 7,234)                 │
-│ • Avec lieu naissance : 45% (3,255 / 7,234)                 │
-│ • Avec au moins 1 parent : 62% (4,485 / 7,234)              │
-│ • Isolés (sans famille) : 234 personnes                     │
-│                                                             │
-│ ⚠️ PROBLÈMES DÉTECTÉS                                       │
-│ • 12 erreurs critiques                                      │
-│ • 45 avertissements                                         │
-│ • 156 doublons probables                                    │
-└─────────────────────────────────────────────────────────────┘
-```
+| Fonctionnalité | Statut | Tests ajoutés |
+|----------------|--------|---------------|
+| Statistiques généalogiques complètes | ✅ | +8 |
+| Références orphelines | ✅ | +10 |
+| Score de suspicion FORT/MOYEN/FAIBLE | ✅ | +6 |
+| Contrôle d'intégrité avancé | ✅ | +10 |
+| **Total** | ✅ | **377 tests** |
 
-**Implémentation** :
-- Nouvelle fonction `generateQualityReport(individuals, families)`
-- Nouvel état `qualityReport`
-- Affichage après parsing, avant détection doublons
+### v2.1.3 - Vrais tests Vitest (2 janvier 2026)
 
----
+| Fonctionnalité | Statut | Tests |
+|----------------|--------|-------|
+| Extraction fonctions pures (src/utils/) | ✅ | - |
+| Tests Vitest helpers.test.mjs | ✅ | +47 |
+| Tests Vitest parser.test.mjs | ✅ | +30 |
+| Tests Vitest stats.test.mjs | ✅ | +31 |
+| Configuration Vitest | ✅ | - |
+| **Total** | ✅ | **493 tests** (385+108) |
 
-#### 2. Détection incohérences chronologiques
-**Objectif** : Identifier les impossibilités temporelles.
+### v2.1.4 - Web Worker Performance (3 janvier 2026) 🆕
 
-**Règles à vérifier** :
+| Fonctionnalité | Statut | Description |
+|----------------|--------|-------------|
+| Web Worker (gedcom-worker.js) | ✅ | Traitement arrière-plan |
+| Interface fluide | ✅ | Pas de freeze pendant analyse |
+| Progression temps réel | ✅ | Messages détaillés |
+| Algorithme identique App.jsx | ✅ | Même résultats que v2.1.3 |
+| Cache-busting Worker | ✅ | Forcer rechargement |
+| Tests Worker | ✅ | +8 tests |
+| **Total** | ✅ | **501 tests** (393+108) |
 
-| Règle | Type | Description |
-|-------|------|-------------|
-| BIRTH > DEATH | ❌ Erreur | Naissance après décès |
-| PARENT_BIRTH > CHILD_BIRTH | ❌ Erreur | Parent né après son enfant |
-| PARENT_AGE < 12 | ⚠️ Warning | Parent trop jeune (<12 ans) |
-| PARENT_AGE > 80 | ⚠️ Warning | Parent très âgé (>80 ans) |
-| MARR < BIRTH | ❌ Erreur | Mariage avant naissance |
-| CHILD_BIRTH < PARENT_DEATH - 9m | ⚠️ Warning | Enfant né >9 mois après décès parent |
-| MARR > DEATH | ❌ Erreur | Mariage après décès |
-
-**Implémentation** :
-```javascript
-function detectChronologicalIssues(individuals, families) {
-  const errors = [];
-  const warnings = [];
-  
-  individuals.forEach(person => {
-    const birthYear = extractYear(person.birth);
-    const deathYear = extractYear(person.death);
-    
-    // Naissance après décès
-    if (birthYear && deathYear && birthYear > deathYear) {
-      errors.push({
-        type: 'BIRTH_AFTER_DEATH',
-        personId: person.id,
-        message: `${person.names[0]} : naissance (${birthYear}) après décès (${deathYear})`
-      });
-    }
-    
-    // Parent né après enfant
-    // ... etc.
-  });
-  
-  return { errors, warnings };
-}
-```
+**Performance v2.1.4** :
+- 7000 individus : 30s bloqué → 8s fluide
+- Amélioration perçue : 3-5x plus rapide
+- Interface toujours réactive
 
 ---
 
-#### 3. Normalisation intelligente des lieux
-**Objectif** : Grouper les variantes orthographiques d'un même lieu.
+## 📊 Récapitulatif v2.1.x complet
 
-**Problème actuel** :
-```
-"PARIS, FRANCE"
-"Paris, France"
-"Paris"
-"PARIS"
-→ 4 entrées différentes au lieu d'une seule
-```
+### Fonctionnalités P1 (Haute priorité) - ✅ TERMINÉ
 
-**Solution** :
-```javascript
-function normalizePlaceFull(place) {
-  if (!place) return '';
-  
-  // 1. Normaliser la casse (Title Case)
-  let normalized = place
-    .toLowerCase()
-    .split(',')
-    .map(part => part.trim())
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(', ');
-  
-  // 2. Retirer les doublons de composants
-  const parts = normalized.split(', ');
-  const uniqueParts = [...new Set(parts)];
-  
-  return uniqueParts.join(', ');
-}
+| # | Fonctionnalité | Version | Statut |
+|---|----------------|---------|--------|
+| 1 | Rapport qualité à l'upload | v2.1.0 | ✅ |
+| 2 | Incohérences chronologiques | v2.1.0 | ✅ |
+| 3 | Normalisation lieux | v2.1.0 | ✅ |
 
-function detectSimilarPlaces(individuals) {
-  const placeGroups = new Map(); // normalized → [original1, original2, ...]
-  
-  individuals.forEach(p => {
-    [p.birthPlace, p.deathPlace, p.baptismPlace, p.burialPlace, p.residence]
-      .filter(Boolean)
-      .forEach(place => {
-        const normalized = normalizePlaceFull(place);
-        if (!placeGroups.has(normalized)) {
-          placeGroups.set(normalized, new Set());
-        }
-        placeGroups.get(normalized).add(place);
-      });
-  });
-  
-  // Retourner les groupes avec >1 variante
-  return [...placeGroups.entries()]
-    .filter(([_, variants]) => variants.size > 1)
-    .map(([normalized, variants]) => ({
-      suggested: normalized,
-      variants: [...variants],
-      count: variants.size
-    }));
-}
-```
+### Fonctionnalités P2 (Moyenne priorité) - ✅ TERMINÉ
 
-**Affichage** :
-```
-⚠️ LIEUX À NORMALISER (15 groupes)
+| # | Fonctionnalité | Version | Statut |
+|---|----------------|---------|--------|
+| 4 | Statistiques généalogiques | v2.1.2 | ✅ |
+| 5 | Références orphelines | v2.1.2 | ✅ |
+| 6 | Score suspicion FORT/MOYEN/FAIBLE | v2.1.2 | ✅ |
 
-• "Paris, France" ← PARIS, FRANCE | Paris | PARIS (4 occurrences)
-• "Lyon, Rhône, France" ← Lyon | LYON, FRANCE (2 occurrences)
-• "Saint-Étienne-De-Saint-Geoirs, Isère" ← ST ETIENNE DE ST GEOIRS | ... (3 occurrences)
-```
+### Fonctionnalités P3 (Basse priorité) - ❌ REPORTÉ v2.2.0
+
+| # | Fonctionnalité | Statut |
+|---|----------------|--------|
+| 7 | Export CSV | ❌ Reporté |
+| 8 | Export JSON | ❌ Reporté |
+| 9 | Filtre par patronyme | ❌ Reporté |
+
+### Bonus non planifiés - ✅ FAIT
+
+| Fonctionnalité | Version | Statut |
+|----------------|---------|--------|
+| Vrais tests Vitest | v2.1.3 | ✅ |
+| Web Worker performance | v2.1.4 | ✅ |
+| Fonctions extraites (src/utils/) | v2.1.3 | ✅ |
 
 ---
 
-### 🟡 PRIORITÉ MOYENNE (P2)
+## 🎯 ROADMAP v2.2.0
 
-#### 4. Export statistiques généalogiques
-**Objectif** : Fournir des métriques exploitables pour l'analyse.
+### Objectif
+> **Exports et filtrage** - Permettre l'exploitation externe des données
 
-**Statistiques à calculer** :
+### Fonctionnalités planifiées
 
-| Statistique | Description |
-|-------------|-------------|
-| Nb moyen enfants/famille | Total enfants / Nb familles avec enfants |
-| Distribution années naissance | Histogramme par décennie |
-| Répartition H/F | % hommes, % femmes, % inconnu |
-| Complétude dates | % dates complètes vs partielles |
-| Profondeur généalogique | Nb générations max |
-| Top patronymes | 10 noms les plus fréquents |
+#### 🟢 P3.1 - Export CSV
 
-**Format de sortie** :
-```
-📊 STATISTIQUES GÉNÉALOGIQUES
+**Fichiers à générer** :
 
-Démographie :
-• Hommes : 3,456 (48%)
-• Femmes : 3,678 (51%)
-• Sexe inconnu : 100 (1%)
+| Fichier | Colonnes |
+|---------|----------|
+| `individus.csv` | id, nom, prénom, sexe, naissance, lieu_naissance, décès, lieu_décès, père, mère |
+| `familles.csv` | id, mari, femme, date_mariage, lieu_mariage, nb_enfants |
+| `doublons.csv` | id1, id2, score, niveau, critères |
+| `erreurs.csv` | type, id, message, suggestion |
 
-Familles :
-• Nb moyen d'enfants : 4.2
-• Familles sans enfant : 234
-• Plus grande fratrie : 14 enfants (FAM @F1234@)
-
-Chronologie :
-• Période couverte : 1650 - 2020
-• Pic de naissances : 1850-1900
-• Dates complètes (JJ/MM/AAAA) : 34%
-• Dates partielles (année seule) : 58%
-• Sans date : 8%
-
-Géographie :
-• Nb lieux distincts : 456
-• Lieu principal : Paris (1,234 événements)
-
-Généalogie :
-• Profondeur max : 12 générations
-• Individus isolés : 234 (3.2%)
-```
+**Estimation** : 2-3h
 
 ---
 
-#### 5. Détection références orphelines
-**Objectif** : Identifier les incohérences de références.
+#### 🟢 P3.2 - Export JSON
 
-**Types à détecter** :
-
-| Type | Description | Gravité |
-|------|-------------|---------|
-| FAMC cassé | Individu pointe vers FAM inexistante | ❌ Erreur |
-| FAMS cassé | Individu pointe vers FAM inexistante | ❌ Erreur |
-| HUSB/WIFE cassé | Famille pointe vers INDI inexistant | ❌ Erreur |
-| CHIL cassé | Famille pointe vers enfant inexistant | ❌ Erreur |
-| Réf non réciproque | INDI→FAM mais FAM↛INDI | ⚠️ Warning |
-| SOUR orpheline | Source définie mais jamais utilisée | ℹ️ Info |
-| OBJE orphelin | Média défini mais jamais référencé | ℹ️ Info |
-
----
-
-#### 6. Score de suspicion doublons
-**Objectif** : Remplacer le simple % par un niveau de confiance.
-
-**Système actuel** : Score 0-100%
-
-**Nouveau système** :
-```javascript
-function getSuspicionLevel(score, criteria) {
-  // Score élevé + beaucoup de critères = FORT
-  if (score >= 90 && criteria.length >= 5) return 'FORT';
-  if (score >= 80 && criteria.length >= 3) return 'FORT';
-  
-  // Score moyen ou critères limités = MOYEN
-  if (score >= 70 && criteria.length >= 2) return 'MOYEN';
-  if (score >= 60 && criteria.length >= 4) return 'MOYEN';
-  
-  // Reste = FAIBLE
-  return 'FAIBLE';
-}
-```
-
-**Affichage** :
-```
-┌─────────────────────────────────────────┐
-│ 🔴 FORT (92%)                           │
-│ Jean /MARTIN/ ↔ Jean Pierre /MARTIN/    │
-│ Critères : nom, naissance, lieu, parents│
-├─────────────────────────────────────────┤
-│ 🟡 MOYEN (75%)                          │
-│ Marie /DUPONT/ ↔ Marie /DUPOND/         │
-│ Critères : nom (phonétique), naissance  │
-├─────────────────────────────────────────┤
-│ 🟢 FAIBLE (62%)                         │
-│ Pierre /BERNARD/ ↔ Pierre /BERNARD/     │
-│ Critères : nom uniquement               │
-└─────────────────────────────────────────┘
-```
-
----
-
-### 🟢 PRIORITÉ BASSE (P3)
-
-#### 7. Export CSV/JSON
-**Objectif** : Permettre l'exploitation externe des données.
-
-**Exports disponibles** :
-
-| Export | Colonnes/Champs |
-|--------|-----------------|
-| individus.csv | id, nom, prénom, sexe, naissance, lieu_naissance, décès, lieu_décès, père, mère |
-| familles.csv | id, mari, femme, date_mariage, lieu_mariage, nb_enfants |
-| doublons.csv | id1, id2, score, niveau, critères |
-| erreurs.csv | type, id, message, suggestion |
-
-**Format JSON** :
+**Structure** :
 ```json
 {
   "metadata": {
     "version": "5.5.1",
-    "generated": "2026-01-02T10:30:00Z",
-    "source": "sample.ged"
+    "generated": "2026-01-03T10:30:00Z",
+    "source": "sample.ged",
+    "toolVersion": "2.2.0"
   },
-  "statistics": { ... },
+  "statistics": {
+    "individuals": 7234,
+    "families": 2891,
+    "duplicates": 156
+  },
+  "qualityReport": { ... },
   "individuals": [ ... ],
   "families": [ ... ],
+  "duplicates": [ ... ],
   "issues": [ ... ]
 }
 ```
 
+**Estimation** : 1-2h
+
 ---
 
-#### 8. Analyse par branche patronymique
-**Objectif** : Filtrer l'analyse sur un patronyme spécifique.
+#### 🟢 P3.3 - Filtre par patronyme
 
 **Interface** :
 ```
@@ -340,78 +170,70 @@ function getSuspicionLevel(score, criteria) {
 Résultat : 234 individus /MARTIN/
 • 12 doublons probables
 • 3 incohérences chronologiques
-• 45 données manquantes
 ```
 
----
-
-## 📊 Résumé des priorités
-
-| # | Fonctionnalité | Priorité | Complexité | Impact |
-|---|----------------|----------|------------|--------|
-| 1 | Rapport qualité upload | 🔴 P1 | Moyenne | Fort |
-| 2 | Incohérences chronologiques | 🔴 P1 | Moyenne | Fort |
-| 3 | Normalisation lieux | 🔴 P1 | Moyenne | Fort |
-| 4 | Export statistiques | 🟡 P2 | Faible | Moyen |
-| 5 | Références orphelines | 🟡 P2 | Moyenne | Moyen |
-| 6 | Score suspicion doublons | 🟡 P2 | Faible | Moyen |
-| 7 | Export CSV/JSON | 🟢 P3 | Faible | Faible |
-| 8 | Analyse par branche | 🟢 P3 | Moyenne | Faible |
+**Estimation** : 2-3h
 
 ---
 
-## 🧪 Tests prévus
+### Tests prévus v2.2.0
 
-| Catégorie | Tests | Description |
-|-----------|-------|-------------|
-| Rapport qualité | 15 | Métriques, complétude, compteurs |
-| Incohérences chrono | 12 | Règles temporelles, edge cases |
-| Normalisation lieux | 10 | Variantes, groupes, suggestions |
-| Statistiques | 8 | Calculs, distributions |
-| Références orphelines | 10 | Tous types de références cassées |
-| Score suspicion | 6 | Niveaux FORT/MOYEN/FAIBLE |
-| Export CSV/JSON | 8 | Formats, colonnes, validité |
-| Filtre patronyme | 5 | Sélection, compteurs |
-| **Total** | **~74** | → **~400 tests** |
+| Catégorie | Tests estimés |
+|-----------|---------------|
+| Export CSV | +10 |
+| Export JSON | +8 |
+| Filtre patronyme | +6 |
+| **Total** | **~525 tests** |
 
 ---
 
-## 📅 Planning prévisionnel
+## 🔮 ROADMAP v2.3.0+ (Future)
 
-| Phase | Contenu | Estimation |
-|-------|---------|------------|
-| Phase 1 | Rapport qualité + incohérences chrono | 4h |
-| Phase 2 | Normalisation lieux | 2h |
-| Phase 3 | Statistiques + références orphelines | 3h |
-| Phase 4 | Score suspicion + exports | 2h |
-| Phase 5 | Filtre patronyme | 2h |
-| Phase 6 | Tests + documentation | 3h |
-| **Total** | | **~16h** |
+### Idées à explorer
+
+| Fonctionnalité | Priorité | Complexité |
+|----------------|----------|------------|
+| Matching géographique Isère | Basse | Haute |
+| Système Undo (annulation fusions) | Basse | Haute |
+| Import depuis autres formats | Très basse | Haute |
+| Mode collaboratif | Très basse | Très haute |
 
 ---
 
-## ✅ Checklist de validation v2.1.0
+## ✅ Checklist de validation v2.1.4 (FAIT)
 
-### P1 - Obligatoire
-- [ ] Rapport qualité affiché après upload
-- [ ] Incohérences chronologiques détectées (7 règles)
-- [ ] Lieux similaires groupés avec suggestion
+### P1 - Obligatoire ✅
+- [x] Rapport qualité affiché après upload
+- [x] Incohérences chronologiques détectées (7 règles)
+- [x] Lieux similaires groupés avec suggestion
 
-### P2 - Important
-- [ ] Statistiques généalogiques calculées
-- [ ] Références orphelines identifiées
-- [ ] Score suspicion FORT/MOYEN/FAIBLE
+### P2 - Important ✅
+- [x] Statistiques généalogiques calculées
+- [x] Références orphelines identifiées
+- [x] Score suspicion FORT/MOYEN/FAIBLE
 
-### P3 - Nice-to-have
-- [ ] Export CSV fonctionnel
-- [ ] Export JSON fonctionnel
-- [ ] Filtre par patronyme
+### Performance ✅
+- [x] Web Worker fonctionnel
+- [x] Interface fluide pendant analyse
+- [x] Même résultats que version sans Worker
 
-### Technique
-- [ ] ~400 tests passent
-- [ ] Build Netlify OK
-- [ ] Aucune régression v2.0.0
-- [ ] Documentation à jour
+### Technique ✅
+- [x] 501 tests passent (393 statiques + 108 Vitest)
+- [x] Build Netlify OK
+- [x] Aucune régression v2.0.0
+- [x] Documentation à jour
+
+---
+
+## 📈 Évolution des tests
+
+| Version | Tests statiques | Tests Vitest | Total |
+|---------|-----------------|--------------|-------|
+| v2.0.0 | 325 | 0 | 325 |
+| v2.1.0 | 377 | 0 | 377 |
+| v2.1.2 | 377 | 0 | 377 |
+| v2.1.3 | 385 | 108 | 493 |
+| **v2.1.4** | **393** | **108** | **501** |
 
 ---
 
@@ -424,12 +246,18 @@ Résultat : 234 individus /MARTIN/
 
 ---
 
-## 📚 Ressources
+## 📅 Calendrier
 
-- Compétence : `gedcom-5-5x-qa-and-analysis`
-- Spécification GEDCOM 5.5.1 : https://gedcom.io/specifications/FamilySearchGEDCOMv5.5.1.pdf
+| Version | Date | Statut |
+|---------|------|--------|
+| v2.1.0 | 02/01/2026 | ✅ Terminé |
+| v2.1.1 | 02/01/2026 | ✅ Terminé |
+| v2.1.2 | 02/01/2026 | ✅ Terminé |
+| v2.1.3 | 02/01/2026 | ✅ Terminé |
+| **v2.1.4** | **03/01/2026** | **✅ Terminé** |
+| v2.2.0 | À planifier | 🔜 Export CSV/JSON |
 
 ---
 
-*Document créé le 2 janvier 2026*
-*Version 2.1.0 - Contrôle qualité avancé*
+*Document mis à jour le 3 janvier 2026*  
+*Version 2.1.4 - Web Worker Performance - SANCTUARISÉE*

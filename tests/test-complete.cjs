@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.1.3
-// 385 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// SUITE DE TESTS GEDCOM MERGER v2.1.4
+// 393 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -30,8 +30,8 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.1.3');
-console.log('                         385 TESTS STATIQUES AU TOTAL');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.1.4');
+console.log('                         393 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -64,8 +64,8 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.1.3'") || appCode.includes('VERSION = "2.1.3"'), 'VERSION 2.1.3 dans App.jsx');
-check(packageJson.version === '2.1.3', 'Version 2.1.3 dans package.json');
+check(appCode.includes("VERSION = '2.1.4'") || appCode.includes('VERSION = "2.1.4"'), 'VERSION 2.1.4 dans App.jsx');
+check(packageJson.version === '2.1.4', 'Version 2.1.4 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -717,13 +717,30 @@ console.log('┌─────────────────────�
 console.log('│ 8.9 Améliorations v2.1.2 (8 tests)                                         │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 check(appCode.includes('bg-blue-500') && appCode.includes('bg-purple-500') && appCode.includes('bg-orange-500'), 'Classes Tailwind statiques pour barres couleur');
-check(appCode.includes('async') && appCode.includes('await updateProgress'), 'Progression async avec updateProgress');
+check(appCode.includes('progressMessage') && appCode.includes('setProgressMessage'), 'Progression avec message (v2.1.4 Worker)');
 check(appCode.includes('ages:') && appCode.includes('avg:') && appCode.includes('median:'), 'Stats âges (avg, median)');
 check(appCode.includes('topMaleNames') && appCode.includes('topFemaleNames'), 'Top prénoms H/F');
 check(appCode.includes('topBirthPlaces'), 'Top lieux naissance');
 check(appCode.includes('topOccupations'), 'Top professions');
 check(appCode.includes('estimatedGenerations'), 'Générations estimées');
 check(appCode.includes('multipleMarriages'), 'Détection remariages');
+console.log('');
+
+// --- 8.10 Web Worker v2.1.4 (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 8.10 Web Worker v2.1.4 (8 tests)                                           │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+const workerExists = fs.existsSync('./public/gedcom-worker.js');
+let workerCode = '';
+try { workerCode = fs.readFileSync('./public/gedcom-worker.js', 'utf8'); } catch (e) { workerCode = ''; }
+check(workerExists, 'Fichier public/gedcom-worker.js existe');
+check(workerCode.includes('self.onmessage'), 'Worker: gestionnaire onmessage');
+check(workerCode.includes('self.postMessage'), 'Worker: envoi postMessage');
+check(workerCode.includes('parseGedcom'), 'Worker: fonction parseGedcom');
+check(workerCode.includes('findDuplicates'), 'Worker: fonction findDuplicates');
+check(workerCode.includes('calculateGenealogyStats'), 'Worker: fonction calculateGenealogyStats');
+check(appCode.includes('workerRef') && appCode.includes('useRef'), 'App: référence workerRef');
+check(appCode.includes("new Worker('/gedcom-worker.js')"), 'App: création du Worker');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -734,7 +751,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 385;
+const expectedTotal = 393;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -750,13 +767,13 @@ console.log('     4. Fusion & suppression .... 34 tests');
 console.log('     5. Interface utilisateur ... 79 tests');
 console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
-console.log('     8. Qualité & analyses v2.1.x 60 tests');
+console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.1.3 validée (tests statiques)');
+  console.log('  ✅ Version 2.1.4 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

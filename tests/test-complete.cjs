@@ -19,8 +19,8 @@ const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const indexHtml = fs.readFileSync('./index.html', 'utf8');
 const viteConfig = fs.readFileSync('./vite.config.mjs', 'utf8');
 const netlifyToml = fs.readFileSync('./netlify.toml', 'utf8');
-const tailwindConfig = fs.readFileSync('./tailwind.config.js', 'utf8');
-const postcssConfig = fs.readFileSync('./postcss.config.js', 'utf8');
+const tailwindConfig = fs.readFileSync('./tailwind.config.cjs', 'utf8');
+const postcssConfig = fs.readFileSync('./postcss.config.cjs', 'utf8');
 
 let changelogMd = '', readmeMd = '', deploiementMd = '', architectureMd = '';
 try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.1.3 v2.1.2 v2.1.1 v2.1.0 v2.0.0 rawLines critères contrôles 1.9'; }
@@ -558,7 +558,7 @@ check(netlifyToml.includes('build'), 'Commande build');
 check(netlifyToml.includes('dist'), 'Répertoire publish');
 check(tailwindConfig.includes('content') || tailwindConfig.includes('./src'), 'Config Tailwind');
 check(tailwindConfig.includes('module.exports'), 'CommonJS Tailwind');
-check(fs.existsSync('./postcss.config.js'), 'Fichier postcss');
+check(fs.existsSync('./postcss.config.cjs'), 'Fichier postcss');
 check(postcssConfig.includes('module.exports'), 'CommonJS PostCSS');
 console.log('');
 

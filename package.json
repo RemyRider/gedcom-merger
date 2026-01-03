@@ -1,6 +1,7 @@
 {
   "name": "gedcom-merger",
   "version": "2.1.3",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

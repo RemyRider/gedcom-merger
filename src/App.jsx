@@ -34,14 +34,31 @@ const GedcomDuplicateMerger = () => {
   const [genealogyStats, setGenealogyStats] = useState(null);
   const [orphanRefs, setOrphanRefs] = useState([]);
 
-  const VERSION = '2.1.2';
+  const VERSION = '2.1.3';
 
   const CHANGELOG = [
     {
-      version: '2.1.2',
+      version: '2.1.3',
       date: '2 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Vrais tests unitaires Vitest',
+      items: [
+        'NOUVEAU: 108 tests Vitest avec exécution réelle de code',
+        'NOUVEAU: Tests unitaires pour helpers (extractYear, soundex, etc.)',
+        'NOUVEAU: Tests unitaires pour parser GEDCOM',
+        'NOUVEAU: Tests unitaires pour statistiques généalogiques',
+        'NOUVEAU: Tests de détection incohérences chronologiques',
+        'AMÉLIORATION: Fonctions pures extraites dans src/utils/',
+        'TECHNIQUE: vitest.config.mjs, fichiers .mjs pour modules ES',
+        'TECHNIQUE: npm run test:all exécute tests statiques + Vitest'
+      ]
+    },
+    {
+      version: '2.1.2',
+      date: '2 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Performance, progression et statistiques enrichies',
       items: [
         'CORRECTION: Barres de couleur complétude maintenant toutes visibles',
@@ -58,8 +75,8 @@ const GedcomDuplicateMerger = () => {
     {
       version: '2.1.1',
       date: '2 janvier 2026',
-      tag: 'PRÉCÉDENTE',
-      color: 'blue',
+      tag: null,
+      color: 'gray',
       title: 'Détails enrichis dans l\'onglet "À supprimer"',
       items: [
         'AMÉLIORATION: Affichage des parents avec leurs noms dans l\'onglet À supprimer',

@@ -740,30 +740,34 @@ const detectChronologicalIssues = (people, families) => {
 };
 
 // ============================================================================
-// VARIANTES DE LIEUX
+// VARIANTES DE LIEUX (format compatible App.jsx)
 // ============================================================================
 
 const detectPlaceVariants = (people) => {
   const placeGroups = new Map();
   
   people.forEach(p => {
-    [p.birthPlace, p.deathPlace, p.baptismPlace, p.burialPlace, p.residence].forEach(place => {
-      if (place) {
+    [p.birthPlace, p.deathPlace, p.baptismPlace, p.burialPlace, p.residence]
+      .filter(Boolean)
+      .forEach(place => {
         const normalized = normalizePlaceFull(place);
-        if (!placeGroups.has(normalized)) placeGroups.set(normalized, new Set());
-        placeGroups.get(normalized).add(place);
-      }
-    });
+        if (!placeGroups.has(normalized)) {
+          placeGroups.set(normalized, { variants: new Set(), count: 0 });
+        }
+        placeGroups.get(normalized).variants.add(place);
+        placeGroups.get(normalized).count++;
+      });
   });
   
-  const variants = [];
-  placeGroups.forEach((originals, normalized) => {
-    if (originals.size > 1) {
-      variants.push({ normalized, originals: Array.from(originals), count: originals.size });
-    }
-  });
-  
-  return variants.sort((a, b) => b.count - a.count);
+  // Retourner les groupes avec >1 variante
+  return [...placeGroups.entries()]
+    .filter(([_, data]) => data.variants.size > 1)
+    .map(([normalized, data]) => ({
+      suggested: normalized,
+      variants: Array.from(data.variants),
+      occurrences: data.count
+    }))
+    .sort((a, b) => b.occurrences - a.occurrences);
 };
 
 // ============================================================================

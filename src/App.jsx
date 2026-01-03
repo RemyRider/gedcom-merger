@@ -1790,8 +1790,8 @@ const GedcomDuplicateMerger = () => {
         }
         
         try {
-          // v2.1.4: Cache-busting pour forcer le rechargement du Worker
-          workerRef.current = new Worker('/gedcom-worker.js?v=2.1.4');
+          // v2.1.4b: Cache-busting pour forcer le rechargement du Worker
+          workerRef.current = new Worker('/gedcom-worker.js?v=2.1.4b');
         } catch (err) {
           console.error('Erreur création Worker:', err);
           setProgressMessage('Erreur: Worker non disponible');

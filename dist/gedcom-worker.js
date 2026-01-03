@@ -257,7 +257,7 @@ const parseGedcom = (content) => {
 };
 
 // ============================================================================
-// CALCUL DE SIMILARITÉ (optimisé avec peopleById)
+// CALCUL DE SIMILARITÉ (identique à App.jsx)
 // ============================================================================
 
 const calculateSimilarity = (person1, person2, peopleById) => {
@@ -308,7 +308,7 @@ const calculateSimilarity = (person1, person2, peopleById) => {
     maxPossibleScore += 15;
     if (person1.sex && person2.sex) {
       if (person1.sex === person2.sex) { matchScore += 15; details.push('✓ Même sexe (+15/15)'); }
-      else { details.push('✗ Sexes différents (ÉLIMINATOIRE)'); return { score: 0, details, sufficientCriteria: [], rejected: true }; }
+      else { details.push('✗ Sexes différents (ÉLIMINATOIRE)'); return { score: 0, details, sufficientCriteria: [] }; }
     }
   }
 
@@ -319,7 +319,6 @@ const calculateSimilarity = (person1, person2, peopleById) => {
       if (common.length === 2) { matchScore += 20; sufficientCriteria.push('parents_2'); details.push('✓ 2 parents communs (+20/20)'); }
       else if (common.length === 1) { matchScore += 10; sufficientCriteria.push('parent_1'); details.push('≈ 1 parent commun (+10/20)'); }
       else {
-        // v2.0.0: Comparer par nom si les IDs sont différents
         const parentNames1 = person1.parents.map(id => {
           const parent = peopleById.get(id);
           return parent?.names[0]?.toLowerCase() || '';
@@ -382,99 +381,36 @@ const calculateSimilarity = (person1, person2, peopleById) => {
     if (person1.death && person2.death) {
       const dy1 = person1.death.match(/\d{4}/), dy2 = person2.death.match(/\d{4}/);
       if (person1.death === person2.death) { matchScore += 15; sufficientCriteria.push('deces_exact'); details.push('✓ Dates décès identiques (+15/15)'); }
-      else if (dy1 && dy2) {
-        const diff = Math.abs(parseInt(dy1[0]) - parseInt(dy2[0]));
-        if (diff === 0) { matchScore += 12; sufficientCriteria.push('annee_deces'); details.push('✓ Années décès identiques (+12/15)'); }
-        else if (diff <= 2) { matchScore += 6; details.push('≈ Années décès proches ±2 ans (+6/15)'); }
-        else details.push('✗ Dates décès trop éloignées (0/15)');
-      }
+      else if (dy1 && dy2 && dy1[0] === dy2[0]) { matchScore += 10; sufficientCriteria.push('annee_deces'); details.push('✓ Années décès identiques (+10/15)'); }
+      else details.push('✗ Dates décès différentes (0/15)');
     }
   }
 
   if (person1.occupation || person2.occupation) {
     maxPossibleScore += 5;
     if (person1.occupation && person2.occupation) {
-      const occ1 = person1.occupation.toLowerCase().trim();
-      const occ2 = person2.occupation.toLowerCase().trim();
-      if (occ1 === occ2) { matchScore += 5; sufficientCriteria.push('profession'); details.push('✓ Professions identiques (+5/5)'); }
-      else if (occ1.includes(occ2) || occ2.includes(occ1)) { matchScore += 3; details.push('≈ Professions similaires (+3/5)'); }
+      if (person1.occupation.toLowerCase() === person2.occupation.toLowerCase()) { matchScore += 5; sufficientCriteria.push('profession'); details.push('✓ Même profession (+5/5)'); }
       else details.push('✗ Professions différentes (0/5)');
     }
   }
 
-  // v2.0.0: Critères étendus (baptême, inhumation, résidence, titre, religion)
-  if (person1.baptism || person2.baptism) {
-    maxPossibleScore += 5;
-    if (person1.baptism && person2.baptism) {
-      const by1 = person1.baptism.match(/\d{4}/), by2 = person2.baptism.match(/\d{4}/);
-      if (person1.baptism === person2.baptism) { matchScore += 5; details.push('✓ Baptêmes identiques (+5/5)'); }
-      else if (by1 && by2 && Math.abs(parseInt(by1[0]) - parseInt(by2[0])) <= 1) { matchScore += 3; details.push('≈ Baptêmes proches (+3/5)'); }
-      else details.push('✗ Baptêmes différents (0/5)');
+  if (person1.deathPlace || person2.deathPlace) {
+    maxPossibleScore += 8;
+    const dp1 = normalizePlace(person1.deathPlace)?.toLowerCase();
+    const dp2 = normalizePlace(person2.deathPlace)?.toLowerCase();
+    if (dp1 && dp2) {
+      if (dp1 === dp2) { matchScore += 8; sufficientCriteria.push('lieu_deces'); details.push('✓ Lieux décès identiques (+8/8)'); }
+      else if (dp1.includes(dp2) || dp2.includes(dp1)) { matchScore += 4; sufficientCriteria.push('lieu_deces_partiel'); details.push('≈ Lieux décès similaires (+4/8)'); }
+      else details.push('✗ Lieux décès différents (0/8)');
     }
   }
 
-  if (person1.baptismPlace || person2.baptismPlace) {
-    maxPossibleScore += 3;
-    const bpl1 = normalizePlace(person1.baptismPlace)?.toLowerCase();
-    const bpl2 = normalizePlace(person2.baptismPlace)?.toLowerCase();
-    if (bpl1 && bpl2) {
-      if (bpl1 === bpl2) { matchScore += 3; details.push('✓ Lieux baptême identiques (+3/3)'); }
-      else details.push('✗ Lieux baptême différents (0/3)');
-    }
-  }
-
-  if (person1.burial || person2.burial) {
-    maxPossibleScore += 4;
-    if (person1.burial && person2.burial) {
-      const bury1 = person1.burial.match(/\d{4}/), bury2 = person2.burial.match(/\d{4}/);
-      if (person1.burial === person2.burial) { matchScore += 4; details.push('✓ Inhumations identiques (+4/4)'); }
-      else if (bury1 && bury2 && Math.abs(parseInt(bury1[0]) - parseInt(bury2[0])) <= 1) { matchScore += 2; details.push('≈ Inhumations proches (+2/4)'); }
-      else details.push('✗ Inhumations différentes (0/4)');
-    }
-  }
-
-  if (person1.burialPlace || person2.burialPlace) {
-    maxPossibleScore += 3;
-    const bupl1 = normalizePlace(person1.burialPlace)?.toLowerCase();
-    const bupl2 = normalizePlace(person2.burialPlace)?.toLowerCase();
-    if (bupl1 && bupl2) {
-      if (bupl1 === bupl2) { matchScore += 3; details.push('✓ Lieux inhumation identiques (+3/3)'); }
-      else details.push('✗ Lieux inhumation différents (0/3)');
-    }
-  }
-
-  if (person1.residence || person2.residence) {
-    maxPossibleScore += 3;
-    const res1 = normalizePlace(person1.residence)?.toLowerCase();
-    const res2 = normalizePlace(person2.residence)?.toLowerCase();
-    if (res1 && res2) {
-      if (res1 === res2) { matchScore += 3; details.push('✓ Résidences identiques (+3/3)'); }
-      else details.push('✗ Résidences différentes (0/3)');
-    }
-  }
-
-  if (person1.title || person2.title) {
-    maxPossibleScore += 2;
-    if (person1.title && person2.title) {
-      if (person1.title.toLowerCase() === person2.title.toLowerCase()) { matchScore += 2; details.push('✓ Titres identiques (+2/2)'); }
-      else details.push('✗ Titres différents (0/2)');
-    }
-  }
-
-  if (person1.religion || person2.religion) {
-    maxPossibleScore += 2;
-    if (person1.religion && person2.religion) {
-      if (person1.religion.toLowerCase() === person2.religion.toLowerCase()) { matchScore += 2; details.push('✓ Religions identiques (+2/2)'); }
-      else details.push('✗ Religions différentes (0/2)');
-    }
-  }
-
-  // v2.0.0: Comparaison enfants par nom
   if (person1.children.length > 0 || person2.children.length > 0) {
-    maxPossibleScore += 6;
+    maxPossibleScore += 15;
     if (person1.children.length > 0 && person2.children.length > 0) {
       const commonChildren = person1.children.filter(c => person2.children.includes(c));
-      if (commonChildren.length > 0) { matchScore += 6; sufficientCriteria.push('enfants'); details.push('✓ Enfants communs (+6/6)'); }
+      if (commonChildren.length >= 2) { matchScore += 15; sufficientCriteria.push('enfants_2+'); details.push('✓ 2+ enfants communs (+15/15)'); }
+      else if (commonChildren.length === 1) { matchScore += 10; sufficientCriteria.push('enfant_1'); details.push('≈ 1 enfant commun (+10/15)'); }
       else {
         const childNames1 = person1.children.map(id => {
           const child = peopleById.get(id);
@@ -485,104 +421,162 @@ const calculateSimilarity = (person1, person2, peopleById) => {
           return child?.names[0]?.toLowerCase() || '';
         }).filter(n => n);
         const commonNames = childNames1.filter(n => childNames2.includes(n));
-        if (commonNames.length >= 2) { matchScore += 6; sufficientCriteria.push('enfants_nom'); details.push('✓ 2+ enfants même nom (+6/6)'); }
-        else if (commonNames.length === 1) { matchScore += 3; details.push('≈ 1 enfant même nom (+3/6)'); }
-        else details.push('✗ Enfants différents (0/6)');
+        if (commonNames.length >= 2) { matchScore += 15; sufficientCriteria.push('enfants_2+_nom'); details.push('✓ 2+ enfants communs (même nom) (+15/15)'); }
+        else if (commonNames.length === 1) { matchScore += 10; sufficientCriteria.push('enfant_1_nom'); details.push('≈ 1 enfant commun (même nom) (+10/15)'); }
+        else details.push('✗ Enfants différents (0/15)');
       }
     }
   }
 
-  // Règle anti-faux-positif v1.9.2
-  if (nameMatches && sufficientCriteria.length === 0 && matchScore > 0) {
-    details.push('⚠️ REJETÉ: Nom similaire mais aucun critère suffisant');
-    return { score: 0, details, sufficientCriteria: [], rejected: true };
+  if (person1.baptism || person2.baptism) {
+    maxPossibleScore += 5;
+    if (person1.baptism && person2.baptism) {
+      if (person1.baptism === person2.baptism) { matchScore += 5; details.push('✓ Dates baptême identiques (+5/5)'); }
+      else {
+        const by1 = person1.baptism.match(/\d{4}/), by2 = person2.baptism.match(/\d{4}/);
+        if (by1 && by2 && by1[0] === by2[0]) { matchScore += 3; details.push('≈ Années baptême identiques (+3/5)'); }
+        else details.push('✗ Dates baptême différentes (0/5)');
+      }
+    }
   }
 
-  const finalScore = maxPossibleScore > 0 ? (matchScore / maxPossibleScore) * 100 : 0;
+  if (person1.baptismPlace || person2.baptismPlace) {
+    maxPossibleScore += 4;
+    const bpl1 = normalizePlace(person1.baptismPlace)?.toLowerCase();
+    const bpl2 = normalizePlace(person2.baptismPlace)?.toLowerCase();
+    if (bpl1 && bpl2) {
+      if (bpl1 === bpl2) { matchScore += 4; details.push('✓ Lieux baptême identiques (+4/4)'); }
+      else if (bpl1.includes(bpl2) || bpl2.includes(bpl1)) { matchScore += 2; details.push('≈ Lieux baptême similaires (+2/4)'); }
+      else details.push('✗ Lieux baptême différents (0/4)');
+    }
+  }
+
+  if (person1.burial || person2.burial) {
+    maxPossibleScore += 5;
+    if (person1.burial && person2.burial) {
+      if (person1.burial === person2.burial) { matchScore += 5; details.push('✓ Dates inhumation identiques (+5/5)'); }
+      else {
+        const bury1 = person1.burial.match(/\d{4}/), bury2 = person2.burial.match(/\d{4}/);
+        if (bury1 && bury2 && bury1[0] === bury2[0]) { matchScore += 3; details.push('≈ Années inhumation identiques (+3/5)'); }
+        else details.push('✗ Dates inhumation différentes (0/5)');
+      }
+    }
+  }
+
+  if (person1.burialPlace || person2.burialPlace) {
+    maxPossibleScore += 4;
+    const bupl1 = normalizePlace(person1.burialPlace)?.toLowerCase();
+    const bupl2 = normalizePlace(person2.burialPlace)?.toLowerCase();
+    if (bupl1 && bupl2) {
+      if (bupl1 === bupl2) { matchScore += 4; details.push('✓ Lieux inhumation identiques (+4/4)'); }
+      else if (bupl1.includes(bupl2) || bupl2.includes(bupl1)) { matchScore += 2; details.push('≈ Lieux inhumation similaires (+2/4)'); }
+      else details.push('✗ Lieux inhumation différents (0/4)');
+    }
+  }
+
+  if (person1.residence || person2.residence) {
+    maxPossibleScore += 4;
+    const res1 = normalizePlace(person1.residence)?.toLowerCase();
+    const res2 = normalizePlace(person2.residence)?.toLowerCase();
+    if (res1 && res2) {
+      if (res1 === res2) { matchScore += 4; details.push('✓ Résidences identiques (+4/4)'); }
+      else if (res1.includes(res2) || res2.includes(res1)) { matchScore += 2; details.push('≈ Résidences similaires (+2/4)'); }
+      else details.push('✗ Résidences différentes (0/4)');
+    }
+  }
+
+  if (person1.title || person2.title) {
+    maxPossibleScore += 3;
+    if (person1.title && person2.title) {
+      if (person1.title.toLowerCase() === person2.title.toLowerCase()) { matchScore += 3; details.push('✓ Titres identiques (+3/3)'); }
+      else details.push('✗ Titres différents (0/3)');
+    }
+  }
+
+  if (person1.religion || person2.religion) {
+    maxPossibleScore += 3;
+    if (person1.religion && person2.religion) {
+      if (person1.religion.toLowerCase() === person2.religion.toLowerCase()) { matchScore += 3; details.push('✓ Religions identiques (+3/3)'); }
+      else details.push('✗ Religions différentes (0/3)');
+    }
+  }
+
+  const finalScore = maxPossibleScore > 0 ? Math.round((matchScore / maxPossibleScore) * 100) : 0;
+  
+  if (nameMatches && sufficientCriteria.length === 0) {
+    details.unshift('⚠️ REJET: Nom seul insuffisant - aucun critère confirmant');
+    return { score: 0, details, sufficientCriteria, rejected: true, rejectionReason: 'Nom + Sexe seuls ne suffisent pas.' };
+  }
+  
+  details.unshift('📊 Score: ' + matchScore + '/' + maxPossibleScore + ' points | Critères suffisants: ' + (sufficientCriteria.length > 0 ? sufficientCriteria.join(', ') : 'AUCUN'));
   return { score: finalScore, details, sufficientCriteria };
 };
 
 // ============================================================================
-// DÉTECTION DOUBLONS (optimisé)
+// DÉTECTION DOUBLONS (même algorithme que App.jsx)
 // ============================================================================
 
 const findDuplicates = (people, progressCallback) => {
   const result = [];
+  const phoneticIndex = new Map(), yearIndex = new Map(), parentIndex = new Map();
   
   // Index O(1) pour accès rapide par ID
   const peopleById = new Map();
   people.forEach(p => peopleById.set(p.id, p));
   
-  // Index phonétique + sexe + décennie
-  const compositeIndex = new Map();
-  
+  // Construction des index (identique à App.jsx)
   people.forEach(person => {
     const fullName = person.names[0] || '';
     const parts = fullName.toLowerCase().split(' ');
-    const firstName = parts[0] || '';
-    const lastName = parts[parts.length - 1]?.replace(/\//g, '') || '';
-    const phoneticKey = soundex(firstName) + '-' + soundex(lastName);
-    const sex = person.sex || '?';
-    const yearMatch = person.birth?.match(/\d{4}/);
-    const decade = yearMatch ? Math.floor(parseInt(yearMatch[0]) / 10) * 10 : 0;
+    const firstName = parts[0] || '', lastName = parts[parts.length - 1]?.replace(/\//g, '') || '';
+    const key = soundex(firstName) + '-' + soundex(lastName);
+    if (!phoneticIndex.has(key)) phoneticIndex.set(key, []);
+    phoneticIndex.get(key).push(person);
     
-    // Clé composite: phonétique + sexe + décennie (±10 ans)
-    for (let d = decade - 10; d <= decade + 10; d += 10) {
-      const key = `${phoneticKey}-${sex}-${d}`;
-      if (!compositeIndex.has(key)) compositeIndex.set(key, []);
-      compositeIndex.get(key).push(person);
+    const year = person.birth?.match(/\d{4}/)?.[0];
+    if (year) {
+      const y = parseInt(year);
+      for (let i = y - 5; i <= y + 5; i++) {
+        const yearKey = String(i);
+        if (!yearIndex.has(yearKey)) yearIndex.set(yearKey, []);
+        yearIndex.get(yearKey).push(person);
+      }
     }
+    person.parents.forEach(parentId => {
+      if (!parentIndex.has(parentId)) parentIndex.set(parentId, []);
+      parentIndex.get(parentId).push(person);
+    });
   });
   
   const compared = new Set();
-  let processedCount = 0;
-  const totalPeople = people.length;
+  
+  const comparePair = (person1, person2) => {
+    if (person1.id === person2.id) return;
+    const pairKey = person1.id < person2.id ? person1.id + '-' + person2.id : person2.id + '-' + person1.id;
+    if (compared.has(pairKey)) return;
+    compared.add(pairKey);
+    if (person1.sex && person2.sex && person1.sex !== person2.sex) return;
+    const y1 = person1.birth?.match(/\d{4}/)?.[0], y2 = person2.birth?.match(/\d{4}/)?.[0];
+    if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 10) return;
+    const sim = calculateSimilarity(person1, person2, peopleById);
+    if (sim.rejected) return;
+    if (sim.score >= 80) {
+      result.push({ person1, person2, similarity: Math.round(sim.score), details: sim.details, sufficientCriteria: sim.sufficientCriteria, id: pairKey });
+    }
+  };
   
   people.forEach((person, i) => {
     const fullName = person.names[0] || '';
     const parts = fullName.toLowerCase().split(' ');
-    const firstName = parts[0] || '';
-    const lastName = parts[parts.length - 1]?.replace(/\//g, '') || '';
+    const firstName = parts[0] || '', lastName = parts[parts.length - 1]?.replace(/\//g, '') || '';
     const phoneticKey = soundex(firstName) + '-' + soundex(lastName);
-    const sex = person.sex || '?';
-    const yearMatch = person.birth?.match(/\d{4}/);
-    const decade = yearMatch ? Math.floor(parseInt(yearMatch[0]) / 10) * 10 : 0;
+    (phoneticIndex.get(phoneticKey) || []).forEach(other => comparePair(person, other));
+    const year = person.birth?.match(/\d{4}/)?.[0];
+    if (year) (yearIndex.get(year) || []).forEach(other => comparePair(person, other));
+    person.parents.forEach(parentId => (parentIndex.get(parentId) || []).forEach(other => comparePair(person, other)));
     
-    // Chercher les candidats avec la même clé composite
-    const key = `${phoneticKey}-${sex}-${decade}`;
-    const candidates = compositeIndex.get(key) || [];
-    
-    candidates.forEach(other => {
-      if (person.id === other.id) return;
-      const pairKey = person.id < other.id ? person.id + '-' + other.id : other.id + '-' + person.id;
-      if (compared.has(pairKey)) return;
-      compared.add(pairKey);
-      
-      // Élimination rapide par sexe
-      if (person.sex && other.sex && person.sex !== other.sex) return;
-      
-      // Élimination rapide par année
-      const y1 = person.birth?.match(/\d{4}/)?.[0];
-      const y2 = other.birth?.match(/\d{4}/)?.[0];
-      if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 10) return;
-      
-      const sim = calculateSimilarity(person, other, peopleById);
-      if (sim.rejected) return;
-      if (sim.score >= 80) {
-        result.push({ 
-          person1: person, 
-          person2: other, 
-          similarity: Math.round(sim.score), 
-          details: sim.details, 
-          sufficientCriteria: sim.sufficientCriteria, 
-          id: pairKey 
-        });
-      }
-    });
-    
-    processedCount++;
     if (i % 200 === 0 && progressCallback) {
-      progressCallback(30 + Math.round((processedCount / totalPeople) * 50));
+      progressCallback(30 + Math.round((i / people.length) * 50));
     }
   });
   

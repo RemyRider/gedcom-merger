@@ -740,7 +740,7 @@ check(workerCode.includes('parseGedcom'), 'Worker: fonction parseGedcom');
 check(workerCode.includes('findDuplicates'), 'Worker: fonction findDuplicates');
 check(workerCode.includes('calculateGenealogyStats'), 'Worker: fonction calculateGenealogyStats');
 check(appCode.includes('workerRef') && appCode.includes('useRef'), 'App: référence workerRef');
-check(appCode.includes("new Worker('/gedcom-worker.js?v=2.1.4')"), 'App: création du Worker avec cache-busting');
+check(appCode.includes("new Worker('/gedcom-worker.js?v=2.1.4b')"), 'App: création du Worker avec cache-busting');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════

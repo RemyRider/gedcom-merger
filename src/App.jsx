@@ -1789,54 +1789,74 @@ const GedcomDuplicateMerger = () => {
           workerRef.current.terminate();
         }
         
-        workerRef.current = new Worker('/gedcom-worker.js');
+        try {
+          workerRef.current = new Worker('/gedcom-worker.js');
+        } catch (err) {
+          console.error('Erreur création Worker:', err);
+          setProgressMessage('Erreur: Worker non disponible');
+          setProgress(0);
+          return;
+        }
         
         workerRef.current.onmessage = (event) => {
-          const { type, progress: workerProgress, message, data, error } = event.data;
-          
-          if (type === 'progress') {
-            setProgress(workerProgress);
-            if (message) setProgressMessage(message);
-          }
-          else if (type === 'complete') {
-            // Reconstruire la Map des familles à partir du tableau
-            const familiesMap = new Map(data.families);
+          try {
+            const { type, progress: workerProgress, message, data, error } = event.data;
             
-            setIndividuals(data.people);
-            setFamiliesData(familiesMap);
-            setQualityReport(data.qualityReport);
-            setChronoIssues(data.chronoIssues);
-            setPlaceVariants(data.placeVariants);
-            setGenealogyStats(data.genealogyStats);
-            setOrphanRefs(data.orphanRefs);
-            setDuplicates(data.duplicates);
-            setClusters(data.clusters);
-            setToDeletePersons(data.toDeletePersons);
-            setSmartSuggestions(data.smartSuggestions);
-            setIntegrityReport(data.integrityReport);
-            
-            setProgress(100);
-            setProgressMessage('Terminé!');
-            setStep('review');
-            setShowQualityReport(true);
-            
-            // Cleanup du worker
-            workerRef.current.terminate();
-            workerRef.current = null;
-          }
-          else if (type === 'error') {
-            console.error('Erreur Worker:', error);
-            setProgressMessage(`Erreur: ${error}`);
+            if (type === 'progress') {
+              setProgress(workerProgress);
+              if (message) setProgressMessage(message);
+            }
+            else if (type === 'complete') {
+              console.log('Worker complete, données reçues:', Object.keys(data));
+              
+              // Reconstruire la Map des familles à partir du tableau
+              const familiesMap = new Map(data.families);
+              
+              setIndividuals(data.people);
+              setFamiliesData(familiesMap);
+              setQualityReport(data.qualityReport);
+              setChronoIssues(data.chronoIssues);
+              setPlaceVariants(data.placeVariants);
+              setGenealogyStats(data.genealogyStats);
+              setOrphanRefs(data.orphanRefs);
+              setDuplicates(data.duplicates);
+              setClusters(data.clusters);
+              setToDeletePersons(data.toDeletePersons);
+              setSmartSuggestions(data.smartSuggestions);
+              setIntegrityReport(data.integrityReport);
+              
+              setProgress(100);
+              setProgressMessage('Terminé!');
+              setStep('review');
+              setShowQualityReport(true);
+              
+              // Cleanup du worker
+              if (workerRef.current) {
+                workerRef.current.terminate();
+                workerRef.current = null;
+              }
+            }
+            else if (type === 'error') {
+              console.error('Erreur Worker:', error);
+              setProgressMessage(`Erreur: ${error}`);
+              setProgress(0);
+              if (workerRef.current) {
+                workerRef.current.terminate();
+                workerRef.current = null;
+              }
+            }
+          } catch (err) {
+            console.error('Erreur traitement message Worker:', err);
+            setProgressMessage(`Erreur: ${err.message}`);
             setProgress(0);
-            workerRef.current.terminate();
-            workerRef.current = null;
           }
         };
         
         workerRef.current.onerror = (error) => {
-          console.error('Erreur Worker:', error);
-          setProgressMessage('Erreur de traitement');
+          console.error('Erreur Worker (onerror):', error);
+          setProgressMessage(`Erreur Worker: ${error.message || 'Erreur inconnue'}`);
           setProgress(0);
+          setStep('upload');
         };
         
         // Envoyer le contenu au Worker

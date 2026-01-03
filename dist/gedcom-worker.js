@@ -633,39 +633,51 @@ const detectClusters = (duplicates, allPeople) => {
 };
 
 // ============================================================================
-// RAPPORT QUALITÉ
+// RAPPORT QUALITÉ (format compatible App.jsx)
 // ============================================================================
 
 const generateQualityReport = (people, families, content) => {
-  const versionMatch = content.match(/1 VERS ([\d.]+)/);
-  const encodingMatch = content.match(/1 CHAR (\w+)/);
-  const sourceMatch = content.match(/1 SOUR ([^\n]+)/);
+  // Détection version GEDCOM
+  const versionMatch = content.match(/1 VERS\s+(\d+\.\d+\.?\d*)/);
+  const gedcomVersion = versionMatch ? versionMatch[1] : 'Non spécifiée';
   
-  const withBirthDate = people.filter(p => p.birth).length;
+  // Détection encodage
+  const encodingMatch = content.match(/1 CHAR\s+(\S+)/);
+  const encoding = encodingMatch ? encodingMatch[1] : 'Non spécifié';
+  
+  // Comptages
+  const sourceCount = (content.match(/0 @S\d+@ SOUR/g) || []).length;
+  const noteCount = (content.match(/0 @N\d+@ NOTE/g) || []).length;
+  const mediaCount = (content.match(/0 @M\d+@ OBJE/g) || []).length;
+  
+  // Complétude
+  const withBirth = people.filter(p => p.birth).length;
   const withBirthPlace = people.filter(p => p.birthPlace).length;
-  const withDeathDate = people.filter(p => p.death).length;
-  const withParents = people.filter(p => p.parents.length > 0).length;
-  const withSpouses = people.filter(p => p.spouses.length > 0).length;
+  const withDeath = people.filter(p => p.death).length;
+  const withParent = people.filter(p => p.parents.length > 0).length;
+  const withSpouse = people.filter(p => p.spouses.length > 0).length;
+  const isolated = people.filter(p => p.parents.length === 0 && p.spouses.length === 0 && p.familiesAsSpouse.length === 0).length;
   
-  const customTags = [];
-  const customMatch = content.match(/^\d+ _\w+/gm);
-  if (customMatch) {
-    const unique = [...new Set(customMatch.map(m => m.split(' ')[1]))];
-    customTags.push(...unique.slice(0, 10));
-  }
+  // Tags non standard
+  const customTags = [...new Set((content.match(/\d+ _\w+/g) || []).map(t => t.split(' ')[1]))];
   
   return {
-    version: versionMatch?.[1] || 'Non spécifiée',
-    encoding: encodingMatch?.[1] || 'Non spécifié',
-    source: sourceMatch?.[1]?.trim() || 'Non spécifiée',
-    totalIndividuals: people.length,
-    totalFamilies: families.size,
+    gedcomVersion,
+    encoding,
+    stats: {
+      individuals: people.length,
+      families: families.size,
+      sources: sourceCount,
+      notes: noteCount,
+      medias: mediaCount
+    },
     completeness: {
-      birthDate: { count: withBirthDate, pct: Math.round((withBirthDate / people.length) * 100) },
-      birthPlace: { count: withBirthPlace, pct: Math.round((withBirthPlace / people.length) * 100) },
-      deathDate: { count: withDeathDate, pct: Math.round((withDeathDate / people.length) * 100) },
-      parents: { count: withParents, pct: Math.round((withParents / people.length) * 100) },
-      spouses: { count: withSpouses, pct: Math.round((withSpouses / people.length) * 100) }
+      withBirth: { count: withBirth, pct: people.length ? Math.round((withBirth / people.length) * 100) : 0 },
+      withBirthPlace: { count: withBirthPlace, pct: people.length ? Math.round((withBirthPlace / people.length) * 100) : 0 },
+      withDeath: { count: withDeath, pct: people.length ? Math.round((withDeath / people.length) * 100) : 0 },
+      withParent: { count: withParent, pct: people.length ? Math.round((withParent / people.length) * 100) : 0 },
+      withSpouse: { count: withSpouse, pct: people.length ? Math.round((withSpouse / people.length) * 100) : 0 },
+      isolated: { count: isolated, pct: people.length ? Math.round((isolated / people.length) * 100) : 0 }
     },
     customTags
   };
@@ -910,151 +922,264 @@ const calculateGenealogyStats = (people, families) => {
 };
 
 // ============================================================================
-// RÉFÉRENCES ORPHELINES
+// RÉFÉRENCES ORPHELINES (format compatible App.jsx)
 // ============================================================================
 
 const detectOrphanReferences = (people, families, content) => {
-  const orphans = { famc: [], fams: [], husb: [], wife: [], chil: [], sour: [] };
+  const issues = [];
   const peopleIds = new Set(people.map(p => p.id));
   const familyIds = new Set(families.keys());
   
-  people.forEach(p => {
-    if (p.familyAsChild && !familyIds.has(p.familyAsChild)) {
-      orphans.famc.push({ personId: p.id, refId: p.familyAsChild });
+  // Individus pointant vers familles inexistantes
+  people.forEach(person => {
+    if (person.familyAsChild && !familyIds.has(person.familyAsChild)) {
+      issues.push({
+        type: 'FAMC_BROKEN',
+        severity: 'error',
+        id: person.id,
+        message: `${person.names[0] || person.id} : FAMC ${person.familyAsChild} inexistante`
+      });
     }
-    p.familiesAsSpouse.forEach(famId => {
+    person.familiesAsSpouse.forEach(famId => {
       if (!familyIds.has(famId)) {
-        orphans.fams.push({ personId: p.id, refId: famId });
+        issues.push({
+          type: 'FAMS_BROKEN',
+          severity: 'error',
+          id: person.id,
+          message: `${person.names[0] || person.id} : FAMS ${famId} inexistante`
+        });
       }
     });
   });
   
+  // Familles pointant vers individus inexistants
   families.forEach((fam, famId) => {
     if (fam.husband && !peopleIds.has(fam.husband)) {
-      orphans.husb.push({ familyId: famId, refId: fam.husband });
+      issues.push({
+        type: 'HUSB_BROKEN',
+        severity: 'error',
+        id: famId,
+        message: `Famille ${famId} : HUSB ${fam.husband} inexistant`
+      });
     }
     if (fam.wife && !peopleIds.has(fam.wife)) {
-      orphans.wife.push({ familyId: famId, refId: fam.wife });
+      issues.push({
+        type: 'WIFE_BROKEN',
+        severity: 'error',
+        id: famId,
+        message: `Famille ${famId} : WIFE ${fam.wife} inexistante`
+      });
     }
-    fam.children.forEach(childId => {
+    (fam.children || []).forEach(childId => {
       if (!peopleIds.has(childId)) {
-        orphans.chil.push({ familyId: famId, refId: childId });
+        issues.push({
+          type: 'CHIL_BROKEN',
+          severity: 'error',
+          id: famId,
+          message: `Famille ${famId} : CHIL ${childId} inexistant`
+        });
       }
     });
   });
   
-  const sourceRefs = content.match(/@S\d+@/g) || [];
-  const sourceDefs = content.match(/^0 @S\d+@ SOUR/gm) || [];
-  const definedSources = new Set(sourceDefs.map(s => s.match(/@S\d+@/)?.[0]).filter(Boolean));
-  sourceRefs.forEach(ref => {
-    if (!definedSources.has(ref) && !orphans.sour.some(o => o.refId === ref)) {
-      orphans.sour.push({ refId: ref });
-    }
+  // Sources orphelines
+  const definedSources = [...(content.match(/@S\d+@/g) || [])];
+  const referencedSources = [...(content.match(/SOUR @S\d+@/g) || [])].map(s => s.split(' ')[1]);
+  const unreferencedSources = definedSources.filter(s => !referencedSources.includes(s));
+  
+  unreferencedSources.slice(0, 10).forEach(sourceId => {
+    issues.push({
+      type: 'SOURCE_ORPHAN',
+      severity: 'info',
+      id: sourceId,
+      message: `Source ${sourceId} définie mais jamais référencée`
+    });
   });
   
-  return orphans;
+  return issues;
 };
 
 // ============================================================================
-// PERSONNES À SUPPRIMER
+// PERSONNES À SUPPRIMER (format compatible App.jsx)
 // ============================================================================
 
 const detectToDeletePersons = (people, families) => {
-  const result = [];
-  const peopleById = new Map();
-  people.forEach(p => peopleById.set(p.id, p));
+  const toDelete = [];
   
   people.forEach(person => {
-    const hasNoName = !person.names[0] || person.names[0].replace(/\//g, '').trim() === '';
-    const hasNoEvents = !person.birth && !person.death && !person.baptism && !person.burial;
-    const isIsolated = person.parents.length === 0 && person.spouses.length === 0 && person.children.length === 0;
+    const hasParents = person.parents.length > 0;
+    const hasSpouses = person.spouses.length > 0;
+    let hasChildren = false;
+    let childrenIds = [];
     
-    if (hasNoName || (hasNoEvents && isIsolated)) {
-      result.push({
-        person,
-        reasons: [
-          hasNoName ? 'Sans nom' : null,
-          hasNoEvents ? 'Aucun événement' : null,
-          isIsolated ? 'Isolé (sans famille)' : null
-        ].filter(Boolean),
-        parentIds: person.parents,
-        spouseIds: person.spouses,
-        childrenIds: person.children
+    // Trouver les enfants de cette personne
+    families.forEach(family => {
+      if ((family.husband === person.id || family.wife === person.id) && family.children && family.children.length > 0) {
+        hasChildren = true;
+        childrenIds = [...childrenIds, ...family.children];
+      }
+    });
+    childrenIds = [...new Set(childrenIds)]; // Dédupliquer
+    
+    const isTotallyIsolated = !hasParents && !hasChildren && !hasSpouses;
+    const fullName = person.names[0] || '';
+    const nameParts = fullName.replace(/\//g, ' ').trim().split(/\s+/).filter(p => p.length > 0);
+    const hasNoIdentity = nameParts.length === 0;
+    
+    if (isTotallyIsolated || hasNoIdentity) {
+      let reason = isTotallyIsolated && hasNoIdentity ? 'Isolé + Sans identité' : isTotallyIsolated ? 'Totalement isolé' : 'Sans identité';
+      toDelete.push({ 
+        ...person, 
+        isTotallyIsolated, 
+        hasNoIdentity, 
+        reason, 
+        hasSpouses, 
+        hasParents, 
+        hasChildren,
+        parentIds: person.parents || [],
+        spouseIds: person.spouses || [],
+        childrenIds: childrenIds
       });
     }
   });
   
-  return result;
+  return toDelete;
 };
 
 // ============================================================================
-// SUGGESTIONS IA
+// SUGGESTIONS IA (format compatible App.jsx)
 // ============================================================================
 
 const generateAiSuggestions = (people) => {
   const suggestions = [];
+  const lastNameGroups = new Map();
   
-  const incompletePeople = people.filter(p => {
-    const hasName = p.names[0] && p.names[0].replace(/\//g, '').trim() !== '';
-    const hasBirth = !!p.birth;
-    const hasParents = p.parents.length > 0;
-    return hasName && (!hasBirth || !hasParents);
+  people.forEach(person => {
+    const fullName = person.names[0] || '';
+    const lastName = fullName.split(' ').pop()?.replace(/\//g, '').toLowerCase() || '';
+    const lastNameKey = soundex(lastName);
+    if (!lastNameGroups.has(lastNameKey)) lastNameGroups.set(lastNameKey, []);
+    lastNameGroups.get(lastNameKey).push(person);
   });
   
-  incompletePeople.slice(0, 5).forEach(person => {
-    const missing = [];
-    if (!person.birth) missing.push('date de naissance');
-    if (person.parents.length === 0) missing.push('parents');
-    
-    suggestions.push({
-      person,
-      type: 'incomplete',
-      confidence: 70,
-      reason: `Données manquantes: ${missing.join(', ')}`
-    });
+  lastNameGroups.forEach((group) => {
+    if (group.length < 2) return;
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const p1 = group[i], p2 = group[j];
+        if (p1.sex && p2.sex && p1.sex !== p2.sex) continue;
+        const y1 = p1.birth?.match(/\d{4}/)?.[0], y2 = p2.birth?.match(/\d{4}/)?.[0];
+        let yearDiff = (y1 && y2) ? Math.abs(parseInt(y1) - parseInt(y2)) : null;
+        if (yearDiff === null || yearDiff <= 25) {
+          const reasons = [];
+          let confidence = 60;
+          if (yearDiff !== null && yearDiff <= 10) { reasons.push('Nés à ' + yearDiff + ' ans d\'écart'); confidence += 15; }
+          if (p1.birthPlace && p2.birthPlace && normalizePlace(p1.birthPlace).toLowerCase() === normalizePlace(p2.birthPlace).toLowerCase()) { reasons.push('Même lieu de naissance'); confidence += 10; }
+          if (p1.parents.some(par => p2.parents.includes(par))) { reasons.push('Parents communs'); confidence += 10; }
+          if (reasons.length >= 2 && confidence >= 60) suggestions.push({ person1: p1, person2: p2, confidence: Math.min(confidence, 95), reasons, type: 'pattern_match' });
+        }
+      }
+    }
   });
   
-  return suggestions;
+  suggestions.sort((a, b) => b.confidence - a.confidence);
+  return suggestions.slice(0, 50);
 };
 
 // ============================================================================
-// CONTRÔLES D'INTÉGRITÉ
+// CONTRÔLES D'INTÉGRITÉ (format compatible App.jsx)
 // ============================================================================
 
 const performIntegrityChecks = (people, families) => {
-  const errors = [];
-  const warnings = [];
-  let isolatedCount = 0;
-  let noNameCount = 0;
+  const errors = [], warnings = [];
+  let isolatedCount = 0, totalCompleteness = 0;
+  const idSet = new Set(people.map(p => p.id));
   
-  people.forEach(person => {
-    if (!person.names[0] || person.names[0].replace(/\//g, '').trim() === '') {
-      noNameCount++;
-      warnings.push(`Personne ${person.id} sans nom`);
-    }
-    
-    if (person.parents.length === 0 && person.spouses.length === 0 && person.children.length === 0) {
-      isolatedCount++;
-    }
-    
-    const birthYear = extractYear(person.birth);
-    const deathYear = extractYear(person.death);
-    if (birthYear && deathYear && birthYear > deathYear) {
-      errors.push(`${person.names[0] || person.id}: naissance après décès`);
+  // Créer un index pour accès rapide
+  const peopleById = new Map();
+  people.forEach(p => peopleById.set(p.id, p));
+  
+  // Type 1: Vérification liens bidirectionnels famille-individu
+  families.forEach((family, famId) => {
+    if (family.husband && idSet.has(family.husband)) {
+      const husband = peopleById.get(family.husband);
+      if (husband && !husband.familiesAsSpouse.includes(famId)) {
+        warnings.push({ type: 'unidirectional_link', message: 'Lien unidirectionnel: Famille ' + famId + ' → ' + family.husband });
+      }
     }
   });
   
-  const completeness = Math.round((people.filter(p => p.birth && p.names[0]).length / people.length) * 100);
-  
-  return {
-    errors,
-    warnings,
-    stats: {
-      total: people.length,
-      isolated: isolatedCount,
-      noName: noNameCount,
-      completeness
+  people.forEach(person => {
+    // Type 4: Vérification structure GEDCOM (niveau cohérent)
+    if (person.familyAsChild && !families.has(person.familyAsChild)) {
+      warnings.push({ type: 'structure_error', message: (person.names[0] || person.id) + ': Saut de niveau - famille ' + person.familyAsChild + ' inexistante' });
     }
+    
+    // Type sans nom
+    if (!person.names[0] || person.names[0].trim() === '') 
+      errors.push({ type: 'no_name', message: person.id + ': Sans nom' });
+    
+    // Type 2: Dates incohérentes (naissance après décès)
+    if (person.birth && person.death) {
+      const by = person.birth.match(/\d{4}/)?.[0], dy = person.death.match(/\d{4}/)?.[0];
+      if (by && dy && parseInt(by) > parseInt(dy))
+        errors.push({ type: 'birth_after_death', message: (person.names[0] || person.id) + ': Naissance après décès' });
+    }
+    
+    // Type 5: Références orphelines (parents inexistants)
+    person.parents.forEach(parentId => {
+      if (!idSet.has(parentId))
+        warnings.push({ type: 'orphan_reference', message: (person.names[0] || person.id) + ': Parent ' + parentId + ' inexistant' });
+    });
+    
+    // Type 7: Compteur isolés
+    const hasFamily = person.parents.length > 0 || person.spouses.length > 0 || person.familiesAsSpouse.length > 0;
+    if (!hasFamily) isolatedCount++;
+    
+    // Type 8: Score complétude
+    let score = 0;
+    if (person.names[0]) score += 2;
+    if (person.birth) score += 2;
+    if (person.death) score += 2;
+    if (person.sex) score += 1;
+    if (person.birthPlace) score += 1;
+    if (person.parents.length > 0) score += 2;
+    totalCompleteness += score;
+  });
+  
+  // Type 3: Boucles généalogiques (échantillon)
+  const checkLoop = (personId, ancestors = new Set()) => {
+    if (ancestors.has(personId)) return true;
+    const person = peopleById.get(personId);
+    if (!person) return false;
+    ancestors.add(personId);
+    for (const parentId of person.parents) {
+      if (checkLoop(parentId, new Set(ancestors))) return true;
+    }
+    return false;
+  };
+  people.slice(0, 100).forEach(person => {
+    if (checkLoop(person.id)) 
+      errors.push({ type: 'genealogical_loop', message: (person.names[0] || person.id) + ': Boucle généalogique détectée' });
+  });
+  
+  // Type 6: IDs dupliqués
+  const idCounts = {};
+  people.forEach(p => { idCounts[p.id] = (idCounts[p.id] || 0) + 1; });
+  Object.entries(idCounts).forEach(([id, count]) => {
+    if (count > 1) errors.push({ type: 'duplicate_id', message: 'ID ' + id + ' dupliqué ' + count + ' fois' });
+  });
+  
+  const completenessScore = people.length > 0 ? Math.round((totalCompleteness / (people.length * 10)) * 100) : 0;
+  
+  return { 
+    errors, 
+    warnings, 
+    isolatedCount, 
+    completenessScore,
+    errorCount: errors.length,
+    warningCount: warnings.length,
+    totalChecked: people.length
   };
 };
 

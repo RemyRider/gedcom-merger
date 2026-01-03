@@ -17,7 +17,7 @@ const check = (condition, testName) => {
 const appCode = fs.readFileSync('./src/App.jsx', 'utf8');
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const indexHtml = fs.readFileSync('./index.html', 'utf8');
-const viteConfig = fs.readFileSync('./vite.config.js', 'utf8');
+const viteConfig = fs.readFileSync('./vite.config.mjs', 'utf8');
 const netlifyToml = fs.readFileSync('./netlify.toml', 'utf8');
 const tailwindConfig = fs.readFileSync('./tailwind.config.js', 'utf8');
 const postcssConfig = fs.readFileSync('./postcss.config.js', 'utf8');

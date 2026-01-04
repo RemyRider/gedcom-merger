@@ -8,8 +8,50 @@ import {
   areValuesCompatible, 
   detectMergeConflicts,
   cleanOrphanedFamilies,
+  isApproximateDate,
   CONFLICT_FIELDS
 } from '../src/utils/helpers.mjs';
+
+// ============================================================================
+// Tests isApproximateDate (v2.2.2)
+// ============================================================================
+describe('isApproximateDate', () => {
+  it('devrait retourner true pour une année seule', () => {
+    expect(isApproximateDate('1726')).toBe(true);
+  });
+
+  it('devrait retourner true pour ABT (environ)', () => {
+    expect(isApproximateDate('ABT 1800')).toBe(true);
+  });
+
+  it('devrait retourner true pour BEF (avant)', () => {
+    expect(isApproximateDate('BEF 1900')).toBe(true);
+  });
+
+  it('devrait retourner true pour AFT (après)', () => {
+    expect(isApproximateDate('AFT 1750')).toBe(true);
+  });
+
+  it('devrait retourner true pour EST (estimé)', () => {
+    expect(isApproximateDate('EST 1800')).toBe(true);
+  });
+
+  it('devrait retourner false pour une date précise', () => {
+    expect(isApproximateDate('15 MAR 1726')).toBe(false);
+  });
+
+  it('devrait retourner false pour 29 NOV 2025', () => {
+    expect(isApproximateDate('29 NOV 2025')).toBe(false);
+  });
+
+  it('devrait retourner true pour null', () => {
+    expect(isApproximateDate(null)).toBe(true);
+  });
+
+  it('devrait retourner true pour chaîne vide', () => {
+    expect(isApproximateDate('')).toBe(true);
+  });
+});
 
 // ============================================================================
 // Tests areValuesCompatible
@@ -22,24 +64,33 @@ describe('areValuesCompatible', () => {
       expect(areValuesCompatible(null, '1726', 'date')).toBe(true);
     });
 
-    it('devrait retourner true si même année (date complète)', () => {
-      expect(areValuesCompatible('15 MAR 1726', '20 SEP 1726', 'date')).toBe(true);
-    });
-
-    it('devrait retourner true si même année (formats différents)', () => {
+    it('devrait retourner true si même année avec dates approximatives', () => {
       expect(areValuesCompatible('1726', '15 MAR 1726', 'date')).toBe(true);
-    });
-
-    it('devrait retourner false si années différentes', () => {
-      expect(areValuesCompatible('15 MAR 1726', '15 MAR 1730', 'date')).toBe(false);
-    });
-
-    it('devrait retourner false pour 4 ans d\'écart', () => {
-      expect(areValuesCompatible('1720', '1724', 'date')).toBe(false);
     });
 
     it('devrait retourner true si même année avec ABT/BEF', () => {
       expect(areValuesCompatible('ABT 1800', 'BEF 1800', 'date')).toBe(true);
+    });
+
+    it('devrait retourner false pour années différentes', () => {
+      expect(areValuesCompatible('1720', '1724', 'date')).toBe(false);
+    });
+
+    // v2.2.2: Tests pour dates précises
+    it('devrait retourner false pour dates précises différentes même année', () => {
+      expect(areValuesCompatible('29 NOV 2025', '12 NOV 2025', 'date')).toBe(false);
+    });
+
+    it('devrait retourner false pour 15 MAR 1726 vs 20 SEP 1726 (précises)', () => {
+      expect(areValuesCompatible('15 MAR 1726', '20 SEP 1726', 'date')).toBe(false);
+    });
+
+    it('devrait retourner true pour dates identiques', () => {
+      expect(areValuesCompatible('29 NOV 2025', '29 NOV 2025', 'date')).toBe(true);
+    });
+
+    it('devrait retourner true si une date est approximative (année seule)', () => {
+      expect(areValuesCompatible('1726', '15 MAR 1726', 'date')).toBe(true);
     });
   });
 
@@ -139,19 +190,28 @@ describe('detectMergeConflicts', () => {
     expect(conflicts).toHaveLength(0);
   });
 
-  it('devrait détecter un conflit de date de naissance', () => {
+  it('devrait détecter un conflit de date de naissance (années différentes)', () => {
     const person1 = { id: 'I1', names: ['Jean /DUPONT/'], birth: '15 MAR 1726' };
     const person2 = { id: 'I2', names: ['Jean /DUPONT/'], birth: '15 MAR 1730' };
     const conflicts = detectMergeConflicts(person1, person2);
     expect(conflicts).toHaveLength(1);
     expect(conflicts[0].field).toBe('birth');
-    expect(conflicts[0].value1).toBe('15 MAR 1726');
-    expect(conflicts[0].value2).toBe('15 MAR 1730');
   });
 
-  it('devrait ne pas détecter de conflit si même année', () => {
-    const person1 = { id: 'I1', names: ['Jean /DUPONT/'], birth: '15 MAR 1726' };
-    const person2 = { id: 'I2', names: ['Jean /DUPONT/'], birth: '20 SEP 1726' };
+  // v2.2.2: Test pour dates précises différentes même année
+  it('devrait détecter un conflit pour dates précises différentes même année', () => {
+    const person1 = { id: 'I1', names: ['Jacques /COING/'], death: '29 NOV 2025' };
+    const person2 = { id: 'I2', names: ['Jacques /COING/'], death: '12 NOV 2025' };
+    const conflicts = detectMergeConflicts(person1, person2);
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0].field).toBe('death');
+    expect(conflicts[0].value1).toBe('29 NOV 2025');
+    expect(conflicts[0].value2).toBe('12 NOV 2025');
+  });
+
+  it('devrait ne pas détecter de conflit si une date est approximative', () => {
+    const person1 = { id: 'I1', names: ['Jean /DUPONT/'], birth: '1726' };
+    const person2 = { id: 'I2', names: ['Jean /DUPONT/'], birth: '15 MAR 1726' };
     const conflicts = detectMergeConflicts(person1, person2);
     expect(conflicts).toHaveLength(0);
   });

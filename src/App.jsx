@@ -53,14 +53,29 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.2.1';
+  const VERSION = '2.2.2';
 
   const CHANGELOG = [
     {
-      version: '2.2.1',
+      version: '2.2.2',
       date: '4 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Corrections bugs sélection clusters',
+      items: [
+        'CORRECTION: Bouton "Sélectionner" cluster encadre maintenant le cluster',
+        'CORRECTION: Bouton "Désélectionner tout" cluster retire aussi les paires',
+        'CORRECTION: Bouton "Désélectionner tout" doublons ne touche plus aux clusters',
+        'CORRECTION: Modal prévisualisation a maintenant un ascenseur',
+        'AMÉLIORATION: Détection conflit dates plus stricte (dates précises différentes = conflit)',
+        'TECHNIQUE: isApproximateDate() pour distinguer dates précises/approximatives'
+      ]
+    },
+    {
+      version: '2.2.1',
+      date: '4 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Amélioration UX - Modal qualité',
       items: [
         'AMÉLIORATION: Modal "Rapport Qualité" ne s\'affiche plus automatiquement',
@@ -1574,10 +1589,18 @@ const GedcomDuplicateMerger = () => {
     setSelectedClusters(newSelectedClusters);
     setSelectedPairs(newSelectedPairs);
   };
-  const selectCluster = (clusterIds) => {
+  // v2.2.2: Corrigé - selectCluster doit aussi marquer le cluster comme sélectionné
+  const selectCluster = (clusterIds, clusterIndex) => {
     const newSelected = new Set(selectedPairs);
     duplicates.forEach(dup => { if (clusterIds.includes(dup.person1.id) && clusterIds.includes(dup.person2.id)) newSelected.add(dup.id); });
     setSelectedPairs(newSelected);
+    
+    // Marquer le cluster comme sélectionné visuellement
+    if (clusterIndex !== undefined) {
+      const newSelectedClusters = new Set(selectedClusters);
+      newSelectedClusters.add(clusterIndex);
+      setSelectedClusters(newSelectedClusters);
+    }
   };
   const toggleClusterExpand = (clusterIndex) => {
     const newExpanded = new Set(expandedClusters);
@@ -1612,16 +1635,35 @@ const GedcomDuplicateMerger = () => {
     return match ? parseInt(match[1]) : null;
   };
 
+  // v2.2.2: Vérifier si une date est approximative ou partielle
+  const isApproximateDate = (dateStr) => {
+    if (!dateStr) return true;
+    const upper = dateStr.toUpperCase();
+    // ABT (about), BEF (before), AFT (after), EST (estimated), CAL (calculated)
+    if (/^(ABT|BEF|AFT|EST|CAL|FROM|TO|BET)\b/.test(upper)) return true;
+    // Si c'est juste une année (ex: "1726")
+    if (/^\d{4}$/.test(dateStr.trim())) return true;
+    return false;
+  };
+
   // Vérifier si deux valeurs sont compatibles selon leur type
   const areValuesCompatible = (v1, v2, type) => {
     if (!v1 || !v2) return true; // Si une valeur est vide, pas de conflit
     
     if (type === 'date') {
-      // Dates compatibles si même année (même si jour/mois différents)
-      const year1 = extractYearFromDate(v1);
-      const year2 = extractYearFromDate(v2);
-      if (year1 && year2) return year1 === year2;
-      return true; // Si on ne peut pas extraire l'année, considérer compatible
+      // Si les dates sont identiques (texte), c'est compatible
+      if (v1.trim().toLowerCase() === v2.trim().toLowerCase()) return true;
+      
+      // v2.2.2: Si une des dates est approximative/partielle, comparer les années
+      if (isApproximateDate(v1) || isApproximateDate(v2)) {
+        const year1 = extractYearFromDate(v1);
+        const year2 = extractYearFromDate(v2);
+        if (year1 && year2) return year1 === year2;
+        return true;
+      }
+      
+      // Les deux dates sont précises et différentes → CONFLIT
+      return false;
     }
     
     if (type === 'place') {
@@ -2496,7 +2538,24 @@ const GedcomDuplicateMerger = () => {
                       </div>
                       <div className="flex gap-2">
                         <button onClick={autoSelectHighConfidenceClusters} className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Sélectionner ≥{clusterScoreFilter}%</button>
-                        <button onClick={() => setSelectedClusters(new Set())} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600">Désélectionner tout</button>
+                        <button onClick={() => {
+                          // v2.2.2: Désélectionner les clusters ET leurs paires associées
+                          const clusterPairIds = new Set();
+                          selectedClusters.forEach(idx => {
+                            const cluster = clusters[idx];
+                            if (cluster) {
+                              duplicates.forEach(dup => {
+                                if (cluster.ids.includes(dup.person1.id) && cluster.ids.includes(dup.person2.id)) {
+                                  clusterPairIds.add(dup.id);
+                                }
+                              });
+                            }
+                          });
+                          // Retirer seulement les paires des clusters (pas les doublons simples)
+                          const newSelectedPairs = new Set([...selectedPairs].filter(id => !clusterPairIds.has(id)));
+                          setSelectedPairs(newSelectedPairs);
+                          setSelectedClusters(new Set());
+                        }} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600">Désélectionner tout</button>
                       </div>
                     </div>
                     {getFilteredClusters().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun cluster trouvé avec ce filtre</p> : (
@@ -2512,7 +2571,7 @@ const GedcomDuplicateMerger = () => {
                                 <button onClick={() => toggleClusterExpand(idx)} className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 flex items-center gap-1">
                                   {expandedClusters.has(idx) ? <>Réduire <ChevronUp className="w-4 h-4" /></> : <>Détails <ChevronDown className="w-4 h-4" /></>}
                                 </button>
-                                <button onClick={() => selectCluster(cluster.ids)} className="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700">Sélectionner</button>
+                                <button onClick={() => selectCluster(cluster.ids, idx)} className="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700">Sélectionner</button>
                               </div>
                             </div>
                             {expandedClusters.has(idx) && (
@@ -2581,7 +2640,20 @@ const GedcomDuplicateMerger = () => {
                       </div>
                       <div className="flex gap-2">
                         <button onClick={selectHighConfidence} className="px-3 py-1 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700">Sélectionner ≥{filterScore}%</button>
-                        <button onClick={() => setSelectedPairs(new Set())} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600">Désélectionner tout</button>
+                        <button onClick={() => {
+                          // v2.2.2: Désélectionner seulement les doublons simples (pas les paires des clusters)
+                          const clusterPairIds = new Set();
+                          clusters.forEach(cluster => {
+                            duplicates.forEach(dup => {
+                              if (cluster.ids.includes(dup.person1.id) && cluster.ids.includes(dup.person2.id)) {
+                                clusterPairIds.add(dup.id);
+                              }
+                            });
+                          });
+                          // Garder seulement les paires des clusters
+                          const newSelectedPairs = new Set([...selectedPairs].filter(id => clusterPairIds.has(id)));
+                          setSelectedPairs(newSelectedPairs);
+                        }} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600">Désélectionner tout</button>
                       </div>
                     </div>
                     {getSimplePairs().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun doublon simple trouvé</p> : (
@@ -3256,14 +3328,14 @@ const GedcomDuplicateMerger = () => {
 
       {previewPair && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-            <div className="sticky top-0 bg-emerald-600 text-white px-6 py-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="sticky top-0 bg-emerald-600 text-white px-6 py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Prévisualisation de la fusion</h2>
                 <button onClick={closePreview} className="p-2 hover:bg-white/20 rounded-lg">✕</button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 overflow-y-auto flex-grow">
               <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div className="border rounded-lg p-4">
                   <h3 className="font-bold text-lg mb-2">{previewPair.person1.names[0] || previewPair.person1.id}</h3>
@@ -3313,7 +3385,7 @@ const GedcomDuplicateMerger = () => {
                 <div className="text-sm space-y-1">{previewPair.details.map((detail, i) => <p key={i} className="text-gray-600">{detail}</p>)}</div>
               </div>
             </div>
-            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t flex gap-3">
+            <div className="bg-gray-50 px-6 py-4 border-t flex gap-3 flex-shrink-0">
               <button onClick={closePreview} className="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Fermer</button>
               <button onClick={() => { togglePairSelection(previewPair.id); closePreview(); }} className={`flex-1 px-4 py-2 rounded-lg ${selectedPairs.has(previewPair.id) ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}>{selectedPairs.has(previewPair.id) ? 'Désélectionner' : 'Sélectionner pour fusion'}</button>
             </div>

@@ -131,11 +131,19 @@ export const areValuesCompatible = (v1, v2, type) => {
   if (!v1 || !v2) return true; // Si une valeur est vide, pas de conflit
   
   if (type === 'date') {
-    // Dates compatibles si même année (même si jour/mois différents)
-    const year1 = extractYear(v1);
-    const year2 = extractYear(v2);
-    if (year1 && year2) return year1 === year2;
-    return true; // Si on ne peut pas extraire l'année, considérer compatible
+    // Si les dates sont identiques (texte), c'est compatible
+    if (v1.trim().toLowerCase() === v2.trim().toLowerCase()) return true;
+    
+    // v2.2.2: Si une des dates est approximative/partielle, comparer les années
+    if (isApproximateDate(v1) || isApproximateDate(v2)) {
+      const year1 = extractYear(v1);
+      const year2 = extractYear(v2);
+      if (year1 && year2) return year1 === year2;
+      return true;
+    }
+    
+    // Les deux dates sont précises et différentes → CONFLIT
+    return false;
   }
   
   if (type === 'place') {
@@ -147,6 +155,21 @@ export const areValuesCompatible = (v1, v2, type) => {
   
   // Texte: compatible si identique (insensible à la casse)
   return v1.toLowerCase().trim() === v2.toLowerCase().trim();
+};
+
+/**
+ * v2.2.2: Vérifie si une date est approximative ou partielle
+ * @param {string} dateStr - Date au format GEDCOM
+ * @returns {boolean} - true si la date est approximative/partielle
+ */
+export const isApproximateDate = (dateStr) => {
+  if (!dateStr) return true;
+  const upper = dateStr.toUpperCase();
+  // ABT (about), BEF (before), AFT (after), EST (estimated), CAL (calculated)
+  if (/^(ABT|BEF|AFT|EST|CAL|FROM|TO|BET)\b/.test(upper)) return true;
+  // Si c'est juste une année (ex: "1726")
+  if (/^\d{4}$/.test(dateStr.trim())) return true;
+  return false;
 };
 
 /**

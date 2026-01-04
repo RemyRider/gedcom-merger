@@ -2,6 +2,26 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [v2.2.2] - 4 janvier 2026
+
+### 🎯 Thème : Corrections bugs sélection clusters
+
+### 🐛 Corrections
+- Bouton "Sélectionner" cluster encadre maintenant visuellement le cluster
+- Bouton "Désélectionner tout" cluster retire aussi les paires associées
+- Bouton "Désélectionner tout" doublons ne touche plus aux sélections de clusters
+- Modal "Prévisualisation de la fusion" a maintenant un ascenseur fonctionnel
+
+### ✨ Améliorations
+- Détection de conflit plus stricte sur les dates précises
+- "29 NOV 2025" vs "12 NOV 2025" = CONFLIT (dates précises différentes)
+- "1726" vs "15 MAR 1726" = Compatible (une date approximative)
+
+### 🔧 Technique
+- Nouvelle fonction `isApproximateDate()` pour distinguer dates précises/approximatives
+
+---
+
 ## [v2.2.1] - 4 janvier 2026
 
 ### 🎯 Thème : Amélioration UX - Modal qualité

@@ -1,4 +1,4 @@
-# 🧬 GEDCOM Merger v2.2.1
+# 🧬 GEDCOM Merger v2.2.2
 
 Application React professionnelle pour détecter et fusionner les doublons dans les fichiers GEDCOM.
 
@@ -74,8 +74,8 @@ npm run test:all
 | 8 | Qualité & analyses v2.1.x | 68 |
 | 9 | Conflits v2.2.0 | 30 |
 | **Total statiques** | | **423** |
-| Vitest | helpers, parser, stats, conflicts | 147 |
-| **TOTAL** | | **576** |
+| Vitest | helpers, parser, stats, conflicts | 159 |
+| **TOTAL** | | **588** |
 
 ## 📦 Structure du projet
 
@@ -113,4 +113,4 @@ MIT © 2025-2026 RemyRider
 
 ---
 
-*Version 2.2.1 - 4 janvier 2026*
+*Version 2.2.2 - 4 janvier 2026*

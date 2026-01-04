@@ -1,4 +1,4 @@
-# 🧬 GEDCOM Merger v2.2.3
+# 🧬 GEDCOM Merger v2.2.4
 
 Application React professionnelle pour détecter et fusionner les doublons dans les fichiers GEDCOM.
 
@@ -113,4 +113,4 @@ MIT © 2025-2026 RemyRider
 
 ---
 
-*Version 2.2.3 - 4 janvier 2026*
+*Version 2.2.4 - 4 janvier 2026*

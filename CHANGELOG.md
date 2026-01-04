@@ -2,6 +2,18 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [v2.2.4] - 4 janvier 2026
+
+### 🎯 Thème : Nettoyage références orphelines
+
+### 🐛 Corrections
+- Suppression des lignes FAMS/FAMC qui pointent vers des familles supprimées
+- Suppression des lignes HUSB/WIFE/CHIL qui pointent vers des personnes supprimées
+- `generateMergedIndiLines` filtre maintenant les familles orphelines
+- Fichier GEDCOM généré sans aucune référence invalide
+
+---
+
 ## [v2.2.3] - 4 janvier 2026
 
 ### 🎯 Thème : Isolation complète doublons/clusters

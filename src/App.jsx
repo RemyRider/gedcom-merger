@@ -53,14 +53,27 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.2.3';
+  const VERSION = '2.2.4';
 
   const CHANGELOG = [
     {
-      version: '2.2.3',
+      version: '2.2.4',
       date: '4 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Nettoyage références orphelines',
+      items: [
+        'CORRECTION: Suppression des références FAMS/FAMC vers familles supprimées',
+        'CORRECTION: Suppression des références HUSB/WIFE/CHIL vers personnes supprimées',
+        'CORRECTION: generateMergedIndiLines filtre les familles orphelines',
+        'AMÉLIORATION: Fichier GEDCOM généré sans références invalides'
+      ]
+    },
+    {
+      version: '2.2.3',
+      date: '4 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Isolation complète doublons/clusters',
       items: [
         'CORRECTION: Bouton "Sélectionner ≥X%" doublons n\'affecte plus les clusters',
@@ -1885,7 +1898,8 @@ const GedcomDuplicateMerger = () => {
   };
 
   // Générer les lignes GEDCOM pour une personne fusionnée
-  const generateMergedIndiLines = (merged) => {
+  // v2.2.4: Ajout paramètre familiesToRemove pour filtrer les références
+  const generateMergedIndiLines = (merged, familiesToRemove = new Set()) => {
     const lines = [];
     lines.push('0 @' + merged.id + '@ INDI');
     
@@ -1934,15 +1948,17 @@ const GedcomDuplicateMerger = () => {
       lines.push('2 PLAC ' + merged.residence);
     }
     
-    // Famille comme enfant
-    if (merged.familyAsChild) {
+    // v2.2.4: Famille comme enfant (vérifier qu'elle existe encore)
+    if (merged.familyAsChild && !familiesToRemove.has(merged.familyAsChild)) {
       lines.push('1 FAMC @' + merged.familyAsChild + '@');
     }
     
-    // Familles comme conjoint (dédupliquées)
-    [...new Set(merged.familiesAsSpouse)].forEach(famId => {
-      lines.push('1 FAMS @' + famId + '@');
-    });
+    // v2.2.4: Familles comme conjoint (dédupliquées, filtrées)
+    [...new Set(merged.familiesAsSpouse)]
+      .filter(famId => !familiesToRemove.has(famId))
+      .forEach(famId => {
+        lines.push('1 FAMS @' + famId + '@');
+      });
     
     // Note de fusion pour traçabilité
     if (merged.mergedFrom && merged.mergedFrom.length > 1) {
@@ -2382,7 +2398,7 @@ const GedcomDuplicateMerger = () => {
             
             if (trimmed.includes('INDI') && mergedPersons.has(currentBlockId)) {
               const merged = mergedPersons.get(currentBlockId);
-              const mergedLines = generateMergedIndiLines(merged);
+              const mergedLines = generateMergedIndiLines(merged, familiesToRemove);
               mergedLines.forEach(ml => outputLines.push(ml));
               inMergedIndi = true;
               continue;
@@ -2401,6 +2417,23 @@ const GedcomDuplicateMerger = () => {
       mergeMap.forEach((targetId, sourceId) => {
         processedLine = processedLine.replace(new RegExp('@' + sourceId + '@', 'g'), '@' + targetId + '@');
       });
+      
+      // v2.2.4: Supprimer les lignes FAMS/FAMC qui pointent vers des familles supprimées
+      const trimmedProcessed = processedLine.trim().replace(/\r/g, '');
+      if ((trimmedProcessed.includes('FAMS') || trimmedProcessed.includes('FAMC')) && !trimmedProcessed.startsWith('0 ')) {
+        const famMatch = trimmedProcessed.match(/@([^@]+)@/);
+        if (famMatch && familiesToRemove.has(famMatch[1])) {
+          continue; // Sauter cette ligne - référence vers famille supprimée
+        }
+      }
+      
+      // v2.2.4: Supprimer les lignes HUSB/WIFE/CHIL qui pointent vers des personnes supprimées
+      if ((trimmedProcessed.includes('HUSB') || trimmedProcessed.includes('WIFE') || trimmedProcessed.includes('CHIL')) && !trimmedProcessed.startsWith('0 ')) {
+        const personMatch = trimmedProcessed.match(/@([^@]+)@/);
+        if (personMatch && idsToRemove.has(personMatch[1])) {
+          continue; // Sauter cette ligne - référence vers personne supprimée
+        }
+      }
       
       // Dédupliquer les CHIL dans les FAM
       const trimmedProcessed = processedLine.trim().replace(/\r/g, '');

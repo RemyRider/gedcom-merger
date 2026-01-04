@@ -2,6 +2,17 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [v2.2.1] - 4 janvier 2026
+
+### 🎯 Thème : Amélioration UX - Modal qualité
+
+### ✨ Améliorations
+- Modal "Rapport Qualité" ne s'affiche plus automatiquement au démarrage
+- Rapport qualité accessible via le bouton "Qualité" uniquement
+- Démarrage plus fluide sans interruption modale
+
+---
+
 ## [v2.2.0] - 4 janvier 2026
 
 ### 🎯 Thème : Gestion intelligente des conflits de fusion

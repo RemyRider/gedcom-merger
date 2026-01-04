@@ -53,14 +53,26 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.2.0';
+  const VERSION = '2.2.1';
 
   const CHANGELOG = [
     {
-      version: '2.2.0',
+      version: '2.2.1',
       date: '4 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Amélioration UX - Modal qualité',
+      items: [
+        'AMÉLIORATION: Modal "Rapport Qualité" ne s\'affiche plus automatiquement',
+        'AMÉLIORATION: Rapport qualité accessible via bouton "Qualité" uniquement',
+        'AMÉLIORATION: Démarrage plus fluide sans interruption modale'
+      ]
+    },
+    {
+      version: '2.2.0',
+      date: '4 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Gestion intelligente des conflits de fusion',
       items: [
         'NOUVEAU: Détection automatique des conflits avant fusion',
@@ -2002,7 +2014,7 @@ const GedcomDuplicateMerger = () => {
               setProgress(100);
               setProgressMessage('Terminé!');
               setStep('review');
-              setShowQualityReport(true);
+              // v2.2.1: Modal qualité accessible via bouton uniquement
               
               // Cleanup du worker
               if (workerRef.current) {

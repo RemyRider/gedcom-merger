@@ -1,4 +1,4 @@
-# Architecture - GEDCOM Merger v2.2.0
+# Architecture - GEDCOM Merger v2.2.1
 
 ## Vue d'ensemble
 
@@ -122,4 +122,4 @@ selectedToDelete     // Personnes à supprimer
 
 ---
 
-*Version 2.2.0 - 4 janvier 2026*
+*Version 2.2.1 - 4 janvier 2026*

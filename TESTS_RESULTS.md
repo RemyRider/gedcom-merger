@@ -1,14 +1,14 @@
 
-> gedcom-merger@2.2.0 test:all
+> gedcom-merger@2.2.1 test:all
 > npm run test:static && npm run test
 
 
-> gedcom-merger@2.2.0 test:static
+> gedcom-merger@2.2.1 test:static
 > node tests/test-complete.cjs
 
 
 ═══════════════════════════════════════════════════════════════════════════════
-                      SUITE DE TESTS GEDCOM MERGER v2.2.0
+                      SUITE DE TESTS GEDCOM MERGER v2.2.1
                          423 TESTS STATIQUES AU TOTAL
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -33,8 +33,8 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 1.2 Versions et cohérence (10 tests)                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
-  ✅ VERSION 2.2.0 dans App.jsx
-  ✅ Version 2.2.0 dans package.json
+  ✅ VERSION 2.2.1 dans App.jsx
+  ✅ Version 2.2.1 dans package.json
   ✅ Version dans index.html
   ✅ Version 2.0.0 dans CHANGELOG.md
   ✅ Version 2.1.0 référencée
@@ -673,23 +673,23 @@
 
   🎉 SUCCÈS TOTAL: 429/429 tests passés (100%)
 
-  ✅ Version 2.2.0 validée (tests statiques)
+  ✅ Version 2.2.1 validée (tests statiques)
 
 ═══════════════════════════════════════════════════════════════════════════════
 
-> gedcom-merger@2.2.0 test
+> gedcom-merger@2.2.1 test
 > vitest run
 
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/conflicts.test.mjs  (39 tests) 14ms
- ✓ tests/parser.test.mjs  (30 tests) 15ms
- ✓ tests/stats.test.mjs  (31 tests) 16ms
- ✓ tests/helpers.test.mjs  (47 tests) 13ms
+ ✓ tests/conflicts.test.mjs  (39 tests) 15ms
+ ✓ tests/parser.test.mjs  (30 tests) 16ms
+ ✓ tests/stats.test.mjs  (31 tests) 15ms
+ ✓ tests/helpers.test.mjs  (47 tests) 12ms
 
  Test Files  4 passed (4)
       Tests  147 passed (147)
-   Start at  10:56:17
-   Duration  2.18s (transform 152ms, setup 0ms, collect 288ms, tests 58ms, environment 1ms, prepare 3.18s)
+   Start at  17:02:58
+   Duration  2.26s (transform 158ms, setup 0ms, collect 296ms, tests 58ms, environment 1ms, prepare 3.36s)
 

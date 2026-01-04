@@ -2,6 +2,16 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [v2.2.3] - 4 janvier 2026
+
+### 🎯 Thème : Isolation complète doublons/clusters
+
+### 🐛 Corrections
+- Bouton "Sélectionner ≥X%" des doublons n'affecte plus les clusters
+- Les sélections de doublons et clusters sont complètement indépendantes
+
+---
+
 ## [v2.2.2] - 4 janvier 2026
 
 ### 🎯 Thème : Corrections bugs sélection clusters

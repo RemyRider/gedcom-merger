@@ -1,14 +1,14 @@
 
-> gedcom-merger@2.2.2 test:all
+> gedcom-merger@2.2.3 test:all
 > npm run test:static && npm run test
 
 
-> gedcom-merger@2.2.2 test:static
+> gedcom-merger@2.2.3 test:static
 > node tests/test-complete.cjs
 
 
 ═══════════════════════════════════════════════════════════════════════════════
-                      SUITE DE TESTS GEDCOM MERGER v2.2.2
+                      SUITE DE TESTS GEDCOM MERGER v2.2.3
                          423 TESTS STATIQUES AU TOTAL
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -34,7 +34,7 @@
 │ 1.2 Versions et cohérence (10 tests)                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
   ✅ VERSION 2.2.1 dans App.jsx
-  ✅ Version 2.2.2 dans package.json
+  ✅ Version 2.2.3 dans package.json
   ✅ Version dans index.html
   ✅ Version 2.0.0 dans CHANGELOG.md
   ✅ Version 2.1.0 référencée
@@ -673,23 +673,23 @@
 
   🎉 SUCCÈS TOTAL: 429/429 tests passés (100%)
 
-  ✅ Version 2.2.2 validée (tests statiques)
+  ✅ Version 2.2.3 validée (tests statiques)
 
 ═══════════════════════════════════════════════════════════════════════════════
 
-> gedcom-merger@2.2.2 test
+> gedcom-merger@2.2.3 test
 > vitest run
 
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/parser.test.mjs  (30 tests) 12ms
- ✓ tests/conflicts.test.mjs  (51 tests) 17ms
+ ✓ tests/conflicts.test.mjs  (51 tests) 14ms
+ ✓ tests/parser.test.mjs  (30 tests) 16ms
  ✓ tests/stats.test.mjs  (31 tests) 15ms
  ✓ tests/helpers.test.mjs  (47 tests) 13ms
 
  Test Files  4 passed (4)
       Tests  159 passed (159)
-   Start at  17:33:12
-   Duration  2.35s (transform 170ms, setup 1ms, collect 320ms, tests 57ms, environment 1ms, prepare 3.50s)
+   Start at  17:44:29
+   Duration  2.28s (transform 158ms, setup 0ms, collect 304ms, tests 58ms, environment 1ms, prepare 3.37s)
 

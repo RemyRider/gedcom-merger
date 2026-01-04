@@ -65,4 +65,4 @@ module.exports = {
 
 ---
 
-*Version 2.2.2 - 4 janvier 2026*
+*Version 2.2.3 - 4 janvier 2026*

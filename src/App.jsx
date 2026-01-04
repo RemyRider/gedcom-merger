@@ -53,14 +53,25 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.2.2';
+  const VERSION = '2.2.3';
 
   const CHANGELOG = [
     {
-      version: '2.2.2',
+      version: '2.2.3',
       date: '4 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Isolation complète doublons/clusters',
+      items: [
+        'CORRECTION: Bouton "Sélectionner ≥X%" doublons n\'affecte plus les clusters',
+        'AMÉLIORATION: Sélections doublons et clusters complètement indépendantes'
+      ]
+    },
+    {
+      version: '2.2.2',
+      date: '4 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Corrections bugs sélection clusters',
       items: [
         'CORRECTION: Bouton "Sélectionner" cluster encadre maintenant le cluster',
@@ -1990,9 +2001,26 @@ const GedcomDuplicateMerger = () => {
     else newSelected.add(pairId);
     setSelectedPairs(newSelected);
   };
+  // v2.2.2: Sélectionner uniquement les doublons simples (pas ceux des clusters)
   const selectHighConfidence = () => {
-    const highConfidencePairs = duplicates.filter(pair => pair.similarity >= filterScore).map(pair => pair.id);
-    setSelectedPairs(new Set(highConfidencePairs));
+    // Identifier les paires qui font partie d'un cluster
+    const clusterPairIds = new Set();
+    clusters.forEach(cluster => {
+      duplicates.forEach(dup => {
+        if (cluster.ids.includes(dup.person1.id) && cluster.ids.includes(dup.person2.id)) {
+          clusterPairIds.add(dup.id);
+        }
+      });
+    });
+    
+    // Sélectionner uniquement les doublons simples avec score >= filterScore
+    const highConfidencePairs = duplicates
+      .filter(pair => pair.similarity >= filterScore && !clusterPairIds.has(pair.id))
+      .map(pair => pair.id);
+    
+    // Conserver les paires des clusters déjà sélectionnées
+    const existingClusterPairs = [...selectedPairs].filter(id => clusterPairIds.has(id));
+    setSelectedPairs(new Set([...existingClusterPairs, ...highConfidencePairs]));
   };
   const getPersonName = (personId) => {
     const person = individuals.find(p => p.id === personId);

@@ -35,6 +35,10 @@ const GedcomDuplicateMerger = () => {
   const [orphanRefs, setOrphanRefs] = useState([]);
   // v2.1.4 - Message de progression
   const [progressMessage, setProgressMessage] = useState('');
+  // v2.2.0 - États pour gestion des conflits de fusion
+  const [mergeConflicts, setMergeConflicts] = useState([]);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingMergePair, setPendingMergePair] = useState(null);
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -49,14 +53,31 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.1.4';
+  const VERSION = '2.2.0';
 
   const CHANGELOG = [
     {
-      version: '2.1.4',
-      date: '3 janvier 2026',
+      version: '2.2.0',
+      date: '4 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Gestion intelligente des conflits de fusion',
+      items: [
+        'NOUVEAU: Détection automatique des conflits avant fusion',
+        'NOUVEAU: Modal de résolution des conflits avec choix utilisateur',
+        'NOUVEAU: Comparaison intelligente dates (même année = compatible)',
+        'NOUVEAU: Comparaison intelligente lieux (inclusion = compatible)',
+        'NOUVEAU: Option saisie manuelle pour valeurs personnalisées',
+        'NOUVEAU: Nettoyage automatique des FAM orphelines après fusion',
+        'AMÉLIORATION: Fusion bloquée tant que conflits non résolus',
+        'TECHNIQUE: detectMergeConflicts(), areValuesCompatible()'
+      ]
+    },
+    {
+      version: '2.1.4',
+      date: '3 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Web Worker - Performance optimisée',
       items: [
         'NOUVEAU: Web Worker pour traitement en arrière-plan',
@@ -1568,6 +1589,158 @@ const GedcomDuplicateMerger = () => {
     return score;
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // v2.2.0 - FONCTIONS DE DÉTECTION ET RÉSOLUTION DES CONFLITS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Extraire l'année d'une date GEDCOM
+  const extractYearFromDate = (dateStr) => {
+    if (!dateStr) return null;
+    const match = dateStr.match(/(\d{4})/);
+    return match ? parseInt(match[1]) : null;
+  };
+
+  // Vérifier si deux valeurs sont compatibles selon leur type
+  const areValuesCompatible = (v1, v2, type) => {
+    if (!v1 || !v2) return true; // Si une valeur est vide, pas de conflit
+    
+    if (type === 'date') {
+      // Dates compatibles si même année (même si jour/mois différents)
+      const year1 = extractYearFromDate(v1);
+      const year2 = extractYearFromDate(v2);
+      if (year1 && year2) return year1 === year2;
+      return true; // Si on ne peut pas extraire l'année, considérer compatible
+    }
+    
+    if (type === 'place') {
+      // Lieux compatibles si l'un contient l'autre
+      const norm1 = v1.toLowerCase().trim();
+      const norm2 = v2.toLowerCase().trim();
+      return norm1.includes(norm2) || norm2.includes(norm1) || norm1 === norm2;
+    }
+    
+    // Texte: compatible si identique (insensible à la casse)
+    return v1.toLowerCase().trim() === v2.toLowerCase().trim();
+  };
+
+  // Détecter les conflits entre deux personnes avant fusion
+  const detectMergeConflicts = (person1, person2) => {
+    const conflicts = [];
+    
+    const fieldsToCheck = [
+      { key: 'birth', label: 'Date de naissance', type: 'date' },
+      { key: 'birthPlace', label: 'Lieu de naissance', type: 'place' },
+      { key: 'death', label: 'Date de décès', type: 'date' },
+      { key: 'deathPlace', label: 'Lieu de décès', type: 'place' },
+      { key: 'baptism', label: 'Date de baptême', type: 'date' },
+      { key: 'baptismPlace', label: 'Lieu de baptême', type: 'place' },
+      { key: 'burial', label: 'Date d\'inhumation', type: 'date' },
+      { key: 'burialPlace', label: 'Lieu d\'inhumation', type: 'place' },
+      { key: 'occupation', label: 'Profession', type: 'text' },
+      { key: 'religion', label: 'Religion', type: 'text' },
+    ];
+    
+    fieldsToCheck.forEach(({ key, label, type }) => {
+      const v1 = person1[key];
+      const v2 = person2[key];
+      
+      // Conflit = deux valeurs non-nulles ET différentes ET incompatibles
+      if (v1 && v2 && v1 !== v2 && !areValuesCompatible(v1, v2, type)) {
+        conflicts.push({
+          field: key,
+          label,
+          type,
+          value1: v1,
+          value2: v2,
+          person1Id: person1.id,
+          person2Id: person2.id,
+          person1Name: person1.names[0] || person1.id,
+          person2Name: person2.names[0] || person2.id,
+          resolved: false,
+          chosenValue: null,
+          chosenSource: null // 'person1' | 'person2' | 'manual'
+        });
+      }
+    });
+    
+    return conflicts;
+  };
+
+  // Résoudre un conflit en choisissant une valeur
+  const resolveConflict = (conflictIndex, chosenValue, chosenSource) => {
+    setMergeConflicts(prev => prev.map((conflict, idx) => 
+      idx === conflictIndex 
+        ? { ...conflict, resolved: true, chosenValue, chosenSource }
+        : conflict
+    ));
+  };
+
+  // Vérifier si tous les conflits sont résolus
+  const allConflictsResolved = () => {
+    return mergeConflicts.length === 0 || mergeConflicts.every(c => c.resolved);
+  };
+
+  // Appliquer les résolutions de conflits à la fusion
+  const applyConflictResolutions = (merged, conflicts) => {
+    const resolvedMerged = { ...merged };
+    
+    conflicts.forEach(conflict => {
+      if (conflict.resolved && conflict.chosenValue !== null) {
+        resolvedMerged[conflict.field] = conflict.chosenValue;
+      }
+    });
+    
+    return resolvedMerged;
+  };
+
+  // Nettoyer les familles orphelines après fusion/suppression
+  const cleanOrphanedFamilies = (families, removedIds, people) => {
+    const cleanedFamilies = new Map();
+    const orphanReport = { removed: [], modified: [] };
+    const peopleIds = new Set(people.filter(p => !removedIds.has(p.id)).map(p => p.id));
+    
+    families.forEach((family, famId) => {
+      let modified = false;
+      const cleanedFamily = { ...family };
+      
+      // Vérifier si HUSB existe encore
+      if (family.husband && !peopleIds.has(family.husband)) {
+        cleanedFamily.husband = null;
+        modified = true;
+      }
+      
+      // Vérifier si WIFE existe encore
+      if (family.wife && !peopleIds.has(family.wife)) {
+        cleanedFamily.wife = null;
+        modified = true;
+      }
+      
+      // Filtrer les enfants qui n'existent plus
+      if (family.children && family.children.length > 0) {
+        const validChildren = family.children.filter(childId => peopleIds.has(childId));
+        if (validChildren.length !== family.children.length) {
+          cleanedFamily.children = validChildren;
+          modified = true;
+        }
+      }
+      
+      // Famille orpheline = ni mari, ni femme, ni enfants
+      const isOrphaned = !cleanedFamily.husband && !cleanedFamily.wife && 
+                         (!cleanedFamily.children || cleanedFamily.children.length === 0);
+      
+      if (isOrphaned) {
+        orphanReport.removed.push({ famId, reason: 'Famille vide (aucun membre valide)' });
+      } else {
+        cleanedFamilies.set(famId, cleanedFamily);
+        if (modified) {
+          orphanReport.modified.push({ famId, family: cleanedFamily });
+        }
+      }
+    });
+    
+    return { cleanedFamilies, orphanReport };
+  };
+
   // ═══════════════════════════════════════════════════════════════════════════
   // FONCTIONS DE FUSION DE DONNÉES v1.9.5
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1874,6 +2047,9 @@ const GedcomDuplicateMerger = () => {
     const warnings = [];
     const errors = [];
     
+    // v2.2.0: Collecter tous les conflits détectés
+    let allConflicts = [];
+    
     duplicates.forEach(pair => {
       if (!selectedPairs.has(pair.id)) return;
       
@@ -1890,7 +2066,13 @@ const GedcomDuplicateMerger = () => {
         errors.push(`Sexes incompatibles: ${p1.names[0]} (${p1.sex}) ≠ ${p2.names[0]} (${p2.sex})`);
       }
       
-      // Warning: dates de naissance très différentes
+      // v2.2.0: Détecter les conflits pour cette paire
+      const pairConflicts = detectMergeConflicts(p1, p2);
+      if (pairConflicts.length > 0) {
+        allConflicts = [...allConflicts, ...pairConflicts];
+      }
+      
+      // Warning: dates de naissance très différentes (> 5 ans mais pas conflit)
       if (p1.birth && p2.birth) {
         const y1 = p1.birth.match(/\d{4}/)?.[0], y2 = p2.birth.match(/\d{4}/)?.[0];
         if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 5) {
@@ -1901,7 +2083,10 @@ const GedcomDuplicateMerger = () => {
       // Warning: lieux de naissance différents
       if (p1.birthPlace && p2.birthPlace && 
           normalizePlace(p1.birthPlace).toLowerCase() !== normalizePlace(p2.birthPlace).toLowerCase()) {
-        warnings.push(`Lieux naissance différents: ${p1.names[0]} - "${p1.birthPlace}" vs "${p2.birthPlace}"`);
+        // Seulement si pas déjà un conflit détecté sur ce champ
+        if (!pairConflicts.some(c => c.field === 'birthPlace')) {
+          warnings.push(`Lieux naissance différents: ${p1.names[0]} - "${p1.birthPlace}" vs "${p2.birthPlace}"`);
+        }
       }
       
       // Warning: dates de décès très différentes
@@ -1919,7 +2104,14 @@ const GedcomDuplicateMerger = () => {
       return;
     }
     
-    // Demander confirmation si warnings
+    // v2.2.0: Si conflits détectés, afficher le modal de résolution
+    if (allConflicts.length > 0) {
+      setMergeConflicts(allConflicts);
+      setShowConflictModal(true);
+      return; // Attendre que l'utilisateur résolve les conflits
+    }
+    
+    // Demander confirmation si warnings (mais pas de conflits)
     if (warnings.length > 0) {
       const proceed = window.confirm(
         '⚠️ ATTENTION - ' + warnings.length + ' avertissement(s):\n\n' + 
@@ -1930,6 +2122,12 @@ const GedcomDuplicateMerger = () => {
       if (!proceed) return;
     }
     
+    // Procéder à la fusion (pas de conflits)
+    executeMerge();
+  };
+
+  // v2.2.0: Fonction séparée pour exécuter la fusion après résolution des conflits
+  const executeMerge = () => {
     const idsToMerge = new Map();
     duplicates.forEach(pair => {
       if (selectedPairs.has(pair.id)) {
@@ -1948,6 +2146,16 @@ const GedcomDuplicateMerger = () => {
     idsToMerge.forEach((target, source) => { if (source !== target) idsToRemove.add(source); });
     setValidationResults({ totalIndividuals: individuals.length, mergedCount: idsToRemove.size, deletedCount: 0, remainingCount: individuals.length - idsToRemove.size });
     setStep('merged');
+  };
+
+  // v2.2.0: Appliquer les résolutions de conflits et fusionner
+  const handleApplyConflictResolutions = () => {
+    if (!allConflictsResolved()) {
+      alert('⚠️ Veuillez résoudre tous les conflits avant de fusionner.');
+      return;
+    }
+    setShowConflictModal(false);
+    executeMerge();
   };
 
   const handleDeleteToDelete = () => {
@@ -2008,7 +2216,17 @@ const GedcomDuplicateMerger = () => {
     // Créer les personnes fusionnées à partir des paires sélectionnées
     duplicates.forEach(pair => {
       if (selectedPairs.has(pair.id)) {
-        const merged = mergePersonData(pair.person1, pair.person2);
+        let merged = mergePersonData(pair.person1, pair.person2);
+        
+        // v2.2.0: Appliquer les résolutions de conflits pour cette paire
+        const pairConflicts = mergeConflicts.filter(c => 
+          (c.person1Id === pair.person1.id && c.person2Id === pair.person2.id) ||
+          (c.person1Id === pair.person2.id && c.person2Id === pair.person1.id)
+        );
+        if (pairConflicts.length > 0) {
+          merged = applyConflictResolutions(merged, pairConflicts);
+        }
+        
         idsToRemove.add(merged.removedId);
         mergeMap.set(merged.removedId, merged.id);
         
@@ -2026,6 +2244,13 @@ const GedcomDuplicateMerger = () => {
     
     // Ajouter les suppressions manuelles
     selectedToDelete.forEach(id => idsToRemove.add(id));
+    
+    // v2.2.0: Nettoyer les familles orphelines
+    const { cleanedFamilies, orphanReport } = cleanOrphanedFamilies(familiesData, idsToRemove, individuals);
+    if (orphanReport.removed.length > 0) {
+      console.log(`v2.2.0: ${orphanReport.removed.length} famille(s) orpheline(s) supprimée(s)`);
+    }
+    const familiesToRemove = new Set(orphanReport.removed.map(r => r.famId));
     
     // ÉTAPE 2: Traiter le fichier GEDCOM
     const lines = originalGedcom.split('\n');
@@ -2063,6 +2288,12 @@ const GedcomDuplicateMerger = () => {
             currentBlockId = match[1];
             
             if (idsToRemove.has(currentBlockId)) {
+              skipCurrentBlock = true;
+              continue;
+            }
+            
+            // v2.2.0: Supprimer les FAM orphelines
+            if (trimmed.includes('FAM') && familiesToRemove.has(currentBlockId)) {
               skipCurrentBlock = true;
               continue;
             }
@@ -2125,6 +2356,8 @@ const GedcomDuplicateMerger = () => {
     setSelectedToDelete(new Set()); setSmartSuggestions([]); setIntegrityReport(null);
     setFile(null); setMergedIds(new Map()); setValidationResults(null); setPreviewPair(null);
     setFamiliesData(new Map());
+    // v2.2.0: Réinitialiser les états de conflits
+    setMergeConflicts([]); setShowConflictModal(false); setPendingMergePair(null);
   };
 
   const getFilteredDuplicates = () => duplicates.filter(pair => pair.similarity >= filterScore && (!searchTerm || pair.person1.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase())) || pair.person2.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase()))));
@@ -2621,6 +2854,124 @@ const GedcomDuplicateMerger = () => {
             </div>
             <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
               <button onClick={() => setShowIntegrityModal(false)} className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Résolution des Conflits v2.2.0 */}
+      {showConflictModal && mergeConflicts.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+            <div className="sticky top-0 px-6 py-4 bg-orange-600 text-white">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <AlertCircle className="w-6 h-6" />
+                  {mergeConflicts.length} CONFLIT{mergeConflicts.length > 1 ? 'S' : ''} DÉTECTÉ{mergeConflicts.length > 1 ? 'S' : ''}
+                </h2>
+                <button onClick={() => { setShowConflictModal(false); setMergeConflicts([]); }} className="p-2 hover:bg-white/20 rounded-lg">✕</button>
+              </div>
+              <p className="text-orange-100 text-sm mt-1">Choisissez les valeurs à conserver pour chaque conflit</p>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[55vh] space-y-6">
+              {mergeConflicts.map((conflict, idx) => (
+                <div key={idx} className={`border-2 rounded-xl p-4 ${conflict.resolved ? 'border-green-300 bg-green-50' : 'border-orange-300 bg-orange-50'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800">
+                      Conflit {idx + 1}/{mergeConflicts.length} : {conflict.label}
+                    </h3>
+                    {conflict.resolved && <span className="text-green-600 text-sm font-medium">✓ Résolu</span>}
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-3">
+                    {conflict.person1Name} ({conflict.person1Id}) ↔ {conflict.person2Name} ({conflict.person2Id})
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <button
+                      onClick={() => resolveConflict(idx, conflict.value1, 'person1')}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        conflict.chosenSource === 'person1' 
+                          ? 'border-emerald-500 bg-emerald-100 ring-2 ring-emerald-300' 
+                          : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-4 h-4 rounded-full border-2 ${conflict.chosenSource === 'person1' ? 'bg-emerald-500 border-emerald-500' : 'border-gray-400'}`}>
+                          {conflict.chosenSource === 'person1' && <div className="w-full h-full flex items-center justify-center text-white text-xs">✓</div>}
+                        </div>
+                        <span className="text-sm font-medium text-gray-600">Personne 1</span>
+                      </div>
+                      <p className="font-semibold text-gray-800 break-words">{conflict.value1}</p>
+                    </button>
+                    
+                    <button
+                      onClick={() => resolveConflict(idx, conflict.value2, 'person2')}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        conflict.chosenSource === 'person2' 
+                          ? 'border-emerald-500 bg-emerald-100 ring-2 ring-emerald-300' 
+                          : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-4 h-4 rounded-full border-2 ${conflict.chosenSource === 'person2' ? 'bg-emerald-500 border-emerald-500' : 'border-gray-400'}`}>
+                          {conflict.chosenSource === 'person2' && <div className="w-full h-full flex items-center justify-center text-white text-xs">✓</div>}
+                        </div>
+                        <span className="text-sm font-medium text-gray-600">Personne 2</span>
+                      </div>
+                      <p className="font-semibold text-gray-800 break-words">{conflict.value2}</p>
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ou saisissez une valeur manuellement..."
+                      className={`flex-1 px-3 py-2 border rounded-lg text-sm ${
+                        conflict.chosenSource === 'manual' ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-gray-300'
+                      }`}
+                      onFocus={(e) => {
+                        if (e.target.value) {
+                          resolveConflict(idx, e.target.value, 'manual');
+                        }
+                      }}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          resolveConflict(idx, e.target.value, 'manual');
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="sticky bottom-0 bg-gray-100 px-6 py-4 border-t">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Conflits résolus : <span className="font-bold">{mergeConflicts.filter(c => c.resolved).length}/{mergeConflicts.length}</span>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => { setShowConflictModal(false); setMergeConflicts([]); }}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    onClick={handleApplyConflictResolutions}
+                    disabled={!allConflictsResolved()}
+                    className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                      allConflictsResolved() 
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    Appliquer et fusionner
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

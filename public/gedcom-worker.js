@@ -1,5 +1,5 @@
 /**
- * GEDCOM Merger v2.1.4 - Web Worker
+ * GEDCOM Merger v2.2.0 - Web Worker
  * 
  * Ce worker s'exécute dans un thread séparé pour éviter de bloquer l'interface.
  * Toutes les opérations lourdes (parsing, détection doublons, stats) sont ici.

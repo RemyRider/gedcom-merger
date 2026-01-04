@@ -115,3 +115,141 @@ export const getSuspicionLevel = (score, criteriaCount) => {
   }
   return { level: 'FAIBLE', emoji: '🟢' };
 };
+
+// ============================================================================
+// v2.2.0 - FONCTIONS DE GESTION DES CONFLITS
+// ============================================================================
+
+/**
+ * Vérifie si deux valeurs sont compatibles selon leur type
+ * @param {string} v1 - Première valeur
+ * @param {string} v2 - Deuxième valeur
+ * @param {string} type - Type de comparaison: 'date', 'place', ou 'text'
+ * @returns {boolean} - true si les valeurs sont compatibles
+ */
+export const areValuesCompatible = (v1, v2, type) => {
+  if (!v1 || !v2) return true; // Si une valeur est vide, pas de conflit
+  
+  if (type === 'date') {
+    // Dates compatibles si même année (même si jour/mois différents)
+    const year1 = extractYear(v1);
+    const year2 = extractYear(v2);
+    if (year1 && year2) return year1 === year2;
+    return true; // Si on ne peut pas extraire l'année, considérer compatible
+  }
+  
+  if (type === 'place') {
+    // Lieux compatibles si l'un contient l'autre
+    const norm1 = v1.toLowerCase().trim();
+    const norm2 = v2.toLowerCase().trim();
+    return norm1.includes(norm2) || norm2.includes(norm1) || norm1 === norm2;
+  }
+  
+  // Texte: compatible si identique (insensible à la casse)
+  return v1.toLowerCase().trim() === v2.toLowerCase().trim();
+};
+
+/**
+ * Liste des champs à vérifier pour les conflits
+ */
+export const CONFLICT_FIELDS = [
+  { key: 'birth', label: 'Date de naissance', type: 'date' },
+  { key: 'birthPlace', label: 'Lieu de naissance', type: 'place' },
+  { key: 'death', label: 'Date de décès', type: 'date' },
+  { key: 'deathPlace', label: 'Lieu de décès', type: 'place' },
+  { key: 'baptism', label: 'Date de baptême', type: 'date' },
+  { key: 'baptismPlace', label: 'Lieu de baptême', type: 'place' },
+  { key: 'burial', label: 'Date d\'inhumation', type: 'date' },
+  { key: 'burialPlace', label: 'Lieu d\'inhumation', type: 'place' },
+  { key: 'occupation', label: 'Profession', type: 'text' },
+  { key: 'religion', label: 'Religion', type: 'text' },
+];
+
+/**
+ * Détecte les conflits entre deux personnes avant fusion
+ * @param {object} person1 - Première personne
+ * @param {object} person2 - Deuxième personne
+ * @returns {Array} - Liste des conflits détectés
+ */
+export const detectMergeConflicts = (person1, person2) => {
+  const conflicts = [];
+  
+  CONFLICT_FIELDS.forEach(({ key, label, type }) => {
+    const v1 = person1[key];
+    const v2 = person2[key];
+    
+    // Conflit = deux valeurs non-nulles ET différentes ET incompatibles
+    if (v1 && v2 && v1 !== v2 && !areValuesCompatible(v1, v2, type)) {
+      conflicts.push({
+        field: key,
+        label,
+        type,
+        value1: v1,
+        value2: v2,
+        person1Id: person1.id,
+        person2Id: person2.id,
+        person1Name: person1.names?.[0] || person1.id,
+        person2Name: person2.names?.[0] || person2.id,
+        resolved: false,
+        chosenValue: null,
+        chosenSource: null
+      });
+    }
+  });
+  
+  return conflicts;
+};
+
+/**
+ * Nettoie les familles orphelines après fusion/suppression
+ * @param {Map} families - Map des familles
+ * @param {Set} removedIds - IDs des personnes supprimées
+ * @param {Array} people - Liste des personnes restantes
+ * @returns {object} - { cleanedFamilies: Map, orphanReport: object }
+ */
+export const cleanOrphanedFamilies = (families, removedIds, people) => {
+  const cleanedFamilies = new Map();
+  const orphanReport = { removed: [], modified: [] };
+  const peopleIds = new Set(people.filter(p => !removedIds.has(p.id)).map(p => p.id));
+  
+  families.forEach((family, famId) => {
+    let modified = false;
+    const cleanedFamily = { ...family };
+    
+    // Vérifier si HUSB existe encore
+    if (family.husband && !peopleIds.has(family.husband)) {
+      cleanedFamily.husband = null;
+      modified = true;
+    }
+    
+    // Vérifier si WIFE existe encore
+    if (family.wife && !peopleIds.has(family.wife)) {
+      cleanedFamily.wife = null;
+      modified = true;
+    }
+    
+    // Filtrer les enfants qui n'existent plus
+    if (family.children && family.children.length > 0) {
+      const validChildren = family.children.filter(childId => peopleIds.has(childId));
+      if (validChildren.length !== family.children.length) {
+        cleanedFamily.children = validChildren;
+        modified = true;
+      }
+    }
+    
+    // Famille orpheline = ni mari, ni femme, ni enfants
+    const isOrphaned = !cleanedFamily.husband && !cleanedFamily.wife && 
+                       (!cleanedFamily.children || cleanedFamily.children.length === 0);
+    
+    if (isOrphaned) {
+      orphanReport.removed.push({ famId, reason: 'Famille vide (aucun membre valide)' });
+    } else {
+      cleanedFamilies.set(famId, cleanedFamily);
+      if (modified) {
+        orphanReport.modified.push({ famId, family: cleanedFamily });
+      }
+    }
+  });
+  
+  return { cleanedFamilies, orphanReport };
+};

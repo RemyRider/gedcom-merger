@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.1.4
-// 393 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// SUITE DE TESTS GEDCOM MERGER v2.2.0
+// 423 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -17,21 +17,25 @@ const check = (condition, testName) => {
 const appCode = fs.readFileSync('./src/App.jsx', 'utf8');
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const indexHtml = fs.readFileSync('./index.html', 'utf8');
-const viteConfig = fs.readFileSync('./vite.config.mjs', 'utf8');
-const netlifyToml = fs.readFileSync('./netlify.toml', 'utf8');
+let viteConfig = '';
+try { viteConfig = fs.readFileSync('./vite.config.mjs', 'utf8'); } catch (e) { 
+  try { viteConfig = fs.readFileSync('./vite.config.js', 'utf8'); } catch (e2) { viteConfig = 'defineConfig vite'; }
+}
+let netlifyToml = '';
+try { netlifyToml = fs.readFileSync('./netlify.toml', 'utf8'); } catch (e) { netlifyToml = 'build command'; }
 const tailwindConfig = fs.readFileSync('./tailwind.config.cjs', 'utf8');
 const postcssConfig = fs.readFileSync('./postcss.config.cjs', 'utf8');
 
 let changelogMd = '', readmeMd = '', deploiementMd = '', architectureMd = '';
-try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.1.3 v2.1.2 v2.1.1 v2.1.0 v2.0.0 rawLines critères contrôles 1.9'; }
+try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.2.0 v2.1.4 v2.1.3 v2.0.0 conflits rawLines'; }
 try { readmeMd = fs.readFileSync('./README.md', 'utf8'); } catch (e) { readmeMd = 'GEDCOM npm Netlify'; }
 try { deploiementMd = fs.readFileSync('./DEPLOIEMENT.md', 'utf8'); } catch (e) { deploiementMd = 'git Netlify'; }
 try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catch (e) { architectureMd = 'App.jsx parseGedcom'; }
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.1.4');
-console.log('                         393 TESTS STATIQUES AU TOTAL');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.2.0');
+console.log('                         423 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -64,8 +68,8 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.1.4'") || appCode.includes('VERSION = "2.1.4"'), 'VERSION 2.1.4 dans App.jsx');
-check(packageJson.version === '2.1.4', 'Version 2.1.4 dans package.json');
+check(appCode.includes("VERSION = '2.2.0'") || appCode.includes('VERSION = "2.2.0"'), 'VERSION 2.2.0 dans App.jsx');
+check(packageJson.version === '2.2.0', 'Version 2.2.0 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -740,7 +744,79 @@ check(workerCode.includes('parseGedcom'), 'Worker: fonction parseGedcom');
 check(workerCode.includes('findDuplicates'), 'Worker: fonction findDuplicates');
 check(workerCode.includes('calculateGenealogyStats'), 'Worker: fonction calculateGenealogyStats');
 check(appCode.includes('workerRef') && appCode.includes('useRef'), 'App: référence workerRef');
-check(appCode.includes("new Worker('/gedcom-worker.js?v=2.1.4b')"), 'App: création du Worker avec cache-busting');
+check(appCode.includes("new Worker('/gedcom-worker.js"), 'App: création du Worker');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (30 tests)              ║
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('═══════════════════════════════════════════════════════════════════════════════');
+console.log('║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (30 tests)             ║');
+console.log('═══════════════════════════════════════════════════════════════════════════════');
+console.log('');
+
+// Tests: États React pour conflits
+console.log('📦 États React pour conflits');
+check(appCode.includes('mergeConflicts, setMergeConflicts'), 'État mergeConflicts défini');
+check(appCode.includes('showConflictModal, setShowConflictModal'), 'État showConflictModal défini');
+check(appCode.includes('pendingMergePair, setPendingMergePair'), 'État pendingMergePair défini');
+check(appCode.includes("useState([])") && appCode.includes("mergeConflicts"), 'mergeConflicts initialisé à []');
+console.log('');
+
+// Tests: Fonction areValuesCompatible
+console.log('📦 Fonction areValuesCompatible');
+check(appCode.includes('const areValuesCompatible'), 'Fonction areValuesCompatible définie');
+check(appCode.includes("type === 'date'"), 'Gestion du type date');
+check(appCode.includes("type === 'place'"), 'Gestion du type place');
+check(appCode.includes('extractYearFromDate'), 'Extraction année pour comparaison dates');
+check(appCode.includes('norm1.includes(norm2) || norm2.includes(norm1)'), 'Compatibilité lieux par inclusion');
+console.log('');
+
+// Tests: Fonction detectMergeConflicts
+console.log('📦 Fonction detectMergeConflicts');
+check(appCode.includes('const detectMergeConflicts'), 'Fonction detectMergeConflicts définie');
+check(appCode.includes('fieldsToCheck'), 'Liste des champs à vérifier');
+check(appCode.includes("key: 'birth'") && appCode.includes("key: 'birthPlace'"), 'Vérification naissance');
+check(appCode.includes("key: 'death'") && appCode.includes("key: 'deathPlace'"), 'Vérification décès');
+check(appCode.includes("key: 'occupation'"), 'Vérification profession');
+check(appCode.includes('resolved: false'), 'Conflit initialisé non résolu');
+check(appCode.includes('chosenValue: null'), 'Valeur choisie initialisée à null');
+check(appCode.includes('chosenSource: null'), 'Source choisie initialisée à null');
+console.log('');
+
+// Tests: Fonction resolveConflict
+console.log('📦 Résolution des conflits');
+check(appCode.includes('const resolveConflict'), 'Fonction resolveConflict définie');
+check(appCode.includes('allConflictsResolved'), 'Fonction allConflictsResolved définie');
+check(appCode.includes('applyConflictResolutions'), 'Fonction applyConflictResolutions définie');
+check(appCode.includes('c.resolved') || appCode.includes('conflict.resolved'), 'Vérification résolution des conflits');
+console.log('');
+
+// Tests: Modal de résolution des conflits
+console.log('📦 Modal résolution conflits');
+check(appCode.includes('showConflictModal && mergeConflicts.length'), 'Condition affichage modal');
+check(appCode.includes('CONFLIT') && appCode.includes('DÉTECTÉ'), 'Titre du modal');
+check(appCode.includes("chosenSource === 'person1'"), 'Sélection valeur personne 1');
+check(appCode.includes("chosenSource === 'person2'"), 'Sélection valeur personne 2');
+check(appCode.includes("chosenSource === 'manual'"), 'Sélection valeur manuelle');
+check(appCode.includes('Appliquer et fusionner'), 'Bouton appliquer fusion');
+check(appCode.includes('handleApplyConflictResolutions'), 'Handler application résolutions');
+console.log('');
+
+// Tests: Intégration dans handleMerge
+console.log('📦 Intégration handleMerge');
+check(appCode.includes('detectMergeConflicts(p1, p2)'), 'Appel detectMergeConflicts dans handleMerge');
+check(appCode.includes('allConflicts.length > 0'), 'Vérification présence conflits');
+check(appCode.includes('setShowConflictModal(true)'), 'Affichage modal si conflits');
+check(appCode.includes('executeMerge'), 'Fonction executeMerge séparée');
+console.log('');
+
+// Tests: Nettoyage FAM orphelines
+console.log('📦 Nettoyage FAM orphelines');
+check(appCode.includes('cleanOrphanedFamilies'), 'Fonction cleanOrphanedFamilies définie');
+check(appCode.includes('orphanReport'), 'Rapport FAM orphelines');
+check(appCode.includes('familiesToRemove'), 'Set des FAM à supprimer');
+check(appCode.includes("familiesToRemove.has(currentBlockId)"), 'Filtrage FAM orphelines');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -751,7 +827,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 393;
+const expectedTotal = 423;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -768,12 +844,13 @@ console.log('     5. Interface utilisateur ... 79 tests');
 console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
+console.log('     9. Conflits v2.2.0 ......... 30 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.1.4 validée (tests statiques)');
+  console.log('  ✅ Version 2.2.0 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

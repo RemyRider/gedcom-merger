@@ -1,110 +1,116 @@
-# GEDCOM Merger v2.0.0
+# 🧬 GEDCOM Merger v2.2.0
 
-Application web de fusion intelligente de fichiers GEDCOM pour nettoyer les arbres généalogiques.
+Application React professionnelle pour détecter et fusionner les doublons dans les fichiers GEDCOM.
 
-## Fonctionnalités
+## 🎯 Fonctionnalités principales
 
 ### Détection de doublons
-- Algorithme de scoring avec **18 critères de comparaison**
-- Comparaison phonétique (Soundex) pour les noms
-- Variantes de prénoms reconnues (Jean/Johannes, Marie/Maria...)
-- Anti-faux-positifs : nom + sexe seuls ne suffisent pas
+- **18 critères de comparaison** : nom, naissance, sexe, parents, fratrie, lieu, conjoints, décès, profession, enfants, baptême, inhumation, résidence, titre, religion
+- **Algorithme Soundex français** adapté aux noms francophones
+- **Anti-faux-positifs** : critères suffisants obligatoires au-delà du nom
+- **Détection de clusters** : groupes de 3+ personnes interconnectées
+- **Score de suspicion** : 🔴 FORT / 🟡 MOYEN / 🟢 FAIBLE
 
-### 18 Critères de comparaison
+### 🆕 Gestion des conflits (v2.2.0)
+- **Détection automatique** des valeurs contradictoires avant fusion
+- **Modal de résolution** pour choisir la valeur à conserver
+- **Comparaison intelligente** :
+  - Dates : compatibles si même année
+  - Lieux : compatibles si l'un contient l'autre
+- **Nettoyage automatique** des familles orphelines
 
-| Critère | Points max | Description |
-|---------|------------|-------------|
-| Noms | 30 | Identiques, phonétiques ou partiels |
-| Naissance | 25 | Date exacte ou année |
-| Sexe | 15 | Éliminatoire si différent |
-| Parents | 20 | 1 ou 2 parents communs (par ID ou nom) |
-| Fratrie | 15 | Même famille comme enfant |
-| Lieu naissance | 10 | Identique ou similaire |
-| Conjoints | 8 | Communs (par ID ou nom) |
-| Décès | 15 | Date exacte ou année |
-| Lieu décès | 8 | Identique ou similaire |
-| Profession | 5 | Identique |
-| Enfants | 15 | 1 ou 2+ communs (par ID ou nom) |
-| Baptême | 5 | Date exacte ou année |
-| Lieu baptême | 4 | Identique ou similaire |
-| Inhumation | 5 | Date exacte ou année |
-| Lieu inhumation | 4 | Identique ou similaire |
-| Résidence | 4 | Identique ou similaire |
-| Titre | 3 | Identique |
-| Religion | 3 | Identique |
+### Contrôle qualité (v2.1.x)
+- Rapport qualité à l'upload
+- Détection incohérences chronologiques (7 règles)
+- Normalisation intelligente des lieux
+- Statistiques généalogiques complètes
+- Détection des références orphelines
 
-**Score maximum possible : 190 points** (si tous les champs renseignés)
+### Performance (v2.1.4)
+- **Web Worker** pour traitement en arrière-plan
+- Interface toujours réactive
+- Traitement 3-5x plus rapide sur gros fichiers
 
-### Interface 4 onglets
-- **Clusters** : Groupes de doublons interconnectés
-- **Doublons** : Paires simples de doublons
-- **À supprimer** : Individus isolés ou sans identité
-- **IA** : Suggestions basées sur l'analyse de patterns
-
-### Préservation des données (v2.0.0)
-- **rawLines[]** : Toutes les lignes GEDCOM originales conservées
-- **rawLinesByTag{}** : Indexation par tag (SOUR, NOTE, OBJE, EVEN...)
-- **Fusion intelligente** : Sources et notes combinées des 2 personnes
-- **Zéro perte** : Les tags inconnus (_TAG) sont préservés
-
-### Affichage complet
-16 champs affichés systématiquement dans la prévisualisation :
-- ID, Sexe, Naissance, Lieu naissance
-- Baptême, Décès, Lieu décès, Inhumation
-- Profession, Titre, Résidence, Religion
-- Parents, Conjoints, Enfants, Note
-
-## Installation
+## 🚀 Installation
 
 ```bash
+# Cloner le repository
+git clone https://github.com/RemyRider/gedcom-merger.git
+cd gedcom-merger
+
+# Installer les dépendances
 npm install
+
+# Lancer en développement
 npm run dev
+
+# Lancer les tests
+npm run test:all
 ```
 
-## Tests
+## 🧪 Tests
 
 ```bash
-npm test
+# Tests statiques (423 tests)
+npm run test:static
+
+# Tests Vitest (108 tests)
+npm run test
+
+# Tous les tests (531 total)
+npm run test:all
 ```
 
-**309 tests** répartis en :
-- 22 niveaux de tests (207 tests)
-- 7 bonus thématiques (88 tests)
+### Catégories de tests
+| # | Catégorie | Tests |
+|---|-----------|-------|
+| 1 | Fondamentaux | 61 |
+| 2 | Parsing GEDCOM | 52 |
+| 3 | Détection doublons | 42 |
+| 4 | Fusion & suppression | 34 |
+| 5 | Interface utilisateur | 79 |
+| 6 | Suggestions IA | 18 |
+| 7 | Config & déploiement | 39 |
+| 8 | Qualité & analyses v2.1.x | 68 |
+| 9 | Conflits v2.2.0 | 30 |
+| **Total statiques** | | **423** |
+| Vitest | helpers, parser, stats, conflicts | 147 |
+| **TOTAL** | | **576** |
 
-| Catégorie | Tests |
-|-----------|-------|
-| Syntaxe et structure | 10 |
-| Versions et cohérence | 10 |
-| Imports Lucide-React | 17 |
-| États React | 24 |
-| Fonctions principales | 12 |
-| Interface 4 onglets | 8 |
-| Anti-faux-positifs | 8 |
-| Contrôle intégrité | 15 |
-| ... | ... |
-| **Total** | **295** |
+## 📦 Structure du projet
 
-## Déploiement
-
-### Option A : Netlify Drag & Drop
-```bash
-npm run build
-# Glisser le dossier dist/ sur Netlify
+```
+gedcom-merger/
+├── src/
+│   ├── App.jsx           # Composant principal (~3200 lignes)
+│   ├── utils/
+│   │   ├── helpers.mjs   # Fonctions utilitaires
+│   │   ├── parser.mjs    # Parsing GEDCOM
+│   │   └── stats.mjs     # Statistiques
+│   ├── index.css
+│   └── main.jsx
+├── public/
+│   └── gedcom-worker.js  # Web Worker (~1300 lignes)
+├── tests/
+│   ├── test-complete.cjs # Tests statiques
+│   ├── helpers.test.mjs  # Tests Vitest
+│   ├── parser.test.mjs
+│   └── stats.test.mjs
+├── CHANGELOG.md
+├── README.md
+└── package.json
 ```
 
-### Option B : GitHub Auto-deploy
-```bash
-git add .
-git commit -m "v2.0.0"
-git push origin dev
-```
-
-## Liens
+## 🔗 Liens
 
 - **Production** : https://gedcom-merger.netlify.app
-- **Dev** : https://dev--gedcom-merger.netlify.app
+- **Développement** : https://dev--gedcom-merger.netlify.app
 - **GitHub** : https://github.com/RemyRider/gedcom-merger
 
-## Licence
+## 📜 Licence
 
-MIT
+MIT © 2025-2026 RemyRider
+
+---
+
+*Version 2.2.0 - 4 janvier 2026*

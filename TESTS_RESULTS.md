@@ -1,12 +1,3 @@
-# Résultats des Tests v2.2.0 - 2026-01-04
-
-## Résumé
-- **Tests statiques** : 429/429 ✅
-- **Tests Vitest** : 147/147 ✅
-- **TOTAL** : 576 tests passés (100%)
-
----
-
 
 > gedcom-merger@2.2.0 test:all
 > npm run test:static && npm run test
@@ -692,13 +683,13 @@
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/parser.test.mjs  (30 tests) 13ms
- ✓ tests/stats.test.mjs  (31 tests) 15ms
- ✓ tests/conflicts.test.mjs  (39 tests) 17ms
+ ✓ tests/conflicts.test.mjs  (39 tests) 14ms
+ ✓ tests/parser.test.mjs  (30 tests) 15ms
+ ✓ tests/stats.test.mjs  (31 tests) 16ms
  ✓ tests/helpers.test.mjs  (47 tests) 13ms
 
  Test Files  4 passed (4)
       Tests  147 passed (147)
-   Start at  10:44:53
-   Duration  2.27s (transform 160ms, setup 0ms, collect 293ms, tests 58ms, environment 1ms, prepare 3.41s)
+   Start at  10:56:17
+   Duration  2.18s (transform 152ms, setup 0ms, collect 288ms, tests 58ms, environment 1ms, prepare 3.18s)
 

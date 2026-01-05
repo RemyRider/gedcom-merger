@@ -2467,12 +2467,28 @@ const GedcomDuplicateMerger = () => {
         }
       }
       
-      if (skipCurrentBlock || inMergedIndi) continue;
+      if (skipCurrentBlock || inMergedIndi) {
+        // DEBUG: Voir si des lignes avec I502549/I505905 sont skippées
+        if (line.includes('I502549') || line.includes('I505905')) {
+          console.log('DEBUG SKIPPED:', { line: line.trim(), skipCurrentBlock, inMergedIndi, currentBlockId });
+        }
+        continue;
+      }
       
       let processedLine = line;
+      const originalLine = line; // DEBUG
       mergeMap.forEach((targetId, sourceId) => {
         processedLine = processedLine.replace(new RegExp('@' + sourceId + '@', 'g'), '@' + targetId + '@');
       });
+      
+      // DEBUG: Log si une ligne avec I502549 ou I505905 a été transformée
+      if (originalLine.includes('I502549') || originalLine.includes('I505905')) {
+        console.log('DEBUG LIGNE:', {
+          original: originalLine.trim(),
+          processed: processedLine.trim(),
+          changed: originalLine !== processedLine
+        });
+      }
       
       const trimmedProcessed = processedLine.trim().replace(/\r/g, '');
       

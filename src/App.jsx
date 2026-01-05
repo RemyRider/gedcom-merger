@@ -66,7 +66,7 @@ const GedcomDuplicateMerger = () => {
         'CORRECTION: Fusion en cascade résolue (A→B→C devient A→C)',
         'CORRECTION: Références fusionnées REDIRIGÉES via mergeMap',
         'CORRECTION: cleanOrphanedFamilies utilise mergeMap pour redirections',
-        'AMÉLIORATION: Fichier GEDCOM sans références invalides'
+        'AMÉLIORATION: Support clusters de N individus'
       ]
     },
     {
@@ -2366,11 +2366,6 @@ const GedcomDuplicateMerger = () => {
     let iterations = 0;
     const maxIterations = 100; // Sécurité anti-boucle infinie
     
-    // DEBUG v2.2.4: Log avant résolution
-    console.log('=== DEBUG MERGE MAP AVANT RÉSOLUTION ===');
-    console.log('idsToRemove:', [...idsToRemove]);
-    console.log('mergeMap entries:', [...mergeMap.entries()]);
-    
     while (chainsResolved && iterations < maxIterations) {
       chainsResolved = false;
       iterations++;
@@ -2379,21 +2374,10 @@ const GedcomDuplicateMerger = () => {
         // Si la cible est elle-même fusionnée vers une autre personne
         if (mergeMap.has(targetId)) {
           const finalTarget = mergeMap.get(targetId);
-          console.log(`Chaîne détectée: ${sourceId} → ${targetId} → ${finalTarget}`);
           mergeMap.set(sourceId, finalTarget);
           chainsResolved = true;
         }
       });
-    }
-    
-    // DEBUG v2.2.4: Log après résolution
-    console.log('=== DEBUG MERGE MAP APRÈS RÉSOLUTION ===');
-    console.log('mergeMap entries après:', [...mergeMap.entries()]);
-    console.log('Recherche I502549:', mergeMap.get('I502549'));
-    console.log('Recherche I505905:', mergeMap.get('I505905'));
-    
-    if (iterations > 1) {
-      console.log(`v2.2.4: ${iterations - 1} itération(s) de résolution de chaînes de fusion`);
     }
     
     // Ajouter les suppressions manuelles
@@ -2467,28 +2451,12 @@ const GedcomDuplicateMerger = () => {
         }
       }
       
-      if (skipCurrentBlock || inMergedIndi) {
-        // DEBUG: Voir si des lignes avec I502549/I505905 sont skippées
-        if (line.includes('I502549') || line.includes('I505905')) {
-          console.log('DEBUG SKIPPED:', { line: line.trim(), skipCurrentBlock, inMergedIndi, currentBlockId });
-        }
-        continue;
-      }
+      if (skipCurrentBlock || inMergedIndi) continue;
       
       let processedLine = line;
-      const originalLine = line; // DEBUG
       mergeMap.forEach((targetId, sourceId) => {
         processedLine = processedLine.replace(new RegExp('@' + sourceId + '@', 'g'), '@' + targetId + '@');
       });
-      
-      // DEBUG: Log si une ligne avec I502549 ou I505905 a été transformée
-      if (originalLine.includes('I502549') || originalLine.includes('I505905')) {
-        console.log('DEBUG LIGNE:', {
-          original: originalLine.trim(),
-          processed: processedLine.trim(),
-          changed: originalLine !== processedLine
-        });
-      }
       
       const trimmedProcessed = processedLine.trim().replace(/\r/g, '');
       

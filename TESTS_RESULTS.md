@@ -683,13 +683,13 @@
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/parser.test.mjs  (30 tests) 14ms
- ✓ tests/conflicts.test.mjs  (56 tests) 18ms
+ ✓ tests/parser.test.mjs  (30 tests) 15ms
+ ✓ tests/conflicts.test.mjs  (56 tests) 17ms
  ✓ tests/stats.test.mjs  (31 tests) 15ms
  ✓ tests/helpers.test.mjs  (47 tests) 13ms
 
  Test Files  4 passed (4)
       Tests  164 passed (164)
-   Start at  09:10:02
-   Duration  2.24s (transform 170ms, setup 0ms, collect 304ms, tests 60ms, environment 1ms, prepare 3.37s)
+   Start at  09:51:57
+   Duration  2.30s (transform 191ms, setup 0ms, collect 327ms, tests 60ms, environment 1ms, prepare 3.34s)
 

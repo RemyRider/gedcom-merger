@@ -4,21 +4,23 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ## [v2.2.4] - 5 janvier 2026
 
-### 🎯 Thème : Nettoyage références orphelines - CORRECTION MAJEURE
+### 🎯 Thème : Correction fusion en cascade - CORRECTION MAJEURE
 
 ### 🐛 Corrections critiques
-- **MAJEUR**: Les références HUSB/WIFE/CHIL sont maintenant **redirigées** vers la cible de fusion (pas supprimées)
+- **MAJEUR**: Fusion en cascade résolue (si A→B et B→C, alors A→C directement)
+- **MAJEUR**: Les références HUSB/WIFE/CHIL sont **redirigées** vers la cible finale (pas supprimées)
 - `cleanOrphanedFamilies` utilise maintenant `mergeMap` pour rediriger les références
-- Les lignes FAMS/FAMC vers familles supprimées sont correctement filtrées
-- Les suppressions manuelles (sans mergeMap) causent une suppression de la référence
+- Support complet des clusters de N individus (pas seulement 3)
 
 ### ✨ Améliorations
 - Fichier GEDCOM généré sans aucune référence invalide
 - Déduplication automatique si deux enfants fusionnent vers la même personne
+- Résolution itérative des chaînes de fusion (jusqu'à 100 itérations max)
 
 ### 🔧 Technique
 - `cleanOrphanedFamilies(families, removedIds, people, mergeMap)` - nouveau paramètre
 - Helper `getValidId(id)` pour résoudre les redirections
+- Boucle `while` pour résoudre les chaînes A→B→C→...→Z
 
 ---
 

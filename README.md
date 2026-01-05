@@ -73,9 +73,9 @@ npm run test:all
 | 7 | Config & déploiement | 39 |
 | 8 | Qualité & analyses v2.1.x | 68 |
 | 9 | Conflits v2.2.0 | 30 |
-| **Total statiques** | | **423** |
-| Vitest | helpers, parser, stats, conflicts | 159 |
-| **TOTAL** | | **588** |
+| **Total statiques** | | **429** |
+| Vitest | helpers, parser, stats, conflicts | 164 |
+| **TOTAL** | | **593** |
 
 ## 📦 Structure du projet
 

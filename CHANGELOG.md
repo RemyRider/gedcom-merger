@@ -2,15 +2,23 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [v2.2.4] - 4 janvier 2026
+## [v2.2.4] - 5 janvier 2026
 
-### 🎯 Thème : Nettoyage références orphelines
+### 🎯 Thème : Nettoyage références orphelines - CORRECTION MAJEURE
 
-### 🐛 Corrections
-- Suppression des lignes FAMS/FAMC qui pointent vers des familles supprimées
-- Suppression des lignes HUSB/WIFE/CHIL qui pointent vers des personnes supprimées
-- `generateMergedIndiLines` filtre maintenant les familles orphelines
+### 🐛 Corrections critiques
+- **MAJEUR**: Les références HUSB/WIFE/CHIL sont maintenant **redirigées** vers la cible de fusion (pas supprimées)
+- `cleanOrphanedFamilies` utilise maintenant `mergeMap` pour rediriger les références
+- Les lignes FAMS/FAMC vers familles supprimées sont correctement filtrées
+- Les suppressions manuelles (sans mergeMap) causent une suppression de la référence
+
+### ✨ Améliorations
 - Fichier GEDCOM généré sans aucune référence invalide
+- Déduplication automatique si deux enfants fusionnent vers la même personne
+
+### 🔧 Technique
+- `cleanOrphanedFamilies(families, removedIds, people, mergeMap)` - nouveau paramètre
+- Helper `getValidId(id)` pour résoudre les redirections
 
 ---
 

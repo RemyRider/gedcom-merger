@@ -367,4 +367,77 @@ describe('cleanOrphanedFamilies', () => {
     expect(cleanedFamilies.has('F2')).toBe(true);
     expect(orphanReport.removed).toHaveLength(1);
   });
+
+  // v2.2.4: Tests avec mergeMap
+  it('devrait rediriger HUSB vers cible de fusion', () => {
+    const families = new Map([
+      ['F1', { husband: 'I1', wife: 'I2', children: ['I3'] }]
+    ]);
+    const people = [{ id: 'I1' }, { id: 'I2' }, { id: 'I3' }, { id: 'I99' }];
+    const removedIds = new Set(['I1']); // I1 est fusionné vers I99
+    const mergeMap = new Map([['I1', 'I99']]);
+    
+    const { cleanedFamilies, orphanReport } = cleanOrphanedFamilies(families, removedIds, people, mergeMap);
+    
+    expect(cleanedFamilies.get('F1').husband).toBe('I99'); // Redirigé, pas null
+    expect(cleanedFamilies.get('F1').wife).toBe('I2');
+    expect(orphanReport.modified).toHaveLength(1);
+  });
+
+  it('devrait rediriger WIFE vers cible de fusion', () => {
+    const families = new Map([
+      ['F1', { husband: 'I1', wife: 'I2', children: [] }]
+    ]);
+    const people = [{ id: 'I1' }, { id: 'I2' }, { id: 'I99' }];
+    const removedIds = new Set(['I2']); // I2 fusionné vers I99
+    const mergeMap = new Map([['I2', 'I99']]);
+    
+    const { cleanedFamilies, orphanReport } = cleanOrphanedFamilies(families, removedIds, people, mergeMap);
+    
+    expect(cleanedFamilies.get('F1').wife).toBe('I99');
+    expect(cleanedFamilies.get('F1').husband).toBe('I1');
+  });
+
+  it('devrait rediriger enfants vers cibles de fusion', () => {
+    const families = new Map([
+      ['F1', { husband: 'I1', wife: 'I2', children: ['I3', 'I4'] }]
+    ]);
+    const people = [{ id: 'I1' }, { id: 'I2' }, { id: 'I3' }, { id: 'I4' }, { id: 'I99' }];
+    const removedIds = new Set(['I4']); // I4 fusionné vers I99
+    const mergeMap = new Map([['I4', 'I99']]);
+    
+    const { cleanedFamilies, orphanReport } = cleanOrphanedFamilies(families, removedIds, people, mergeMap);
+    
+    expect(cleanedFamilies.get('F1').children).toContain('I3');
+    expect(cleanedFamilies.get('F1').children).toContain('I99'); // I4 redirigé vers I99
+    expect(cleanedFamilies.get('F1').children).not.toContain('I4');
+  });
+
+  it('devrait dédupliquer si deux enfants fusionnent vers le même', () => {
+    const families = new Map([
+      ['F1', { husband: 'I1', wife: 'I2', children: ['I3', 'I4'] }]
+    ]);
+    const people = [{ id: 'I1' }, { id: 'I2' }, { id: 'I3' }, { id: 'I4' }];
+    const removedIds = new Set(['I4']); // I4 fusionné vers I3
+    const mergeMap = new Map([['I4', 'I3']]);
+    
+    const { cleanedFamilies, orphanReport } = cleanOrphanedFamilies(families, removedIds, people, mergeMap);
+    
+    expect(cleanedFamilies.get('F1').children).toHaveLength(1);
+    expect(cleanedFamilies.get('F1').children).toContain('I3');
+  });
+
+  it('devrait supprimer famille si tous redirigent vers null (pas de mergeMap)', () => {
+    const families = new Map([
+      ['F1', { husband: 'I1', wife: 'I2', children: [] }]
+    ]);
+    const people = [{ id: 'I1' }, { id: 'I2' }];
+    const removedIds = new Set(['I1', 'I2']); // Suppressions manuelles, pas de mergeMap
+    const mergeMap = new Map(); // Vide = suppressions manuelles
+    
+    const { cleanedFamilies, orphanReport } = cleanOrphanedFamilies(families, removedIds, people, mergeMap);
+    
+    expect(cleanedFamilies.size).toBe(0);
+    expect(orphanReport.removed).toHaveLength(1);
+  });
 });

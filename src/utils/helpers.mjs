@@ -224,38 +224,57 @@ export const detectMergeConflicts = (person1, person2) => {
 };
 
 /**
- * Nettoie les familles orphelines après fusion/suppression
+ * v2.2.4: Nettoie les familles orphelines après fusion/suppression
  * @param {Map} families - Map des familles
  * @param {Set} removedIds - IDs des personnes supprimées
  * @param {Array} people - Liste des personnes restantes
+ * @param {Map} mergeMap - Map des redirections (removedId -> targetId)
  * @returns {object} - { cleanedFamilies: Map, orphanReport: object }
  */
-export const cleanOrphanedFamilies = (families, removedIds, people) => {
+export const cleanOrphanedFamilies = (families, removedIds, people, mergeMap = new Map()) => {
   const cleanedFamilies = new Map();
   const orphanReport = { removed: [], modified: [] };
   const peopleIds = new Set(people.filter(p => !removedIds.has(p.id)).map(p => p.id));
+  
+  // Helper: obtenir l'ID valide (cible de fusion si fusionné, sinon l'ID original si existe)
+  const getValidId = (id) => {
+    if (!id) return null;
+    // Si l'ID a été fusionné, retourner la cible
+    if (mergeMap.has(id)) return mergeMap.get(id);
+    // Si l'ID existe toujours, le garder
+    if (peopleIds.has(id)) return id;
+    // Sinon, l'ID n'existe plus (suppression manuelle)
+    return null;
+  };
   
   families.forEach((family, famId) => {
     let modified = false;
     const cleanedFamily = { ...family };
     
-    // Vérifier si HUSB existe encore
-    if (family.husband && !peopleIds.has(family.husband)) {
-      cleanedFamily.husband = null;
+    // v2.2.4: Mettre à jour HUSB vers cible de fusion ou null si supprimé
+    const validHusband = getValidId(family.husband);
+    if (validHusband !== family.husband) {
+      cleanedFamily.husband = validHusband;
       modified = true;
     }
     
-    // Vérifier si WIFE existe encore
-    if (family.wife && !peopleIds.has(family.wife)) {
-      cleanedFamily.wife = null;
+    // v2.2.4: Mettre à jour WIFE vers cible de fusion ou null si supprimé
+    const validWife = getValidId(family.wife);
+    if (validWife !== family.wife) {
+      cleanedFamily.wife = validWife;
       modified = true;
     }
     
-    // Filtrer les enfants qui n'existent plus
+    // v2.2.4: Mettre à jour enfants vers cibles de fusion, filtrer supprimés
     if (family.children && family.children.length > 0) {
-      const validChildren = family.children.filter(childId => peopleIds.has(childId));
-      if (validChildren.length !== family.children.length) {
-        cleanedFamily.children = validChildren;
+      const updatedChildren = family.children
+        .map(childId => getValidId(childId))
+        .filter(id => id !== null);
+      // Dédupliquer (si deux enfants fusionnent vers le même)
+      const uniqueChildren = [...new Set(updatedChildren)];
+      if (uniqueChildren.length !== family.children.length || 
+          !uniqueChildren.every((c, i) => c === family.children[i])) {
+        cleanedFamily.children = uniqueChildren;
         modified = true;
       }
     }

@@ -58,15 +58,15 @@ const GedcomDuplicateMerger = () => {
   const CHANGELOG = [
     {
       version: '2.2.4',
-      date: '4 janvier 2026',
+      date: '5 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
-      title: 'Nettoyage références orphelines',
+      title: 'Correction fusion en cascade',
       items: [
-        'CORRECTION: Suppression des références FAMS/FAMC vers familles supprimées',
-        'CORRECTION: Suppression des références HUSB/WIFE/CHIL vers personnes supprimées',
-        'CORRECTION: generateMergedIndiLines filtre les familles orphelines',
-        'AMÉLIORATION: Fichier GEDCOM généré sans références invalides'
+        'CORRECTION: Fusion en cascade résolue (A→B→C devient A→C)',
+        'CORRECTION: Références fusionnées REDIRIGÉES via mergeMap',
+        'CORRECTION: cleanOrphanedFamilies utilise mergeMap pour redirections',
+        'AMÉLIORATION: Fichier GEDCOM sans références invalides'
       ]
     },
     {
@@ -2358,6 +2358,43 @@ const GedcomDuplicateMerger = () => {
         }
       }
     });
+    
+    // v2.2.4: RÉSOLUTION DES CHAÎNES DE FUSION EN CASCADE
+    // Si A→B et B→C, alors A doit pointer vers C (la cible finale)
+    // Répéter jusqu'à ce qu'il n'y ait plus de chaînes
+    let chainsResolved = true;
+    let iterations = 0;
+    const maxIterations = 100; // Sécurité anti-boucle infinie
+    
+    // DEBUG v2.2.4: Log avant résolution
+    console.log('=== DEBUG MERGE MAP AVANT RÉSOLUTION ===');
+    console.log('idsToRemove:', [...idsToRemove]);
+    console.log('mergeMap entries:', [...mergeMap.entries()]);
+    
+    while (chainsResolved && iterations < maxIterations) {
+      chainsResolved = false;
+      iterations++;
+      
+      mergeMap.forEach((targetId, sourceId) => {
+        // Si la cible est elle-même fusionnée vers une autre personne
+        if (mergeMap.has(targetId)) {
+          const finalTarget = mergeMap.get(targetId);
+          console.log(`Chaîne détectée: ${sourceId} → ${targetId} → ${finalTarget}`);
+          mergeMap.set(sourceId, finalTarget);
+          chainsResolved = true;
+        }
+      });
+    }
+    
+    // DEBUG v2.2.4: Log après résolution
+    console.log('=== DEBUG MERGE MAP APRÈS RÉSOLUTION ===');
+    console.log('mergeMap entries après:', [...mergeMap.entries()]);
+    console.log('Recherche I502549:', mergeMap.get('I502549'));
+    console.log('Recherche I505905:', mergeMap.get('I505905'));
+    
+    if (iterations > 1) {
+      console.log(`v2.2.4: ${iterations - 1} itération(s) de résolution de chaînes de fusion`);
+    }
     
     // Ajouter les suppressions manuelles
     selectedToDelete.forEach(id => idsToRemove.add(id));

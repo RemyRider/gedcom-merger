@@ -192,7 +192,7 @@ Analyser uniquement les personnes d'un patronyme donné.
 | v2.2.0 | 417 | 135 | 552 |
 | v2.2.2 | 429 | 159 | 588 |
 | v2.2.4 | 429 | 164 | 593 |
-| **v2.2.6** | **464** | **180** | **644** |
+| **v2.2.6** | **464** | **181** | **645** |
 
 ---
 
@@ -221,7 +221,7 @@ Analyser uniquement les personnes d'un patronyme donné.
 - [ ] Stats par branche
 
 ### Technique
-- [x] 644 tests passent
+- [x] 645 tests passent
 - [x] Build Netlify OK
 - [x] Aucune régression v2.1.4
 - [x] Documentation à jour

@@ -688,7 +688,7 @@
   ✅ Map de remplacement
   ✅ Champs lieux à corriger
   ✅ Bouton tout suggérer
-  ✅ Bouton appliquer avec compteur
+  ✅ Fermeture modal qualité avant ouverture normalisation
 
 │ 10.4 Normalisation lieux v2.2.6 - API Géo (9 tests)                          │
 
@@ -700,7 +700,7 @@
   ✅ Bouton rechercher officiels
   ✅ Affichage suggestions officielles
   ✅ Format complet suggestion
-  ✅ Format moyen suggestion
+  ✅ Format inclut France
 
 ═══════════════════════════════════════════════════════════════════════════════
                               RÉSUMÉ FINAL
@@ -735,13 +735,13 @@
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/helpers.test.mjs  (63 tests) 14ms
- ✓ tests/stats.test.mjs  (31 tests) 14ms
- ✓ tests/conflicts.test.mjs  (56 tests) 17ms
+ ✓ tests/helpers.test.mjs  (64 tests) 14ms
+ ✓ tests/conflicts.test.mjs  (56 tests) 16ms
+ ✓ tests/stats.test.mjs  (31 tests) 15ms
  ✓ tests/parser.test.mjs  (30 tests) 14ms
 
  Test Files  4 passed (4)
-      Tests  180 passed (180)
-   Start at  17:08:08
-   Duration  2.24s (transform 162ms, setup 0ms, collect 314ms, tests 59ms, environment 1ms, prepare 3.37s)
+      Tests  181 passed (181)
+   Start at  17:26:43
+   Duration  2.26s (transform 155ms, setup 0ms, collect 301ms, tests 59ms, environment 1ms, prepare 3.31s)
 

@@ -11,7 +11,7 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| **Tests totaux** | 644 (464 statiques + 180 Vitest) |
+| **Tests totaux** | 645 (464 statiques + 181 Vitest) |
 | **Critères de comparaison** | 18 |
 | **Champs affichés** | 16 |
 | **Catégories de tests** | 9 |
@@ -61,8 +61,8 @@
 |----------------|---------|-------------|
 | **Modal normalisation** | v2.2.6 | Interface complète pour corriger les variantes de lieux |
 | **API Géo intégrée** | v2.2.6 | Suggestions officielles depuis geo.api.gouv.fr |
-| **Choix forme correcte** | v2.2.6 | Sélection de la variante ou suggestion officielle |
-| **Tout suggérer** | v2.2.6 | Application automatique des suggestions API ou auto |
+| **Format normalisé** | v2.2.6 | Commune, Département, Région, France |
+| **Fermeture auto modal** | v2.2.6 | Ferme le modal qualité avant ouverture |
 | **Mise à jour GEDCOM** | v2.2.6 | Correction des rawLines pour export cohérent |
 
 ### Interface utilisateur
@@ -109,7 +109,7 @@
 
 | Fonctionnalité | Version | Description |
 |----------------|---------|-------------|
-| **Suite 644 tests** | v2.2.6 | 464 statiques + 180 Vitest |
+| **Suite 645 tests** | v2.2.6 | 464 statiques + 181 Vitest |
 | Tests automatiques Netlify | v1.9.3 | Exécution avant chaque build |
 | **Tests Vitest** | v2.1.3 | helpers, parser, stats, conflicts |
 | **10 catégories** | v2.2.6 | Couverture complète |
@@ -232,7 +232,7 @@ gedcom-merger/
 
 ---
 
-## Catégories de Tests (644 total)
+## Catégories de Tests (645 total)
 
 | # | Catégorie | Tests | Description |
 |---|-----------|-------|-------------|
@@ -246,8 +246,8 @@ gedcom-merger/
 | 8 | Qualité & analyses v2.1.x | 68 | Rapport, chrono, stats, Worker |
 | 9 | Conflits v2.2.x | 30 | Détection, résolution, nettoyage |
 | 10 | Scoring/Normalisation | 35 | v2.2.5 couleurs, v2.2.6 API Géo |
-| | **Vitest** | +180 | helpers, parser, stats, conflicts |
-| | **TOTAL** | **644** | |
+| | **Vitest** | +181 | helpers, parser, stats, conflicts |
+| | **TOTAL** | **645** | |
 
 ---
 
@@ -342,7 +342,7 @@ module.exports = {
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   dev       │────▶│   tests     │────▶│   main      │
-│  (travail)  │     │  (644/644)  │     │  (prod)     │
+│  (travail)  │     │  (645/645)  │     │  (prod)     │
 └─────────────┘     └─────────────┘     └─────────────┘
       │                   │                   │
       ▼                   ▼                   ▼

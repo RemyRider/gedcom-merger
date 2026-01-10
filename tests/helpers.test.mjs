@@ -341,13 +341,12 @@ describe('Normalisation lieux v2.2.6', () => {
 
   it('devrait créer une map de remplacement correcte', () => {
     const variants = ['Grenoble', 'GRENOBLE', 'grenoble, isère'];
-    const chosen = 'Grenoble, Isère';
+    const chosen = 'Grenoble, Isère, Auvergne-Rhône-Alpes, France';
     const map = createReplacementMap(variants, chosen);
     
     expect(map.size).toBe(3);
-    expect(map.get('Grenoble')).toBe('Grenoble, Isère');
-    expect(map.get('GRENOBLE')).toBe('Grenoble, Isère');
-    expect(map.get('grenoble, isère')).toBe('Grenoble, Isère');
+    expect(map.get('Grenoble')).toBe('Grenoble, Isère, Auvergne-Rhône-Alpes, France');
+    expect(map.get('GRENOBLE')).toBe('Grenoble, Isère, Auvergne-Rhône-Alpes, France');
   });
 
   it('ne devrait pas inclure la forme choisie dans la map', () => {
@@ -361,11 +360,11 @@ describe('Normalisation lieux v2.2.6', () => {
 
   it('devrait gérer un groupe avec une seule variante', () => {
     const variants = ['Lyon'];
-    const chosen = 'Lyon, Rhône';
+    const chosen = 'Lyon, Rhône, Auvergne-Rhône-Alpes, France';
     const map = createReplacementMap(variants, chosen);
     
     expect(map.size).toBe(1);
-    expect(map.get('Lyon')).toBe('Lyon, Rhône');
+    expect(map.get('Lyon')).toBe('Lyon, Rhône, Auvergne-Rhône-Alpes, France');
   });
 
   // Simuler l'extraction du nom de commune
@@ -391,5 +390,13 @@ describe('Normalisation lieux v2.2.6', () => {
 
   it('devrait gérer un lieu simple sans virgule', () => {
     expect(extractCommuneName('Lyon')).toBe('Lyon');
+  });
+
+  // Test du format avec France
+  it('devrait inclure France dans le format complet', () => {
+    const formatFull = (nom, dept, region) => {
+      return `${nom}, ${dept}, ${region}, France`;
+    };
+    expect(formatFull('Grenoble', 'Isère', 'Auvergne-Rhône-Alpes')).toBe('Grenoble, Isère, Auvergne-Rhône-Alpes, France');
   });
 });

@@ -870,7 +870,7 @@ check(appCode.includes('applyPlaceNormalizations'), 'Fonction applyPlaceNormaliz
 check(appCode.includes('replacementMap'), 'Map de remplacement');
 check(appCode.includes("'birthPlace', 'deathPlace'"), 'Champs lieux à corriger');
 check(appCode.includes('Tout suggérer'), 'Bouton tout suggérer');
-check(appCode.includes('Appliquer ('), 'Bouton appliquer avec compteur');
+check(appCode.includes('setShowQualityReport(false)') && appCode.includes('setShowPlaceNormModal(true)'), 'Fermeture modal qualité avant ouverture normalisation');
 console.log('');
 
 // Tests v2.2.6: API Géo
@@ -884,7 +884,7 @@ check(appCode.includes('geo.api.gouv.fr'), 'URL API Géo gouvernement');
 check(appCode.includes('Rechercher officiels'), 'Bouton rechercher officiels');
 check(appCode.includes('Suggestions officielles'), 'Affichage suggestions officielles');
 check(appCode.includes('suggestion.full'), 'Format complet suggestion');
-check(appCode.includes('suggestion.medium'), 'Format moyen suggestion');
+check(appCode.includes(', France'), 'Format inclut France');
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════

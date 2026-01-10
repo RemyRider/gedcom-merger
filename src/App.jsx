@@ -1552,11 +1552,14 @@ const GedcomDuplicateMerger = () => {
       const communes = await response.json();
       
       if (communes.length > 0) {
-        // Formater les suggestions
+        // Formater les suggestions : Commune, Département, Région, France
         const suggestions = communes.map(c => ({
           short: c.nom,
           medium: `${c.nom}, ${c.departement?.nom || ''}`.replace(/, $/, ''),
-          full: `${c.nom}, ${c.departement?.nom || ''}, ${c.region?.nom || ''}`.replace(/, , /g, ', ').replace(/, $/, ''),
+          full: `${c.nom}, ${c.departement?.nom || ''}, ${c.region?.nom || ''}, France`
+            .replace(/, , /g, ', ')
+            .replace(/, , /g, ', ')
+            .replace(/, France$/, ', France'),
           departement: c.departement?.nom,
           region: c.region?.nom
         }));
@@ -3754,6 +3757,8 @@ const GedcomDuplicateMerger = () => {
                     <button
                       onClick={() => {
                         setPlaceNormSelections({});
+                        setPlaceApiSuggestions({});
+                        setShowQualityReport(false); // Fermer le modal qualité
                         setShowPlaceNormModal(true);
                       }}
                       className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"

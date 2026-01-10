@@ -19,7 +19,7 @@ Application React professionnelle pour détecter et fusionner les doublons dans 
 ### 🆕 Normalisation des lieux (v2.2.6)
 - **Modal dédié** pour corriger les variantes de lieux
 - **Intégration API Géo** : suggestions officielles depuis geo.api.gouv.fr
-- **Formats proposés** : Commune, Département, Région
+- **Format normalisé** : Commune, Département, Région, France
 - **Application sur fichier GEDCOM** : correction des rawLines pour export
 
 ### Gestion des conflits (v2.2.0)
@@ -65,10 +65,10 @@ npm run test:all
 # Tests statiques (464 tests)
 npm run test:static
 
-# Tests Vitest (180 tests)
+# Tests Vitest (181 tests)
 npm run test
 
-# Tous les tests (644 total)
+# Tous les tests (645 total)
 npm run test:all
 ```
 
@@ -86,7 +86,7 @@ npm run test:all
 | 9 | Conflits v2.2.0 | 30 |
 | 10 | Scoring/Normalisation v2.2.5-6 | 35 |
 | **Total statiques** | | **464** |
-| Vitest | helpers, parser, stats, conflicts | 180 |
+| Vitest | helpers, parser, stats, conflicts | 181 |
 | **TOTAL** | | **644** |
 
 ## 📦 Structure du projet

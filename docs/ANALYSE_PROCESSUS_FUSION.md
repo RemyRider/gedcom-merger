@@ -181,7 +181,7 @@ const response = await fetch(
 {
   short: "Grenoble",
   medium: "Grenoble, Isère",
-  full: "Grenoble, Isère, Auvergne-Rhône-Alpes"
+  full: "Grenoble, Isère, Auvergne-Rhône-Alpes, France"
 }
 ```
 

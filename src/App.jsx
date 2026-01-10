@@ -1482,7 +1482,7 @@ const GedcomDuplicateMerger = () => {
     let totalReplacements = 0;
     const placeFields = ['birthPlace', 'deathPlace', 'baptismPlace', 'burialPlace', 'residence'];
     
-    const updatedPeople = people.map(person => {
+    const updatedPeople = individuals.map(person => {
       let modified = false;
       const updatedPerson = { ...person };
       
@@ -1509,7 +1509,7 @@ const GedcomDuplicateMerger = () => {
     });
     
     // Mettre à jour l'état
-    setPeople(updatedPeople);
+    setIndividuals(updatedPeople);
     
     // Recalculer les variantes de lieux
     const newVariants = detectPlaceVariants(updatedPeople);

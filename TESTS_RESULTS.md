@@ -685,7 +685,7 @@
   ✅ Setter placeNormSelections
   ✅ Titre modal normalisation
   ✅ Fonction applyPlaceNormalizations
-  ✅ Map de remplacement
+  ✅ Utilise individuals.map dans applyPlaceNormalizations
   ✅ Champs lieux à corriger
   ✅ Bouton tout suggérer
   ✅ Fermeture modal qualité avant ouverture normalisation
@@ -735,13 +735,13 @@
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/helpers.test.mjs  (64 tests) 14ms
  ✓ tests/conflicts.test.mjs  (56 tests) 16ms
- ✓ tests/stats.test.mjs  (31 tests) 15ms
- ✓ tests/parser.test.mjs  (30 tests) 14ms
+ ✓ tests/helpers.test.mjs  (64 tests) 18ms
+ ✓ tests/stats.test.mjs  (31 tests) 17ms
+ ✓ tests/parser.test.mjs  (30 tests) 15ms
 
  Test Files  4 passed (4)
       Tests  181 passed (181)
-   Start at  17:26:43
-   Duration  2.26s (transform 155ms, setup 0ms, collect 301ms, tests 59ms, environment 1ms, prepare 3.31s)
+   Start at  17:44:39
+   Duration  2.36s (transform 162ms, setup 0ms, collect 325ms, tests 66ms, environment 1ms, prepare 3.51s)
 

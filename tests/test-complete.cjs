@@ -867,7 +867,7 @@ check(appCode.includes('placeNormSelections'), 'État placeNormSelections');
 check(appCode.includes('setPlaceNormSelections'), 'Setter placeNormSelections');
 check(appCode.includes('Normalisation des Lieux'), 'Titre modal normalisation');
 check(appCode.includes('applyPlaceNormalizations'), 'Fonction applyPlaceNormalizations');
-check(appCode.includes('replacementMap'), 'Map de remplacement');
+check(appCode.includes('individuals.map(person') && appCode.includes('applyPlaceNormalizations'), 'Utilise individuals.map dans applyPlaceNormalizations');
 check(appCode.includes("'birthPlace', 'deathPlace'"), 'Champs lieux à corriger');
 check(appCode.includes('Tout suggérer'), 'Bouton tout suggérer');
 check(appCode.includes('setShowQualityReport(false)') && appCode.includes('setShowPlaceNormModal(true)'), 'Fermeture modal qualité avant ouverture normalisation');

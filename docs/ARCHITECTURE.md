@@ -1,4 +1,4 @@
-# Architecture - GEDCOM Merger v2.2.5
+# Architecture - GEDCOM Merger v2.2.6
 
 ## Vue d'ensemble
 
@@ -47,10 +47,13 @@
 | `cleanOrphanedFamilies()` | Nettoie les FAM orphelines |
 | `handleMerge()` | Gère le processus de fusion |
 | `downloadCleanedFile()` | Génère le fichier GEDCOM nettoyé |
+| `calculateSurnameStats()` | Calcule fréquence des noms (v2.2.5) |
+| `searchPlaceApi()` | Recherche lieu via API Géo (v2.2.6) |
+| `applyPlaceNormalizations()` | Applique corrections lieux (v2.2.6) |
 
 ### Critères de comparaison (18)
 
-1. Noms (30 pts)
+1. Noms (20-35 pts, pondération dynamique v2.2.5)
 2. Date naissance (25 pts) ✓
 3. Sexe (15 pts)
 4. Parents (20 pts) ✓
@@ -85,6 +88,9 @@ step                 // 'upload' | 'review' | 'merged'
 activeTab            // Onglet actif
 showConflictModal    // Modal conflits v2.2.0
 mergeConflicts       // Conflits détectés v2.2.0
+showPlaceNormModal   // Modal normalisation lieux v2.2.6
+placeNormSelections  // Sélections de normalisation v2.2.6
+placeApiSuggestions  // Suggestions API Géo v2.2.6
 
 // Sélections
 selectedPairs        // Paires sélectionnées

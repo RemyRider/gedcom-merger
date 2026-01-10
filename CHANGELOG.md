@@ -2,6 +2,31 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [v2.2.6] - 10 janvier 2026
+
+### 🎯 Thème : Outil de normalisation des lieux
+
+### ✨ Nouvelles fonctionnalités
+- **Modal de normalisation des lieux** : Interface complète pour corriger les variantes
+- **🌍 Intégration API Géo** : Suggestions officielles depuis l'API du gouvernement français
+  - Bouton "Rechercher officiels" pour obtenir les noms normalisés
+  - Format proposé : "Commune, Département, Région"
+  - Recherche individuelle ou globale pour tous les groupes
+- Affichage de tous les groupes de variantes avec leurs occurrences
+- Choix de la forme correcte pour chaque groupe (variante existante ou suggestion officielle)
+- Bouton **"Tout suggérer"** pour appliquer les suggestions API ou automatiques
+- Application des corrections sur toutes les personnes concernées
+- Mise à jour automatique des rawLines pour le fichier GEDCOM
+
+### 🔧 Technique
+- Nouveaux états `placeApiSuggestions` et `loadingPlaceSuggestion`
+- Fonction `searchPlaceApi()` pour appeler l'API Géo (geo.api.gouv.fr)
+- Fonction `searchAllPlacesApi()` pour rechercher tous les groupes
+- Fonction `applyPlaceNormalizations()` pour appliquer les corrections
+- Correction des champs : birthPlace, deathPlace, baptismPlace, burialPlace, residence
+
+---
+
 ## [v2.2.5] - 10 janvier 2026
 
 ### 🎯 Thème : Scoring doublons amélioré

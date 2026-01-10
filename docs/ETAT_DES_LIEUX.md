@@ -1,17 +1,17 @@
 # État des Lieux - GEDCOM Merger
 
-> **Version actuelle** : v2.2.5 (10 janvier 2026)  
+> **Version actuelle** : v2.2.6 (10 janvier 2026)  
 > **Repository** : https://github.com/RemyRider/gedcom-merger  
 > **Production** : https://gedcom-merger.netlify.app  
 > **Développement** : https://dev--gedcom-merger.netlify.app
 
 ---
 
-## 🎯 Résumé v2.2.5
+## 🎯 Résumé v2.2.6
 
 | Métrique | Valeur |
 |----------|--------|
-| **Tests totaux** | 593 (429 statiques + 164 Vitest) |
+| **Tests totaux** | 644 (464 statiques + 180 Vitest) |
 | **Critères de comparaison** | 18 |
 | **Champs affichés** | 16 |
 | **Catégories de tests** | 9 |
@@ -54,6 +54,16 @@
 | **Pondération noms rares** | v2.2.5 | Noms rares = +35 pts, très communs = 20 pts |
 | **Bonus combinaison** | v2.2.5 | +15 pts si nom+naissance+lieu, +8 pts si nom+naissance |
 | **Malus incohérence** | v2.2.5 | -10 pts si lieux naissance contradictoires |
+
+### Normalisation des lieux (v2.2.6)
+
+| Fonctionnalité | Version | Description |
+|----------------|---------|-------------|
+| **Modal normalisation** | v2.2.6 | Interface complète pour corriger les variantes de lieux |
+| **API Géo intégrée** | v2.2.6 | Suggestions officielles depuis geo.api.gouv.fr |
+| **Choix forme correcte** | v2.2.6 | Sélection de la variante ou suggestion officielle |
+| **Tout suggérer** | v2.2.6 | Application automatique des suggestions API ou auto |
+| **Mise à jour GEDCOM** | v2.2.6 | Correction des rawLines pour export cohérent |
 
 ### Interface utilisateur
 
@@ -99,10 +109,10 @@
 
 | Fonctionnalité | Version | Description |
 |----------------|---------|-------------|
-| **Suite 593 tests** | v2.2.4 | 429 statiques + 164 Vitest |
+| **Suite 644 tests** | v2.2.6 | 464 statiques + 180 Vitest |
 | Tests automatiques Netlify | v1.9.3 | Exécution avant chaque build |
 | **Tests Vitest** | v2.1.3 | helpers, parser, stats, conflicts |
-| **9 catégories** | v2.2.4 | Couverture complète |
+| **10 catégories** | v2.2.6 | Couverture complète |
 
 ---
 
@@ -204,7 +214,7 @@ gedcom-merger/
 ├── public/
 │   └── gedcom-worker.js  # ~54KB, Worker autonome
 ├── tests/
-│   ├── test-complete.cjs # 429 tests statiques
+│   ├── test-complete.cjs # 464 tests statiques
 │   ├── helpers.test.mjs  # 47 tests Vitest
 │   ├── parser.test.mjs   # 30 tests Vitest
 │   ├── stats.test.mjs    # 31 tests Vitest
@@ -222,7 +232,7 @@ gedcom-merger/
 
 ---
 
-## Catégories de Tests (593 total)
+## Catégories de Tests (644 total)
 
 | # | Catégorie | Tests | Description |
 |---|-----------|-------|-------------|
@@ -235,8 +245,9 @@ gedcom-merger/
 | 7 | Config & déploiement | 39 | Netlify, package.json |
 | 8 | Qualité & analyses v2.1.x | 68 | Rapport, chrono, stats, Worker |
 | 9 | Conflits v2.2.x | 30 | Détection, résolution, nettoyage |
-| | **Vitest** | +164 | helpers, parser, stats, conflicts |
-| | **TOTAL** | **593** | |
+| 10 | Scoring/Normalisation | 35 | v2.2.5 couleurs, v2.2.6 API Géo |
+| | **Vitest** | +180 | helpers, parser, stats, conflicts |
+| | **TOTAL** | **644** | |
 
 ---
 
@@ -287,6 +298,7 @@ gedcom-merger/
 | **v2.2.3** | 04/01/2026 | 🐛 Fix | Isolation doublons/clusters |
 | **v2.2.4** | 05/01/2026 | 🐛 Fix | **Fusion cascade, redirection références** |
 | **v2.2.5** | 10/01/2026 | ✨ Feature | **Scoring amélioré, couleurs inversées, pondération noms** |
+| **v2.2.6** | 10/01/2026 | ✨ Feature | **Outil de normalisation des lieux** |
 
 ---
 
@@ -330,7 +342,7 @@ module.exports = {
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   dev       │────▶│   tests     │────▶│   main      │
-│  (travail)  │     │  (593/593)  │     │  (prod)     │
+│  (travail)  │     │  (644/644)  │     │  (prod)     │
 └─────────────┘     └─────────────┘     └─────────────┘
       │                   │                   │
       ▼                   ▼                   ▼
@@ -341,8 +353,8 @@ module.exports = {
 **Commandes** :
 ```bash
 # Tests
-npm run test:static  # 429 tests statiques
-npm run test         # 164 tests Vitest
+npm run test:static  # 464 tests statiques
+npm run test         # 180 tests Vitest
 npm run test:all     # Les deux
 
 # Développement
@@ -375,4 +387,4 @@ git push origin main
 
 ---
 
-*Document mis à jour le 10 janvier 2026 - v2.2.5*
+*Document mis à jour le 10 janvier 2026 - v2.2.6*

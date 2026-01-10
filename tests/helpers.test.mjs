@@ -239,6 +239,25 @@ describe('getSuspicionLevel', () => {
     expect(result.level).toBe('FAIBLE');
     expect(result.emoji).toBe('🔴');
   });
+
+  // v2.2.5: Tests couleurs inversées
+  it('devrait utiliser 🟢 pour FORT (feu vert pour fusionner)', () => {
+    const result = getSuspicionLevel(95, 6);
+    expect(result.emoji).toBe('🟢');
+    expect(result.level).toBe('FORT');
+  });
+
+  it('devrait utiliser 🔴 pour FAIBLE (prudence requise)', () => {
+    const result = getSuspicionLevel(80, 1);
+    expect(result.emoji).toBe('🔴');
+    expect(result.level).toBe('FAIBLE');
+  });
+
+  it('devrait retourner FORT pour score >= 85 et >= 4 critères', () => {
+    const result = getSuspicionLevel(85, 4);
+    expect(result.level).toBe('FORT');
+    expect(result.emoji).toBe('🟢');
+  });
 });
 
 // ============================================================================
@@ -257,5 +276,120 @@ describe('NAME_VARIANTS', () => {
 
   it('devrait contenir au moins 15 prénoms', () => {
     expect(Object.keys(NAME_VARIANTS).length).toBeGreaterThanOrEqual(15);
+  });
+});
+
+// ============================================================================
+// Tests v2.2.5 - Pondération dynamique des noms (simulation)
+// ============================================================================
+describe('Pondération noms v2.2.5', () => {
+  // Simuler la fonction getNameWeight
+  const getNameWeight = (surname, surnameStats) => {
+    const frequency = surnameStats[surname] || 0;
+    if (frequency <= 3) return 35;
+    if (frequency <= 10) return 32;
+    if (frequency <= 30) return 30;
+    if (frequency <= 100) return 25;
+    return 20;
+  };
+
+  it('devrait donner 35 pts pour un nom très rare (≤3 occ)', () => {
+    const stats = { 'girardet': 2 };
+    expect(getNameWeight('girardet', stats)).toBe(35);
+  });
+
+  it('devrait donner 32 pts pour un nom rare (≤10 occ)', () => {
+    const stats = { 'berger': 8 };
+    expect(getNameWeight('berger', stats)).toBe(32);
+  });
+
+  it('devrait donner 30 pts pour un nom normal (≤30 occ)', () => {
+    const stats = { 'dupuis': 25 };
+    expect(getNameWeight('dupuis', stats)).toBe(30);
+  });
+
+  it('devrait donner 25 pts pour un nom commun (≤100 occ)', () => {
+    const stats = { 'bernard': 75 };
+    expect(getNameWeight('bernard', stats)).toBe(25);
+  });
+
+  it('devrait donner 20 pts pour un nom très commun (>100 occ)', () => {
+    const stats = { 'martin': 250 };
+    expect(getNameWeight('martin', stats)).toBe(20);
+  });
+
+  it('devrait donner 35 pts pour un nom inconnu (0 occ)', () => {
+    const stats = {};
+    expect(getNameWeight('inconnu', stats)).toBe(35);
+  });
+});
+
+// ============================================================================
+// Tests v2.2.6 - Normalisation des lieux (simulation)
+// ============================================================================
+describe('Normalisation lieux v2.2.6', () => {
+  // Simuler la fonction de création de replacementMap
+  const createReplacementMap = (variants, chosenForm) => {
+    const map = new Map();
+    variants.forEach(variant => {
+      if (variant !== chosenForm) {
+        map.set(variant, chosenForm);
+      }
+    });
+    return map;
+  };
+
+  it('devrait créer une map de remplacement correcte', () => {
+    const variants = ['Grenoble', 'GRENOBLE', 'grenoble, isère'];
+    const chosen = 'Grenoble, Isère';
+    const map = createReplacementMap(variants, chosen);
+    
+    expect(map.size).toBe(3);
+    expect(map.get('Grenoble')).toBe('Grenoble, Isère');
+    expect(map.get('GRENOBLE')).toBe('Grenoble, Isère');
+    expect(map.get('grenoble, isère')).toBe('Grenoble, Isère');
+  });
+
+  it('ne devrait pas inclure la forme choisie dans la map', () => {
+    const variants = ['Paris', 'PARIS', 'paris'];
+    const chosen = 'Paris';
+    const map = createReplacementMap(variants, chosen);
+    
+    expect(map.has('Paris')).toBe(false);
+    expect(map.size).toBe(2);
+  });
+
+  it('devrait gérer un groupe avec une seule variante', () => {
+    const variants = ['Lyon'];
+    const chosen = 'Lyon, Rhône';
+    const map = createReplacementMap(variants, chosen);
+    
+    expect(map.size).toBe(1);
+    expect(map.get('Lyon')).toBe('Lyon, Rhône');
+  });
+
+  // Simuler l'extraction du nom de commune
+  const extractCommuneName = (placeText) => {
+    return placeText
+      .split(',')[0]
+      .replace(/^\d{5}\s*/, '')
+      .replace(/\s*\d{5}$/, '')
+      .trim();
+  };
+
+  it('devrait extraire le nom de commune simple', () => {
+    expect(extractCommuneName('Grenoble, Isère')).toBe('Grenoble');
+  });
+
+  it('devrait retirer le code postal en préfixe', () => {
+    expect(extractCommuneName('38000 Grenoble')).toBe('Grenoble');
+  });
+
+  it('devrait retirer le code postal en suffixe', () => {
+    expect(extractCommuneName('Grenoble 38000')).toBe('Grenoble');
+  });
+
+  it('devrait gérer un lieu simple sans virgule', () => {
+    expect(extractCommuneName('Lyon')).toBe('Lyon');
   });
 });

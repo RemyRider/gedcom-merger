@@ -1,4 +1,4 @@
-# 🔍 Analyse Complète du Processus de Fusion - GEDCOM Merger v2.2.5
+# 🔍 Analyse Complète du Processus de Fusion - GEDCOM Merger v2.2.6
 
 ## Vue d'ensemble du flux
 
@@ -122,9 +122,9 @@ Index 3: Parents communs
 | Religion | 3 | Non |
 | **Total possible** | **~190** | |
 
-*v2.2.5: Pondération dynamique selon la rareté du nom
+*v2.2.6: Pondération dynamique selon la rareté du nom
 
-### Améliorations scoring v2.2.5
+### Améliorations scoring v2.2.6
 
 #### Pondération dynamique des noms
 
@@ -150,6 +150,58 @@ Index 3: Parents communs
 | Lieux naissance contradictoires | -10 pts |
 
 **Anti-faux-positifs** : Si seuls le nom et le sexe correspondent → REJET
+
+---
+
+## Étape 2bis : NORMALISATION DES LIEUX (v2.2.6)
+
+### Fonctionnalité
+
+Avant la fusion, l'utilisateur peut normaliser les variantes de lieux détectées pour améliorer la qualité des données.
+
+### Détection des variantes
+
+```javascript
+// Groupement par forme normalisée
+"Grenoble" | "GRENOBLE" | "grenoble, isère" → Groupe 1
+"Lyon" | "LYON" | "lyon, rhône" → Groupe 2
+```
+
+### Intégration API Géo
+
+**Source** : `https://geo.api.gouv.fr/communes`
+
+```javascript
+// Appel API
+const response = await fetch(
+  `https://geo.api.gouv.fr/communes?nom=${communeName}&fields=nom,departement,region&limit=5`
+);
+
+// Résultat structuré
+{
+  short: "Grenoble",
+  medium: "Grenoble, Isère",
+  full: "Grenoble, Isère, Auvergne-Rhône-Alpes"
+}
+```
+
+### Workflow utilisateur
+
+1. Clic sur "🔧 Normaliser" dans la section "Lieux à normaliser"
+2. Modal affiche tous les groupes de variantes
+3. Option "🌍 Rechercher officiels" pour suggestions API Géo
+4. Sélection de la forme correcte pour chaque groupe
+5. "✨ Tout suggérer" applique les suggestions API ou auto
+6. "Appliquer" corrige toutes les personnes concernées
+
+### Champs mis à jour
+
+- `birthPlace` (lieu de naissance)
+- `deathPlace` (lieu de décès)
+- `baptismPlace` (lieu de baptême)
+- `burialPlace` (lieu d'inhumation)
+- `residence` (résidence)
+- `rawLines` (pour export GEDCOM cohérent)
 
 ---
 
@@ -502,4 +554,4 @@ Le Web Worker assure une interface réactive pendant tout le traitement.
 
 ---
 
-*Analyse mise à jour le 10 janvier 2026 - v2.2.5*
+*Analyse mise à jour le 10 janvier 2026 - v2.2.6*

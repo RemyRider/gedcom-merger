@@ -71,7 +71,7 @@ Version axée sur la **gestion intelligente des conflits** et l'**intégrité de
 
 ---
 
-### ✅ PHASE 2 - TERMINÉE (v2.2.2 → v2.2.5)
+### ✅ PHASE 2 - TERMINÉE (v2.2.2 → v2.2.6)
 
 #### 4. Corrections bugs interface ✅
 **Statut** : Implémenté v2.2.2
@@ -89,7 +89,7 @@ Version axée sur la **gestion intelligente des conflits** et l'**intégrité de
 - Sélections complètement indépendantes
 
 #### 6. Fusion en cascade ✅ 🎉
-**Statut** : Implémenté v2.2.5
+**Statut** : Implémenté v2.2.4
 
 **Problème résolu** : Quand A→B et B→C, les références vers A pointaient vers B (supprimé) au lieu de C.
 
@@ -109,7 +109,7 @@ while (chainsResolved && iterations < maxIterations) {
 **Résultat** : Support complet des clusters de N individus.
 
 #### 7. Redirection des références HUSB/WIFE/CHIL ✅
-**Statut** : Implémenté v2.2.5
+**Statut** : Implémenté v2.2.4
 
 **Problème résolu** : Les références vers les personnes fusionnées étaient supprimées au lieu d'être redirigées.
 
@@ -117,6 +117,24 @@ while (chainsResolved && iterations < maxIterations) {
 - `cleanOrphanedFamilies(families, removedIds, people, mergeMap)` - nouveau paramètre
 - Helper `getValidId(id)` : retourne la cible de fusion ou l'ID original
 - Déduplication si deux enfants fusionnent vers la même personne
+
+#### 8. Scoring amélioré ✅
+**Statut** : Implémenté v2.2.5
+
+**Améliorations** :
+- **Couleurs inversées** : 🟢 FORT (feu vert) / 🟡 MOYEN / 🔴 FAIBLE (prudence)
+- **Pondération dynamique** : noms rares = +35 pts, très communs = 20 pts
+- **Bonus combinaison** : +15 pts si nom+naissance+lieu concordent, +8 pts si nom+naissance
+- **Malus incohérence** : -10 pts si lieux de naissance contradictoires
+
+#### 9. Normalisation des lieux avec API Géo ✅
+**Statut** : Implémenté v2.2.6
+
+**Fonctionnalités** :
+- Modal dédié pour corriger les variantes de lieux
+- Intégration API Géo du gouvernement français (geo.api.gouv.fr)
+- Suggestions officielles : Commune, Département, Région
+- Application des corrections sur le fichier GEDCOM (rawLines)
 
 ---
 
@@ -156,11 +174,13 @@ Analyser uniquement les personnes d'un patronyme donné.
 | 3 | Nettoyage FAM orphelines | v2.2.1 | 🔴 P1 | ✅ Fait |
 | 4 | Corrections bugs interface | v2.2.2 | 🔴 P1 | ✅ Fait |
 | 5 | Isolation doublons/clusters | v2.2.3 | 🔴 P1 | ✅ Fait |
-| 6 | Fusion en cascade | v2.2.5 | 🟡 P2 | ✅ Fait |
-| 7 | Redirection références | v2.2.5 | 🟡 P2 | ✅ Fait |
-| 8 | Export CSV | - | 🟡 P2 | 📋 À faire |
-| 9 | Export JSON | - | 🟡 P2 | 📋 À faire |
-| 10 | Filtre patronyme | - | 🟢 P3 | 📋 À faire |
+| 6 | Fusion en cascade | v2.2.4 | 🟡 P2 | ✅ Fait |
+| 7 | Redirection références | v2.2.4 | 🟡 P2 | ✅ Fait |
+| 8 | Scoring amélioré | v2.2.5 | 🟡 P2 | ✅ Fait |
+| 9 | Normalisation lieux + API Géo | v2.2.6 | 🟡 P2 | ✅ Fait |
+| 10 | Export CSV | - | 🟡 P2 | 📋 À faire |
+| 11 | Export JSON | - | 🟡 P2 | 📋 À faire |
+| 12 | Filtre patronyme | - | 🟢 P3 | 📋 À faire |
 
 ---
 
@@ -171,7 +191,8 @@ Analyser uniquement les personnes d'un patronyme donné.
 | v2.1.4 | 393 | 108 | 501 |
 | v2.2.0 | 417 | 135 | 552 |
 | v2.2.2 | 429 | 159 | 588 |
-| **v2.2.5** | **429** | **164** | **593** |
+| v2.2.4 | 429 | 164 | 593 |
+| **v2.2.6** | **464** | **180** | **644** |
 
 ---
 
@@ -189,6 +210,8 @@ Analyser uniquement les personnes d'un patronyme donné.
 - [x] Support clusters N individus
 - [x] Références HUSB/WIFE/CHIL redirigées
 - [x] Déduplication enfants automatique
+- [x] Scoring amélioré (couleurs, pondération, bonus/malus)
+- [x] Normalisation lieux avec API Géo
 - [ ] Export CSV (4 fichiers)
 - [ ] Export JSON complet
 
@@ -198,7 +221,7 @@ Analyser uniquement les personnes d'un patronyme donné.
 - [ ] Stats par branche
 
 ### Technique
-- [x] 593 tests passent
+- [x] 644 tests passent
 - [x] Build Netlify OK
 - [x] Aucune régression v2.1.4
 - [x] Documentation à jour
@@ -224,5 +247,5 @@ Analyser uniquement les personnes d'un patronyme donné.
 
 ---
 
-*Document mis à jour le 5 janvier 2026*  
-*Version 2.2.4 - Fusion en cascade + Clusters N individus*
+*Document mis à jour le 10 janvier 2026*  
+*Version 2.2.6 - Scoring amélioré + Normalisation lieux API Géo*

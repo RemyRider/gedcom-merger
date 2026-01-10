@@ -1,15 +1,15 @@
 
-> gedcom-merger@2.2.5 test:all
+> gedcom-merger@2.2.6 test:all
 > npm run test:static && npm run test
 
 
-> gedcom-merger@2.2.5 test:static
+> gedcom-merger@2.2.6 test:static
 > node tests/test-complete.cjs
 
 
 ═══════════════════════════════════════════════════════════════════════════════
-                      SUITE DE TESTS GEDCOM MERGER v2.2.5
-                         423 TESTS STATIQUES AU TOTAL
+                      SUITE DE TESTS GEDCOM MERGER v2.2.6
+                         458 TESTS STATIQUES AU TOTAL
 ═══════════════════════════════════════════════════════════════════════════════
 
 ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -34,7 +34,7 @@
 │ 1.2 Versions et cohérence (10 tests)                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
   ✅ VERSION 2.2.1 dans App.jsx
-  ✅ Version 2.2.5 dans package.json
+  ✅ Version 2.2.6 dans package.json
   ✅ Version dans index.html
   ✅ Version 2.0.0 dans CHANGELOG.md
   ✅ Version 2.1.0 référencée
@@ -651,14 +651,65 @@
   ✅ Set des FAM à supprimer
   ✅ Filtrage FAM orphelines
 
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (35 tests)       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+│ 10.1 Scoring v2.2.5 - Couleurs inversées (8 tests)                           │
+
+  ✅ FORT = 🟢 (feu vert)
+  ✅ MOYEN = 🟡 (prudence)
+  ✅ FAIBLE = 🔴 (attention)
+  ✅ Commentaire v2.2.5 couleurs
+  ✅ Fonction calculateSurnameStats définie
+  ✅ Utilisation surnameStats
+  ✅ Fonction getNameWeight définie
+  ✅ Pondération par fréquence
+
+│ 10.2 Scoring v2.2.5 - Bonus/Malus (8 tests)                                  │
+
+  ✅ Bonus combinaison forte nom+naissance+lieu
+  ✅ Bonus combinaison nom+naissance
+  ✅ Application du bonus
+  ✅ Malus incohérence lieux
+  ✅ Application du malus
+  ✅ Détection incohérence lieu
+  ✅ Tracking match année naissance
+  ✅ Tracking match lieu naissance
+
+│ 10.3 Normalisation lieux v2.2.6 - Modal (10 tests)                           │
+
+  ✅ État showPlaceNormModal
+  ✅ Setter showPlaceNormModal
+  ✅ État placeNormSelections
+  ✅ Setter placeNormSelections
+  ✅ Titre modal normalisation
+  ✅ Fonction applyPlaceNormalizations
+  ✅ Map de remplacement
+  ✅ Champs lieux à corriger
+  ✅ Bouton tout suggérer
+  ✅ Bouton appliquer avec compteur
+
+│ 10.4 Normalisation lieux v2.2.6 - API Géo (9 tests)                          │
+
+  ✅ État placeApiSuggestions
+  ✅ État loadingPlaceSuggestion
+  ✅ Fonction searchPlaceApi
+  ✅ Fonction searchAllPlacesApi
+  ✅ URL API Géo gouvernement
+  ✅ Bouton rechercher officiels
+  ✅ Affichage suggestions officielles
+  ✅ Format complet suggestion
+  ✅ Format moyen suggestion
+
 ═══════════════════════════════════════════════════════════════════════════════
                               RÉSUMÉ FINAL
 ═══════════════════════════════════════════════════════════════════════════════
 
-  📊 Tests exécutés: 429
-  ✅ Réussis: 429
+  📊 Tests exécutés: 464
+  ✅ Réussis: 464
   ❌ Échoués: 0
-  📋 Attendus: 423
+  📋 Attendus: 458
 
   📁 CATÉGORIES:
      1. Fondamentaux ............ 61 tests
@@ -670,26 +721,27 @@
      7. Config & déploiement .... 39 tests
      8. Qualité & analyses v2.1.x 68 tests
      9. Conflits v2.2.0 ......... 30 tests
+    10. Scoring/Normalisation ... 35 tests
 
-  🎉 SUCCÈS TOTAL: 429/429 tests passés (100%)
+  🎉 SUCCÈS TOTAL: 464/464 tests passés (100%)
 
-  ✅ Version 2.2.5 validée (tests statiques)
+  ✅ Version 2.2.6 validée (tests statiques)
 
 ═══════════════════════════════════════════════════════════════════════════════
 
-> gedcom-merger@2.2.5 test
+> gedcom-merger@2.2.6 test
 > vitest run
 
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/parser.test.mjs  (30 tests) 15ms
- ✓ tests/conflicts.test.mjs  (56 tests) 19ms
- ✓ tests/stats.test.mjs  (31 tests) 18ms
- ✓ tests/helpers.test.mjs  (47 tests) 13ms
+ ✓ tests/helpers.test.mjs  (63 tests) 14ms
+ ✓ tests/stats.test.mjs  (31 tests) 14ms
+ ✓ tests/conflicts.test.mjs  (56 tests) 17ms
+ ✓ tests/parser.test.mjs  (30 tests) 14ms
 
  Test Files  4 passed (4)
-      Tests  164 passed (164)
-   Start at  11:44:56
-   Duration  2.01s (transform 177ms, setup 0ms, collect 297ms, tests 65ms, environment 1ms, prepare 2.47s)
+      Tests  180 passed (180)
+   Start at  17:08:08
+   Duration  2.24s (transform 162ms, setup 0ms, collect 314ms, tests 59ms, environment 1ms, prepare 3.37s)
 

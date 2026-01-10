@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.2.5
-// 423 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// SUITE DE TESTS GEDCOM MERGER v2.2.6
+// 458 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -34,8 +34,8 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.2.5');
-console.log('                         423 TESTS STATIQUES AU TOTAL');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.2.6');
+console.log('                         458 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -68,8 +68,8 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.2.5'") || appCode.includes('VERSION = "2.2.1"'), 'VERSION 2.2.1 dans App.jsx');
-check(packageJson.version === '2.2.5', 'Version 2.2.5 dans package.json');
+check(appCode.includes("VERSION = '2.2.6'") || appCode.includes('VERSION = "2.2.1"'), 'VERSION 2.2.1 dans App.jsx');
+check(packageJson.version === '2.2.6', 'Version 2.2.6 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -819,6 +819,74 @@ check(appCode.includes('familiesToRemove'), 'Set des FAM à supprimer');
 check(appCode.includes("familiesToRemove.has(currentBlockId)"), 'Filtrage FAM orphelines');
 console.log('');
 
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (35 tests)       ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (35 tests)       ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// Charger helpers.mjs
+let helpersCode = '';
+try { helpersCode = fs.readFileSync('./src/utils/helpers.mjs', 'utf8'); } catch (e) { helpersCode = ''; }
+
+// Tests v2.2.5: Scoring amélioré
+console.log('│ 10.1 Scoring v2.2.5 - Couleurs inversées (8 tests)                           │');
+console.log('');
+check(helpersCode.includes("level: 'FORT', emoji: '🟢'"), 'FORT = 🟢 (feu vert)');
+check(helpersCode.includes("level: 'MOYEN', emoji: '🟡'"), 'MOYEN = 🟡 (prudence)');
+check(helpersCode.includes("level: 'FAIBLE', emoji: '🔴'"), 'FAIBLE = 🔴 (attention)');
+check(helpersCode.includes('v2.2.5: Couleurs inversées'), 'Commentaire v2.2.5 couleurs');
+check(appCode.includes('calculateSurnameStats'), 'Fonction calculateSurnameStats définie');
+check(appCode.includes('surnameStats'), 'Utilisation surnameStats');
+check(appCode.includes('getNameWeight'), 'Fonction getNameWeight définie');
+check(appCode.includes('frequency <='), 'Pondération par fréquence');
+console.log('');
+
+// Tests v2.2.5: Bonus et malus
+console.log('│ 10.2 Scoring v2.2.5 - Bonus/Malus (8 tests)                                  │');
+console.log('');
+check(appCode.includes('BONUS: Combinaison forte'), 'Bonus combinaison forte nom+naissance+lieu');
+check(appCode.includes('BONUS: Combinaison nom+naissance'), 'Bonus combinaison nom+naissance');
+check(appCode.includes('matchScore += bonus'), 'Application du bonus');
+check(appCode.includes('MALUS: Lieux naissance contradictoires'), 'Malus incohérence lieux');
+check(appCode.includes('matchScore -= malus'), 'Application du malus');
+check(appCode.includes('birthPlaceMismatch'), 'Détection incohérence lieu');
+check(appCode.includes('birthYearMatches'), 'Tracking match année naissance');
+check(appCode.includes('birthPlaceMatches'), 'Tracking match lieu naissance');
+console.log('');
+
+// Tests v2.2.6: Modal normalisation lieux
+console.log('│ 10.3 Normalisation lieux v2.2.6 - Modal (10 tests)                           │');
+console.log('');
+check(appCode.includes('showPlaceNormModal'), 'État showPlaceNormModal');
+check(appCode.includes('setShowPlaceNormModal'), 'Setter showPlaceNormModal');
+check(appCode.includes('placeNormSelections'), 'État placeNormSelections');
+check(appCode.includes('setPlaceNormSelections'), 'Setter placeNormSelections');
+check(appCode.includes('Normalisation des Lieux'), 'Titre modal normalisation');
+check(appCode.includes('applyPlaceNormalizations'), 'Fonction applyPlaceNormalizations');
+check(appCode.includes('replacementMap'), 'Map de remplacement');
+check(appCode.includes("'birthPlace', 'deathPlace'"), 'Champs lieux à corriger');
+check(appCode.includes('Tout suggérer'), 'Bouton tout suggérer');
+check(appCode.includes('Appliquer ('), 'Bouton appliquer avec compteur');
+console.log('');
+
+// Tests v2.2.6: API Géo
+console.log('│ 10.4 Normalisation lieux v2.2.6 - API Géo (9 tests)                          │');
+console.log('');
+check(appCode.includes('placeApiSuggestions'), 'État placeApiSuggestions');
+check(appCode.includes('loadingPlaceSuggestion'), 'État loadingPlaceSuggestion');
+check(appCode.includes('searchPlaceApi'), 'Fonction searchPlaceApi');
+check(appCode.includes('searchAllPlacesApi'), 'Fonction searchAllPlacesApi');
+check(appCode.includes('geo.api.gouv.fr'), 'URL API Géo gouvernement');
+check(appCode.includes('Rechercher officiels'), 'Bouton rechercher officiels');
+check(appCode.includes('Suggestions officielles'), 'Affichage suggestions officielles');
+check(appCode.includes('suggestion.full'), 'Format complet suggestion');
+check(appCode.includes('suggestion.medium'), 'Format moyen suggestion');
+console.log('');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -827,7 +895,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 423;
+const expectedTotal = 458;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -845,12 +913,13 @@ console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('     9. Conflits v2.2.0 ......... 30 tests');
+console.log('    10. Scoring/Normalisation ... 35 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.2.5 validée (tests statiques)');
+  console.log('  ✅ Version 2.2.6 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

@@ -4,7 +4,7 @@
 
 Version axée sur l'**ordre de fusion intelligent** et la **préservation maximale des données** lors de la fusion de doublons interconnectés.
 
-**Base de départ** : v2.2.5 (593 tests, fusion cascade, clusters N individus)
+**Base de départ** : v2.2.6 (593 tests, fusion cascade, clusters N individus)
 
 **Date de création** : 5 janvier 2026
 
@@ -176,7 +176,7 @@ const calculateFusionOrder = (dependencyGraph) => {
 
 **Objectif** : Déterminer quelle personne garder avec plus de critères
 
-**Critères actuels** (v2.2.5) :
+**Critères actuels** (v2.2.6) :
 ```javascript
 const calculateDataQuality = (person) => {
   let score = 0;
@@ -472,7 +472,7 @@ Fusionner automatiquement les doublons qui respectent :
 ### Technique
 - [ ] ~656 tests passent
 - [ ] Build Netlify OK
-- [ ] Aucune régression v2.2.5
+- [ ] Aucune régression v2.2.6
 - [ ] Documentation à jour
 
 ---

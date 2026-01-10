@@ -39,6 +39,11 @@ const GedcomDuplicateMerger = () => {
   const [mergeConflicts, setMergeConflicts] = useState([]);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [pendingMergePair, setPendingMergePair] = useState(null);
+  // v2.2.6 - États pour normalisation des lieux
+  const [showPlaceNormModal, setShowPlaceNormModal] = useState(false);
+  const [placeNormSelections, setPlaceNormSelections] = useState({});
+  const [placeApiSuggestions, setPlaceApiSuggestions] = useState({});
+  const [loadingPlaceSuggestion, setLoadingPlaceSuggestion] = useState({});
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -53,14 +58,28 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.2.5';
+  const VERSION = '2.2.6';
 
   const CHANGELOG = [
     {
-      version: '2.2.5',
+      version: '2.2.6',
       date: '10 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Outil normalisation lieux + API Géo',
+      items: [
+        'NOUVEAU: Modal de normalisation des lieux',
+        'NOUVEAU: Intégration API Géo du gouvernement français',
+        'Suggestions officielles : Commune, Département, Région',
+        'Bouton "Rechercher officiels" pour chaque groupe ou tous',
+        'Application des corrections sur le fichier GEDCOM'
+      ]
+    },
+    {
+      version: '2.2.5',
+      date: '10 janvier 2026',
+      tag: '',
+      color: 'gray',
       title: 'Scoring amélioré',
       items: [
         'Couleurs inversées: 🟢 FORT, 🟡 MOYEN, 🔴 FAIBLE',
@@ -1433,6 +1452,136 @@ const GedcomDuplicateMerger = () => {
   // ═══════════════════════════════════════════════════════════════════════════════
   // v2.1.0 - FONCTIONS P2 : STATS, REFS ORPHELINES, SCORE SUSPICION
   // ═══════════════════════════════════════════════════════════════════════════════
+
+  // v2.2.6 - Application des normalisations de lieux
+  const applyPlaceNormalizations = (selections) => {
+    if (Object.keys(selections).length === 0) {
+      alert('Aucune normalisation sélectionnée');
+      return;
+    }
+    
+    // Créer une map de remplacement : variante → forme choisie
+    const replacementMap = new Map();
+    placeVariants.forEach((group, idx) => {
+      const chosenForm = selections[idx];
+      if (chosenForm) {
+        group.variants.forEach(variant => {
+          if (variant !== chosenForm) {
+            replacementMap.set(variant, chosenForm);
+          }
+        });
+      }
+    });
+    
+    if (replacementMap.size === 0) {
+      alert('Aucun remplacement à effectuer');
+      return;
+    }
+    
+    // Appliquer les remplacements sur toutes les personnes
+    let totalReplacements = 0;
+    const placeFields = ['birthPlace', 'deathPlace', 'baptismPlace', 'burialPlace', 'residence'];
+    
+    const updatedPeople = people.map(person => {
+      let modified = false;
+      const updatedPerson = { ...person };
+      
+      placeFields.forEach(field => {
+        if (person[field] && replacementMap.has(person[field])) {
+          updatedPerson[field] = replacementMap.get(person[field]);
+          
+          // v2.2.6: Mettre à jour aussi les rawLines pour le fichier GEDCOM
+          if (updatedPerson.rawLines) {
+            updatedPerson.rawLines = updatedPerson.rawLines.map(line => {
+              if (line.includes('PLAC') && line.includes(person[field])) {
+                return line.replace(person[field], replacementMap.get(person[field]));
+              }
+              return line;
+            });
+          }
+          
+          modified = true;
+          totalReplacements++;
+        }
+      });
+      
+      return modified ? updatedPerson : person;
+    });
+    
+    // Mettre à jour l'état
+    setPeople(updatedPeople);
+    
+    // Recalculer les variantes de lieux
+    const newVariants = detectPlaceVariants(updatedPeople);
+    setPlaceVariants(newVariants);
+    
+    // Réinitialiser les sélections
+    setPlaceNormSelections({});
+    setPlaceApiSuggestions({});
+    setShowPlaceNormModal(false);
+    
+    alert(`✅ ${totalReplacements} lieu(x) normalisé(s) sur ${Object.keys(selections).length} groupe(s)`);
+  };
+
+  // v2.2.6 - Recherche de lieu via API Géo du gouvernement français
+  const searchPlaceApi = async (placeText, groupIdx) => {
+    if (!placeText || placeText.length < 2) return;
+    
+    setLoadingPlaceSuggestion(prev => ({ ...prev, [groupIdx]: true }));
+    
+    try {
+      // Extraire le nom de commune (premier élément, sans code postal)
+      const communeName = placeText
+        .split(',')[0]
+        .replace(/^\d{5}\s*/, '')  // Retirer code postal en préfixe
+        .replace(/\s*\d{5}$/, '')  // Retirer code postal en suffixe
+        .trim();
+      
+      if (!communeName || communeName.length < 2) {
+        setLoadingPlaceSuggestion(prev => ({ ...prev, [groupIdx]: false }));
+        return;
+      }
+      
+      // Appeler l'API Géo
+      const response = await fetch(
+        `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(communeName)}&fields=nom,departement,region&limit=5`
+      );
+      
+      if (!response.ok) throw new Error('Erreur API');
+      
+      const communes = await response.json();
+      
+      if (communes.length > 0) {
+        // Formater les suggestions
+        const suggestions = communes.map(c => ({
+          short: c.nom,
+          medium: `${c.nom}, ${c.departement?.nom || ''}`.replace(/, $/, ''),
+          full: `${c.nom}, ${c.departement?.nom || ''}, ${c.region?.nom || ''}`.replace(/, , /g, ', ').replace(/, $/, ''),
+          departement: c.departement?.nom,
+          region: c.region?.nom
+        }));
+        
+        setPlaceApiSuggestions(prev => ({ ...prev, [groupIdx]: suggestions }));
+      } else {
+        setPlaceApiSuggestions(prev => ({ ...prev, [groupIdx]: [] }));
+      }
+    } catch (error) {
+      console.error('Erreur recherche lieu:', error);
+      setPlaceApiSuggestions(prev => ({ ...prev, [groupIdx]: null }));
+    } finally {
+      setLoadingPlaceSuggestion(prev => ({ ...prev, [groupIdx]: false }));
+    }
+  };
+
+  // v2.2.6 - Rechercher toutes les suggestions API pour tous les groupes
+  const searchAllPlacesApi = async () => {
+    const promises = placeVariants.map((group, idx) => {
+      // Utiliser la première variante ou la suggestion comme base de recherche
+      const searchTerm = group.variants[0] || group.suggested;
+      return searchPlaceApi(searchTerm, idx);
+    });
+    await Promise.all(promises);
+  };
 
   // P2.1 - Statistiques généalogiques
   const calculateGenealogyStats = (people, families) => {
@@ -3298,6 +3447,198 @@ const GedcomDuplicateMerger = () => {
         </div>
       )}
 
+      {/* Modal Normalisation des Lieux v2.2.6 */}
+      {showPlaceNormModal && placeVariants.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="sticky top-0 px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  📍 Normalisation des Lieux
+                </h2>
+                <button onClick={() => setShowPlaceNormModal(false)} className="p-2 hover:bg-white/20 rounded-lg">✕</button>
+              </div>
+              <p className="text-blue-100 text-sm mt-1">
+                Sélectionnez la forme correcte pour chaque groupe de variantes
+              </p>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800 flex items-start gap-3">
+                <div className="flex-1">
+                  <p><strong>💡 Astuce :</strong> Chaque groupe contient des variantes d'un même lieu.</p>
+                  <p className="mt-1">🌍 Cliquez sur <strong>"Rechercher officiels"</strong> pour obtenir les noms officiels depuis l'API Géo du gouvernement français.</p>
+                </div>
+                <button
+                  onClick={searchAllPlacesApi}
+                  className="px-3 py-2 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 flex items-center gap-1 whitespace-nowrap"
+                >
+                  🌍 Rechercher officiels
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {placeVariants.map((group, idx) => (
+                  <div key={idx} className={`border-2 rounded-xl p-4 transition-all ${
+                    placeNormSelections[idx] ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'
+                  }`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-500">Groupe {idx + 1}/{placeVariants.length}</span>
+                        <span className="text-xs bg-gray-200 px-2 py-1 rounded">{group.occurrences} occ.</span>
+                        {!placeApiSuggestions[idx] && (
+                          <button
+                            onClick={() => searchPlaceApi(group.variants[0], idx)}
+                            disabled={loadingPlaceSuggestion[idx]}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                          >
+                            {loadingPlaceSuggestion[idx] ? '⏳' : '🔍 Rechercher'}
+                          </button>
+                        )}
+                      </div>
+                      {placeNormSelections[idx] && (
+                        <span className="text-green-600 text-sm font-medium flex items-center gap-1">
+                          ✓ Sélectionné
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Suggestions officielles de l'API Géo */}
+                    {placeApiSuggestions[idx] && placeApiSuggestions[idx].length > 0 && (
+                      <div className="mb-3 p-2 bg-indigo-50 rounded-lg border border-indigo-200">
+                        <p className="text-xs text-indigo-700 font-medium mb-2">🏛️ Suggestions officielles (API Géo) :</p>
+                        <div className="flex flex-wrap gap-1">
+                          {placeApiSuggestions[idx].slice(0, 3).map((suggestion, sIdx) => (
+                            <button
+                              key={sIdx}
+                              onClick={() => setPlaceNormSelections(prev => ({ ...prev, [idx]: suggestion.full }))}
+                              className={`px-2 py-1 rounded text-xs transition-all ${
+                                placeNormSelections[idx] === suggestion.full
+                                  ? 'bg-indigo-600 text-white'
+                                  : 'bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-100'
+                              }`}
+                              title={`${suggestion.full}`}
+                            >
+                              🏛️ {suggestion.medium}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {placeApiSuggestions[idx] === null && (
+                      <p className="text-xs text-orange-600 mb-2">⚠️ Lieu non trouvé dans l'API Géo</p>
+                    )}
+                    
+                    {loadingPlaceSuggestion[idx] && (
+                      <p className="text-xs text-indigo-600 mb-2">⏳ Recherche en cours...</p>
+                    )}
+                    
+                    <p className="text-xs text-gray-500 mb-2">Variantes détectées :</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {group.variants.map((variant, vIdx) => (
+                        <button
+                          key={vIdx}
+                          onClick={() => setPlaceNormSelections(prev => ({ ...prev, [idx]: variant }))}
+                          className={`p-2 rounded-lg border-2 text-left text-sm transition-all ${
+                            placeNormSelections[idx] === variant
+                              ? 'border-green-500 bg-green-100 ring-2 ring-green-300'
+                              : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                              placeNormSelections[idx] === variant 
+                                ? 'bg-green-500 border-green-500' 
+                                : 'border-gray-400'
+                            }`}>
+                              {placeNormSelections[idx] === variant && (
+                                <div className="w-full h-full flex items-center justify-center text-white text-xs">✓</div>
+                              )}
+                            </div>
+                            <span className="break-words">{variant}</span>
+                          </div>
+                        </button>
+                      ))}
+                      
+                      {/* Option suggestion automatique */}
+                      {!group.variants.includes(group.suggested) && (
+                        <button
+                          onClick={() => setPlaceNormSelections(prev => ({ ...prev, [idx]: group.suggested }))}
+                          className={`p-2 rounded-lg border-2 text-left text-sm transition-all ${
+                            placeNormSelections[idx] === group.suggested
+                              ? 'border-green-500 bg-green-100 ring-2 ring-green-300'
+                              : 'border-blue-200 bg-blue-50 hover:border-blue-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                              placeNormSelections[idx] === group.suggested 
+                                ? 'bg-green-500 border-green-500' 
+                                : 'border-blue-400'
+                            }`}>
+                              {placeNormSelections[idx] === group.suggested && (
+                                <div className="w-full h-full flex items-center justify-center text-white text-xs">✓</div>
+                              )}
+                            </div>
+                            <span className="break-words text-blue-700">✨ {group.suggested}</span>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="sticky bottom-0 bg-gray-100 px-6 py-4 border-t">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Groupes sélectionnés : <span className="font-bold">{Object.keys(placeNormSelections).length}/{placeVariants.length}</span>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      // Sélectionner les suggestions API si disponibles, sinon les suggestions auto
+                      const autoSelections = {};
+                      placeVariants.forEach((group, idx) => {
+                        if (placeApiSuggestions[idx]?.[0]?.full) {
+                          autoSelections[idx] = placeApiSuggestions[idx][0].full;
+                        } else {
+                          autoSelections[idx] = group.suggested;
+                        }
+                      });
+                      setPlaceNormSelections(autoSelections);
+                    }}
+                    className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                  >
+                    ✨ Tout suggérer
+                  </button>
+                  <button 
+                    onClick={() => setShowPlaceNormModal(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    onClick={() => applyPlaceNormalizations(placeNormSelections)}
+                    disabled={Object.keys(placeNormSelections).length === 0}
+                    className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                      Object.keys(placeNormSelections).length > 0
+                        ? 'bg-green-600 text-white hover:bg-green-700' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    Appliquer ({Object.keys(placeNormSelections).length})
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Rapport Qualité v2.1.0 */}
       {showQualityReport && qualityReport && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -3408,7 +3749,18 @@ const GedcomDuplicateMerger = () => {
               {/* Variantes de lieux */}
               {placeVariants.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-semibold text-gray-700 mb-3">📍 Lieux à normaliser ({placeVariants.length} groupes)</h3>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-semibold text-gray-700">📍 Lieux à normaliser ({placeVariants.length} groupes)</h3>
+                    <button
+                      onClick={() => {
+                        setPlaceNormSelections({});
+                        setShowPlaceNormModal(true);
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                    >
+                      🔧 Normaliser
+                    </button>
+                  </div>
                   <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
                     {placeVariants.slice(0, 8).map((group, idx) => (
                       <div key={idx} className="text-xs mb-2 pb-2 border-b last:border-0">

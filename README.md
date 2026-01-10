@@ -1,4 +1,4 @@
-# 🧬 GEDCOM Merger v2.2.5
+# 🧬 GEDCOM Merger v2.2.6
 
 Application React professionnelle pour détecter et fusionner les doublons dans les fichiers GEDCOM.
 
@@ -9,9 +9,20 @@ Application React professionnelle pour détecter et fusionner les doublons dans 
 - **Algorithme Soundex français** adapté aux noms francophones
 - **Anti-faux-positifs** : critères suffisants obligatoires au-delà du nom
 - **Détection de clusters** : groupes de 3+ personnes interconnectées
-- **Score de suspicion** : 🔴 FORT / 🟡 MOYEN / 🟢 FAIBLE
 
-### 🆕 Gestion des conflits (v2.2.0)
+### 🆕 Scoring amélioré (v2.2.5)
+- **Couleurs inversées** : 🟢 FORT (feu vert) / 🟡 MOYEN / 🔴 FAIBLE (prudence)
+- **Pondération dynamique** : noms rares = +pts, noms communs = -pts
+- **Bonus combinaison** : +15 pts si nom+naissance+lieu concordent
+- **Malus incohérence** : -10 pts si lieux de naissance contradictoires
+
+### 🆕 Normalisation des lieux (v2.2.6)
+- **Modal dédié** pour corriger les variantes de lieux
+- **Intégration API Géo** : suggestions officielles depuis geo.api.gouv.fr
+- **Formats proposés** : Commune, Département, Région
+- **Application sur fichier GEDCOM** : correction des rawLines pour export
+
+### Gestion des conflits (v2.2.0)
 - **Détection automatique** des valeurs contradictoires avant fusion
 - **Modal de résolution** pour choisir la valeur à conserver
 - **Comparaison intelligente** :
@@ -51,13 +62,13 @@ npm run test:all
 ## 🧪 Tests
 
 ```bash
-# Tests statiques (423 tests)
+# Tests statiques (464 tests)
 npm run test:static
 
-# Tests Vitest (108 tests)
+# Tests Vitest (180 tests)
 npm run test
 
-# Tous les tests (531 total)
+# Tous les tests (644 total)
 npm run test:all
 ```
 
@@ -73,16 +84,17 @@ npm run test:all
 | 7 | Config & déploiement | 39 |
 | 8 | Qualité & analyses v2.1.x | 68 |
 | 9 | Conflits v2.2.0 | 30 |
-| **Total statiques** | | **429** |
-| Vitest | helpers, parser, stats, conflicts | 164 |
-| **TOTAL** | | **593** |
+| 10 | Scoring/Normalisation v2.2.5-6 | 35 |
+| **Total statiques** | | **464** |
+| Vitest | helpers, parser, stats, conflicts | 180 |
+| **TOTAL** | | **644** |
 
 ## 📦 Structure du projet
 
 ```
 gedcom-merger/
 ├── src/
-│   ├── App.jsx           # Composant principal (~3200 lignes)
+│   ├── App.jsx           # Composant principal (~3900 lignes)
 │   ├── utils/
 │   │   ├── helpers.mjs   # Fonctions utilitaires
 │   │   ├── parser.mjs    # Parsing GEDCOM
@@ -90,12 +102,18 @@ gedcom-merger/
 │   ├── index.css
 │   └── main.jsx
 ├── public/
-│   └── gedcom-worker.js  # Web Worker (~1300 lignes)
+│   └── gedcom-worker.js  # Web Worker (~1400 lignes)
 ├── tests/
-│   ├── test-complete.cjs # Tests statiques
+│   ├── test-complete.cjs # Tests statiques (464)
 │   ├── helpers.test.mjs  # Tests Vitest
 │   ├── parser.test.mjs
-│   └── stats.test.mjs
+│   ├── stats.test.mjs
+│   └── conflicts.test.mjs
+├── docs/
+│   ├── ETAT_DES_LIEUX.md
+│   ├── ARCHITECTURE.md
+│   ├── ANALYSE_PROCESSUS_FUSION.md
+│   └── ROADMAP_V2_*.md
 ├── CHANGELOG.md
 ├── README.md
 └── package.json
@@ -113,4 +131,4 @@ MIT © 2025-2026 RemyRider
 
 ---
 
-*Version 2.2.5 - 4 janvier 2026*
+*Version 2.2.6 - 10 janvier 2026*

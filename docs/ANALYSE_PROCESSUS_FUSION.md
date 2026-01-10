@@ -1,4 +1,4 @@
-# 🔍 Analyse Complète du Processus de Fusion - GEDCOM Merger v2.2.4
+# 🔍 Analyse Complète du Processus de Fusion - GEDCOM Merger v2.2.5
 
 ## Vue d'ensemble du flux
 
@@ -102,7 +102,7 @@ Index 3: Parents communs
 
 | Critère | Points max | Suffisant? |
 |---------|------------|------------|
-| Noms identiques | 30 | Non |
+| Noms identiques | 20-35* | Non |
 | Date naissance | 25 | Oui |
 | Sexe identique | 15 | Non (éliminatoire si différent) |
 | Parents communs | 20 | Oui |
@@ -120,7 +120,34 @@ Index 3: Parents communs
 | Résidence | 4 | Non |
 | Titre | 3 | Non |
 | Religion | 3 | Non |
-| **Total possible** | **190** | |
+| **Total possible** | **~190** | |
+
+*v2.2.5: Pondération dynamique selon la rareté du nom
+
+### Améliorations scoring v2.2.5
+
+#### Pondération dynamique des noms
+
+| Fréquence du nom | Points |
+|------------------|--------|
+| ≤3 occurrences (très rare) | 35 |
+| ≤10 occurrences (rare) | 32 |
+| ≤30 occurrences (normal) | 30 |
+| ≤100 occurrences (commun) | 25 |
+| >100 occurrences (très commun) | 20 |
+
+#### Bonus combinaison forte
+
+| Combinaison | Bonus |
+|-------------|-------|
+| Nom + Naissance + Lieu naissance | +15 pts |
+| Nom + Naissance | +8 pts |
+
+#### Malus incohérence
+
+| Situation | Malus |
+|-----------|-------|
+| Lieux naissance contradictoires | -10 pts |
 
 **Anti-faux-positifs** : Si seuls le nom et le sexe correspondent → REJET
 
@@ -475,4 +502,4 @@ Le Web Worker assure une interface réactive pendant tout le traitement.
 
 ---
 
-*Analyse mise à jour le 5 janvier 2026 - v2.2.4*
+*Analyse mise à jour le 10 janvier 2026 - v2.2.5*

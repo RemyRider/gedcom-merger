@@ -1,4 +1,4 @@
-# Architecture - GEDCOM Merger v2.2.4
+# Architecture - GEDCOM Merger v2.2.5
 
 ## Vue d'ensemble
 

@@ -85,13 +85,14 @@ const extractYear = (dateStr) => {
 };
 
 const getSuspicionLevel = (score, criteriaCount) => {
-  if ((score >= 90 && criteriaCount >= 5) || (score >= 80 && criteriaCount >= 3)) {
-    return { level: 'FORT', emoji: '🔴' };
+  // v2.2.5: Couleurs inversées - 🟢 FORT = feu vert pour fusionner
+  if ((score >= 90 && criteriaCount >= 5) || (score >= 85 && criteriaCount >= 4) || (score >= 80 && criteriaCount >= 3)) {
+    return { level: 'FORT', emoji: '🟢' };
   }
   if ((score >= 70 && criteriaCount >= 2) || (score >= 60 && criteriaCount >= 4)) {
     return { level: 'MOYEN', emoji: '🟡' };
   }
-  return { level: 'FAIBLE', emoji: '🟢' };
+  return { level: 'FAIBLE', emoji: '🔴' };
 };
 
 // ============================================================================
@@ -260,32 +261,91 @@ const parseGedcom = (content) => {
 // CALCUL DE SIMILARITÉ (identique à App.jsx)
 // ============================================================================
 
-const calculateSimilarity = (person1, person2, peopleById) => {
+// v2.2.5: Calcul des statistiques de noms pour pondération dynamique
+const calculateSurnameStats = (people) => {
+  const stats = {};
+  people.forEach(person => {
+    const name = person.names[0] || '';
+    const lastName = name.split('/')[1]?.toLowerCase()?.trim() || 
+                     name.split(' ').pop()?.replace(/\//g, '')?.toLowerCase() || '';
+    if (lastName) {
+      stats[lastName] = (stats[lastName] || 0) + 1;
+    }
+  });
+  return stats;
+};
+
+const calculateSimilarity = (person1, person2, peopleById, surnameStats = {}) => {
   const details = [];
   let matchScore = 0;
   let maxPossibleScore = 0;
   const sufficientCriteria = [];
   
+  // v2.2.5: Variables pour tracking des matchs (bonus combinaison)
+  let nameMatches = false;
+  let birthYearMatches = false;
+  let birthPlaceMatches = false;
+  let birthPlaceMismatch = false;
+  
   const name1 = person1.names[0]?.toLowerCase() || '';
   const name2 = person2.names[0]?.toLowerCase() || '';
   
-  let nameMatches = false;
+  // v2.2.5: Extraire le nom de famille pour pondération dynamique
+  const lastName1 = name1.split('/')[1]?.toLowerCase()?.trim() || 
+                    name1.split(' ').pop()?.replace(/\//g, '')?.toLowerCase() || '';
+  const lastName2 = name2.split('/')[1]?.toLowerCase()?.trim() || 
+                    name2.split(' ').pop()?.replace(/\//g, '')?.toLowerCase() || '';
+  
+  // v2.2.5: Pondération dynamique selon la rareté du nom
+  const getNameWeight = (surname) => {
+    const frequency = surnameStats[surname] || 0;
+    if (frequency <= 3) return 35;
+    if (frequency <= 10) return 32;
+    if (frequency <= 30) return 30;
+    if (frequency <= 100) return 25;
+    return 20;
+  };
+  
   if (name1 || name2) {
-    maxPossibleScore += 30;
+    const nameWeight = Math.max(getNameWeight(lastName1), getNameWeight(lastName2));
+    maxPossibleScore += nameWeight;
+    
     if (name1 && name2) {
       const firstName1 = normalizeFirstName(name1.split(' ')[0] || name1.split('/')[0]);
       const firstName2 = normalizeFirstName(name2.split(' ')[0] || name2.split('/')[0]);
-      const lastName1 = name1.split(' ').pop()?.replace(/\//g, '') || '';
-      const lastName2 = name2.split(' ').pop()?.replace(/\//g, '') || '';
+      const lastName1Clean = name1.split(' ').pop()?.replace(/\//g, '') || '';
+      const lastName2Clean = name2.split(' ').pop()?.replace(/\//g, '') || '';
       const s1 = soundex(firstName1), s2 = soundex(firstName2);
-      const ls1 = soundex(lastName1), ls2 = soundex(lastName2);
+      const ls1 = soundex(lastName1Clean), ls2 = soundex(lastName2Clean);
       
-      if (name1 === name2) { matchScore += 30; nameMatches = true; details.push('✓ Noms identiques (+30/30)'); }
-      else if (s1 === s2 && ls1 === ls2) { matchScore += 25; nameMatches = true; details.push('✓ Noms phonétiquement identiques (+25/30)'); }
-      else if (firstName1 === firstName2 && ls1 === ls2) { matchScore += 25; nameMatches = true; details.push('✓ Variante prénom reconnue (+25/30)'); }
-      else if (s1 === s2 || ls1 === ls2) { matchScore += 20; nameMatches = true; details.push('≈ Prénom ou nom similaire (+20/30)'); }
-      else if (name1.includes(name2) || name2.includes(name1)) { matchScore += 15; nameMatches = true; details.push('≈ Noms partiellement similaires (+15/30)'); }
-      else details.push('✗ Noms différents (0/30)');
+      const freqInfo = surnameStats[lastName1] ? ` (fréq: ${surnameStats[lastName1]})` : '';
+      
+      if (name1 === name2) { 
+        matchScore += nameWeight; 
+        nameMatches = true; 
+        details.push(`✓ Noms identiques (+${nameWeight}/${nameWeight})${freqInfo}`); 
+      }
+      else if (s1 === s2 && ls1 === ls2) { 
+        matchScore += Math.round(nameWeight * 0.85); 
+        nameMatches = true; 
+        details.push(`✓ Noms phonétiquement identiques (+${Math.round(nameWeight * 0.85)}/${nameWeight})${freqInfo}`); 
+      }
+      else if (firstName1 === firstName2 && ls1 === ls2) { 
+        matchScore += Math.round(nameWeight * 0.85); 
+        nameMatches = true; 
+        details.push(`✓ Variante prénom reconnue (+${Math.round(nameWeight * 0.85)}/${nameWeight})${freqInfo}`); 
+      }
+      else if (s1 === s2 || ls1 === ls2) { 
+        matchScore += Math.round(nameWeight * 0.65); 
+        nameMatches = true; 
+        details.push(`≈ Prénom ou nom similaire (+${Math.round(nameWeight * 0.65)}/${nameWeight})`); 
+      }
+      else if (name1.includes(name2) || name2.includes(name1)) { 
+        matchScore += Math.round(nameWeight * 0.5); 
+        nameMatches = true; 
+        details.push(`≈ Noms partiellement similaires (+${Math.round(nameWeight * 0.5)}/${nameWeight})`); 
+      }
+      else details.push(`✗ Noms différents (0/${nameWeight})`);
     }
   }
 
@@ -293,11 +353,26 @@ const calculateSimilarity = (person1, person2, peopleById) => {
     maxPossibleScore += 25;
     if (person1.birth && person2.birth) {
       const y1 = person1.birth.match(/\d{4}/), y2 = person2.birth.match(/\d{4}/);
-      if (person1.birth === person2.birth) { matchScore += 25; sufficientCriteria.push('naissance_exacte'); details.push('✓ Dates naissance identiques (+25/25)'); }
+      if (person1.birth === person2.birth) { 
+        matchScore += 25; 
+        birthYearMatches = true;
+        sufficientCriteria.push('naissance_exacte'); 
+        details.push('✓ Dates naissance identiques (+25/25)'); 
+      }
       else if (y1 && y2) {
         const diff = Math.abs(parseInt(y1[0]) - parseInt(y2[0]));
-        if (diff === 0) { matchScore += 20; sufficientCriteria.push('annee_naissance'); details.push('✓ Années naissance identiques (+20/25)'); }
-        else if (diff <= 2) { matchScore += 12; sufficientCriteria.push('annee_proche'); details.push('≈ Années naissance proches ±2 ans (+12/25)'); }
+        if (diff === 0) { 
+          matchScore += 20; 
+          birthYearMatches = true;
+          sufficientCriteria.push('annee_naissance'); 
+          details.push('✓ Années naissance identiques (+20/25)'); 
+        }
+        else if (diff <= 2) { 
+          matchScore += 12; 
+          birthYearMatches = true;
+          sufficientCriteria.push('annee_proche'); 
+          details.push('≈ Années naissance proches ±2 ans (+12/25)'); 
+        }
         else if (diff <= 5) { matchScore += 5; details.push('≈ Années naissance éloignées ±5 ans (+5/25)'); }
         else details.push('✗ Dates naissance trop éloignées (0/25)');
       }
@@ -349,9 +424,22 @@ const calculateSimilarity = (person1, person2, peopleById) => {
     const bp1 = normalizePlace(person1.birthPlace)?.toLowerCase();
     const bp2 = normalizePlace(person2.birthPlace)?.toLowerCase();
     if (bp1 && bp2) {
-      if (bp1 === bp2) { matchScore += 10; sufficientCriteria.push('lieu_naissance'); details.push('✓ Lieux naissance identiques (+10/10)'); }
-      else if (bp1.includes(bp2) || bp2.includes(bp1)) { matchScore += 5; sufficientCriteria.push('lieu_partiel'); details.push('≈ Lieux naissance similaires (+5/10)'); }
-      else details.push('✗ Lieux naissance différents (0/10)');
+      if (bp1 === bp2) { 
+        matchScore += 10; 
+        birthPlaceMatches = true;
+        sufficientCriteria.push('lieu_naissance'); 
+        details.push('✓ Lieux naissance identiques (+10/10)'); 
+      }
+      else if (bp1.includes(bp2) || bp2.includes(bp1)) { 
+        matchScore += 5; 
+        birthPlaceMatches = true;
+        sufficientCriteria.push('lieu_partiel'); 
+        details.push('≈ Lieux naissance similaires (+5/10)'); 
+      }
+      else { 
+        birthPlaceMismatch = true;
+        details.push('✗ Lieux naissance différents (0/10)'); 
+      }
     }
   }
 
@@ -501,6 +589,30 @@ const calculateSimilarity = (person1, person2, peopleById) => {
     }
   }
 
+  // ============================================================================
+  // v2.2.5: BONUS COMBINAISON FORTE
+  // ============================================================================
+  if (nameMatches && birthYearMatches && birthPlaceMatches) {
+    const bonus = 15;
+    matchScore += bonus;
+    maxPossibleScore += bonus;
+    details.push(`🎯 BONUS: Combinaison forte nom+naissance+lieu (+${bonus})`);
+  } else if (nameMatches && birthYearMatches) {
+    const bonus = 8;
+    matchScore += bonus;
+    maxPossibleScore += bonus;
+    details.push(`🎯 BONUS: Combinaison nom+naissance (+${bonus})`);
+  }
+
+  // ============================================================================
+  // v2.2.5: MALUS INCOHÉRENCES
+  // ============================================================================
+  if (birthPlaceMismatch && nameMatches) {
+    const malus = 10;
+    matchScore -= malus;
+    details.push(`⚠️ MALUS: Lieux naissance contradictoires (-${malus})`);
+  }
+
   const finalScore = maxPossibleScore > 0 ? Math.round((matchScore / maxPossibleScore) * 100) : 0;
   
   if (nameMatches && sufficientCriteria.length === 0) {
@@ -523,6 +635,9 @@ const findDuplicates = (people, progressCallback) => {
   // Index O(1) pour accès rapide par ID
   const peopleById = new Map();
   people.forEach(p => peopleById.set(p.id, p));
+  
+  // v2.2.5: Calculer les statistiques de noms pour pondération dynamique
+  const surnameStats = calculateSurnameStats(people);
   
   // Construction des index (identique à App.jsx)
   people.forEach(person => {
@@ -558,7 +673,8 @@ const findDuplicates = (people, progressCallback) => {
     if (person1.sex && person2.sex && person1.sex !== person2.sex) return;
     const y1 = person1.birth?.match(/\d{4}/)?.[0], y2 = person2.birth?.match(/\d{4}/)?.[0];
     if (y1 && y2 && Math.abs(parseInt(y1) - parseInt(y2)) > 10) return;
-    const sim = calculateSimilarity(person1, person2, peopleById);
+    // v2.2.5: Passer surnameStats à calculateSimilarity
+    const sim = calculateSimilarity(person1, person2, peopleById, surnameStats);
     if (sim.rejected) return;
     if (sim.score >= 80) {
       result.push({ person1, person2, similarity: Math.round(sim.score), details: sim.details, sufficientCriteria: sim.sufficientCriteria, id: pairKey });

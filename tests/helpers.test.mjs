@@ -203,40 +203,41 @@ describe('normalizePlaceFull', () => {
 // Tests getSuspicionLevel
 // ============================================================================
 describe('getSuspicionLevel', () => {
-  it('devrait retourner FORT pour score >= 90 et >= 5 critères', () => {
+  // v2.2.5: Couleurs inversées - 🟢 FORT = feu vert pour fusionner
+  it('devrait retourner FORT (🟢) pour score >= 90 et >= 5 critères', () => {
     const result = getSuspicionLevel(92, 5);
     expect(result.level).toBe('FORT');
-    expect(result.emoji).toBe('🔴');
+    expect(result.emoji).toBe('🟢');
   });
 
-  it('devrait retourner FORT pour score >= 80 et >= 3 critères', () => {
+  it('devrait retourner FORT (🟢) pour score >= 80 et >= 3 critères', () => {
     const result = getSuspicionLevel(85, 3);
     expect(result.level).toBe('FORT');
-    expect(result.emoji).toBe('🔴');
+    expect(result.emoji).toBe('🟢');
   });
 
-  it('devrait retourner MOYEN pour score >= 70 et >= 2 critères', () => {
+  it('devrait retourner MOYEN (🟡) pour score >= 70 et >= 2 critères', () => {
     const result = getSuspicionLevel(75, 2);
     expect(result.level).toBe('MOYEN');
     expect(result.emoji).toBe('🟡');
   });
 
-  it('devrait retourner MOYEN pour score >= 60 et >= 4 critères', () => {
+  it('devrait retourner MOYEN (🟡) pour score >= 60 et >= 4 critères', () => {
     const result = getSuspicionLevel(65, 4);
     expect(result.level).toBe('MOYEN');
     expect(result.emoji).toBe('🟡');
   });
 
-  it('devrait retourner FAIBLE pour score bas', () => {
+  it('devrait retourner FAIBLE (🔴) pour score bas', () => {
     const result = getSuspicionLevel(50, 2);
     expect(result.level).toBe('FAIBLE');
-    expect(result.emoji).toBe('🟢');
+    expect(result.emoji).toBe('🔴');
   });
 
-  it('devrait retourner FAIBLE pour peu de critères', () => {
+  it('devrait retourner FAIBLE (🔴) pour peu de critères', () => {
     const result = getSuspicionLevel(90, 1);
     expect(result.level).toBe('FAIBLE');
-    expect(result.emoji).toBe('🟢');
+    expect(result.emoji).toBe('🔴');
   });
 });
 

@@ -2,6 +2,31 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [v2.2.5] - 10 janvier 2026
+
+### 🎯 Thème : Scoring doublons amélioré
+
+### ✨ Améliorations majeures
+- **Couleurs inversées** : 🟢 FORT (feu vert pour fusionner), 🟡 MOYEN (vérifier), 🔴 FAIBLE (prudence)
+- **Pondération dynamique des noms** : Les noms rares valent plus de points que les noms communs
+  - Nom très rare (≤3 occurrences) : 35 points
+  - Nom rare (≤10) : 32 points
+  - Nom normal (≤30) : 30 points
+  - Nom commun (≤100) : 25 points
+  - Nom très commun (>100) : 20 points
+- **Bonus combinaison forte** : 
+  - +15 pts si nom + année naissance + lieu naissance concordent
+  - +8 pts si nom + année naissance concordent
+- **Malus incohérence** : -10 pts si les deux personnes ont des lieux de naissance contradictoires
+
+### 🔧 Technique
+- Nouvelle fonction `calculateSurnameStats()` pour calculer la fréquence des noms
+- `calculateSimilarity()` accepte maintenant `surnameStats` en paramètre
+- Web Worker synchronisé avec les mêmes améliorations de scoring
+- Tests mis à jour pour les nouvelles couleurs
+
+---
+
 ## [v2.2.4] - 5 janvier 2026
 
 ### 🎯 Thème : Correction fusion en cascade - CORRECTION MAJEURE

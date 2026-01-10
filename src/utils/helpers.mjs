@@ -105,15 +105,23 @@ export const normalizePlaceFull = (place) => {
  * @param {number} score - Score de similarité (0-100)
  * @param {number} criteriaCount - Nombre de critères correspondants
  * @returns {object} - { level: 'FORT'|'MOYEN'|'FAIBLE', emoji: string }
+ * 
+ * v2.2.5: Couleurs inversées pour plus de logique
+ * 🟢 FORT = haute probabilité = feu vert pour fusionner
+ * 🟡 MOYEN = à vérifier
+ * 🔴 FAIBLE = prudence requise
  */
 export const getSuspicionLevel = (score, criteriaCount) => {
-  if ((score >= 90 && criteriaCount >= 5) || (score >= 80 && criteriaCount >= 3)) {
-    return { level: 'FORT', emoji: '🔴' };
+  // 🟢 FORT - Doublon quasi-certain, feu vert pour fusionner
+  if ((score >= 90 && criteriaCount >= 5) || (score >= 85 && criteriaCount >= 4) || (score >= 80 && criteriaCount >= 3)) {
+    return { level: 'FORT', emoji: '🟢' };
   }
+  // 🟡 MOYEN - Doublon probable, vérifier avant fusion
   if ((score >= 70 && criteriaCount >= 2) || (score >= 60 && criteriaCount >= 4)) {
     return { level: 'MOYEN', emoji: '🟡' };
   }
-  return { level: 'FAIBLE', emoji: '🟢' };
+  // 🔴 FAIBLE - Doublon possible, prudence requise
+  return { level: 'FAIBLE', emoji: '🔴' };
 };
 
 // ============================================================================

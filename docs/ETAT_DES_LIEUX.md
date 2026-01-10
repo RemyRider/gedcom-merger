@@ -1,13 +1,13 @@
 # État des Lieux - GEDCOM Merger
 
-> **Version actuelle** : v2.2.4 (5 janvier 2026)  
+> **Version actuelle** : v2.2.5 (10 janvier 2026)  
 > **Repository** : https://github.com/RemyRider/gedcom-merger  
 > **Production** : https://gedcom-merger.netlify.app  
 > **Développement** : https://dev--gedcom-merger.netlify.app
 
 ---
 
-## 🎯 Résumé v2.2.4
+## 🎯 Résumé v2.2.5
 
 | Métrique | Valeur |
 |----------|--------|
@@ -45,6 +45,15 @@
 | **Isolation doublons/clusters** | v2.2.3 | Sélections complètement indépendantes |
 | **Fusion en cascade** | v2.2.4 | A→B→C résolu en A→C (clusters N individus) |
 | **Redirection références** | v2.2.4 | HUSB/WIFE/CHIL redirigés via mergeMap |
+
+### Scoring amélioré (v2.2.5)
+
+| Fonctionnalité | Version | Description |
+|----------------|---------|-------------|
+| **Couleurs inversées** | v2.2.5 | 🟢 FORT (feu vert), 🟡 MOYEN, 🔴 FAIBLE (prudence) |
+| **Pondération noms rares** | v2.2.5 | Noms rares = +35 pts, très communs = 20 pts |
+| **Bonus combinaison** | v2.2.5 | +15 pts si nom+naissance+lieu, +8 pts si nom+naissance |
+| **Malus incohérence** | v2.2.5 | -10 pts si lieux naissance contradictoires |
 
 ### Interface utilisateur
 
@@ -277,6 +286,7 @@ gedcom-merger/
 | **v2.2.2** | 04/01/2026 | 🐛 Fix | Corrections UI clusters, dates précises |
 | **v2.2.3** | 04/01/2026 | 🐛 Fix | Isolation doublons/clusters |
 | **v2.2.4** | 05/01/2026 | 🐛 Fix | **Fusion cascade, redirection références** |
+| **v2.2.5** | 10/01/2026 | ✨ Feature | **Scoring amélioré, couleurs inversées, pondération noms** |
 
 ---
 
@@ -365,4 +375,4 @@ git push origin main
 
 ---
 
-*Document mis à jour le 5 janvier 2026 - v2.2.4*
+*Document mis à jour le 10 janvier 2026 - v2.2.5*

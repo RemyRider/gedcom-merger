@@ -71,7 +71,7 @@ Version axée sur la **gestion intelligente des conflits** et l'**intégrité de
 
 ---
 
-### ✅ PHASE 2 - TERMINÉE (v2.2.2 → v2.2.4)
+### ✅ PHASE 2 - TERMINÉE (v2.2.2 → v2.2.5)
 
 #### 4. Corrections bugs interface ✅
 **Statut** : Implémenté v2.2.2
@@ -89,7 +89,7 @@ Version axée sur la **gestion intelligente des conflits** et l'**intégrité de
 - Sélections complètement indépendantes
 
 #### 6. Fusion en cascade ✅ 🎉
-**Statut** : Implémenté v2.2.4
+**Statut** : Implémenté v2.2.5
 
 **Problème résolu** : Quand A→B et B→C, les références vers A pointaient vers B (supprimé) au lieu de C.
 
@@ -109,7 +109,7 @@ while (chainsResolved && iterations < maxIterations) {
 **Résultat** : Support complet des clusters de N individus.
 
 #### 7. Redirection des références HUSB/WIFE/CHIL ✅
-**Statut** : Implémenté v2.2.4
+**Statut** : Implémenté v2.2.5
 
 **Problème résolu** : Les références vers les personnes fusionnées étaient supprimées au lieu d'être redirigées.
 
@@ -156,8 +156,8 @@ Analyser uniquement les personnes d'un patronyme donné.
 | 3 | Nettoyage FAM orphelines | v2.2.1 | 🔴 P1 | ✅ Fait |
 | 4 | Corrections bugs interface | v2.2.2 | 🔴 P1 | ✅ Fait |
 | 5 | Isolation doublons/clusters | v2.2.3 | 🔴 P1 | ✅ Fait |
-| 6 | Fusion en cascade | v2.2.4 | 🟡 P2 | ✅ Fait |
-| 7 | Redirection références | v2.2.4 | 🟡 P2 | ✅ Fait |
+| 6 | Fusion en cascade | v2.2.5 | 🟡 P2 | ✅ Fait |
+| 7 | Redirection références | v2.2.5 | 🟡 P2 | ✅ Fait |
 | 8 | Export CSV | - | 🟡 P2 | 📋 À faire |
 | 9 | Export JSON | - | 🟡 P2 | 📋 À faire |
 | 10 | Filtre patronyme | - | 🟢 P3 | 📋 À faire |
@@ -171,7 +171,7 @@ Analyser uniquement les personnes d'un patronyme donné.
 | v2.1.4 | 393 | 108 | 501 |
 | v2.2.0 | 417 | 135 | 552 |
 | v2.2.2 | 429 | 159 | 588 |
-| **v2.2.4** | **429** | **164** | **593** |
+| **v2.2.5** | **429** | **164** | **593** |
 
 ---
 

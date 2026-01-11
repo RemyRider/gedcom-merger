@@ -1543,19 +1543,20 @@ const GedcomDuplicateMerger = () => {
   };
 
   // v2.2.6 - Téléchargement du fichier GEDCOM avec lieux normalisés
-  const downloadNormalizedFile = (updatedPeopleArg) => {
+  // Utilise les rawLines mises à jour pour préserver toutes les données GEDCOM
+  const downloadNormalizedFile = () => {
     if (!originalGedcom) {
       alert('Erreur : fichier GEDCOM original non disponible');
       return;
     }
     
-    // Utiliser les personnes passées en argument ou l'état actuel
-    const peopleToUse = updatedPeopleArg || individuals;
+    // Utiliser l'état actuel des individuals (avec rawLines mises à jour)
+    const peopleToUse = individuals;
     
     // Créer une map ID -> rawLines mises à jour
     const updatedRawLinesMap = new Map();
     peopleToUse.forEach(person => {
-      if (person.rawLines) {
+      if (person.rawLines && person.rawLines.length > 0) {
         updatedRawLinesMap.set(person.id, person.rawLines);
       }
     });
@@ -1580,7 +1581,7 @@ const GedcomDuplicateMerger = () => {
           const match = trimmed.match(/@([^@]+)@/);
           if (match && updatedRawLinesMap.has(match[1])) {
             currentIndiId = match[1];
-            // Insérer les rawLines mises à jour
+            // Insérer les rawLines mises à jour (qui contiennent TOUTES les données)
             const updatedLines = updatedRawLinesMap.get(currentIndiId);
             updatedLines.forEach(rawLine => outputLines.push(rawLine));
             skipCurrentIndi = true;
@@ -1589,7 +1590,7 @@ const GedcomDuplicateMerger = () => {
         }
       }
       
-      // Sauter les lignes du bloc INDI qu'on a remplacé
+      // Sauter les lignes du bloc INDI original qu'on a remplacé par les rawLines
       if (skipCurrentIndi) {
         continue;
       }
@@ -3384,7 +3385,20 @@ const GedcomDuplicateMerger = () => {
                 )}
               </div>
               <div className="flex flex-col gap-3">
-                <button onClick={downloadCleanedFile} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex items-center justify-center gap-2"><Download className="w-5 h-5" />Télécharger le fichier nettoyé</button>
+                <button 
+                  onClick={() => {
+                    // Choisir la bonne fonction selon le type de traitement
+                    if (validationResults.normalizedPlaces > 0 && validationResults.mergedCount === 0 && validationResults.deletedCount === 0) {
+                      downloadNormalizedFile();
+                    } else {
+                      downloadCleanedFile();
+                    }
+                  }} 
+                  className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex items-center justify-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Télécharger le fichier {validationResults.normalizedPlaces > 0 && validationResults.mergedCount === 0 ? 'normalisé' : 'nettoyé'}
+                </button>
                 <button onClick={resetAll} className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Traiter un autre fichier</button>
               </div>
             </div>

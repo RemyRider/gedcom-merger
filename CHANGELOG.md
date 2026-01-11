@@ -2,9 +2,9 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [v2.2.6] - 11 janvier 2026
+## [v2.2.6] - 11 janvier 2026 ✅ SANCTUARISÉE
 
-### 🎯 Thème : Outil de normalisation des lieux
+### 🎯 Thème : Outil de normalisation des lieux + Conflits relationnels
 
 ### ✨ Nouvelles fonctionnalités
 - **Modal de normalisation des lieux** : Interface complète pour corriger les variantes

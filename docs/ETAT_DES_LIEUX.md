@@ -1,6 +1,6 @@
 # État des Lieux - GEDCOM Merger
 
-> **Version actuelle** : v2.2.6 (10 janvier 2026)  
+> **Version actuelle : **v2.2.6 SANCTUARISÉE** (11 janvier 2026)
 > **Repository** : https://github.com/RemyRider/gedcom-merger  
 > **Production** : https://gedcom-merger.netlify.app  
 > **Développement** : https://dev--gedcom-merger.netlify.app

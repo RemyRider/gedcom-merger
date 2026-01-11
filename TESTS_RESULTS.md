@@ -9,7 +9,7 @@
 
 ═══════════════════════════════════════════════════════════════════════════════
                       SUITE DE TESTS GEDCOM MERGER v2.2.6
-                         476 TESTS STATIQUES AU TOTAL
+                         482 TESTS STATIQUES AU TOTAL
 ═══════════════════════════════════════════════════════════════════════════════
 
 ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -598,7 +598,7 @@
   ✅ App: création du Worker
 
 ═══════════════════════════════════════════════════════════════════════════════
-║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (30 tests)             ║
+║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (36 tests)             ║
 ═══════════════════════════════════════════════════════════════════════════════
 
 📦 États React pour conflits
@@ -650,6 +650,14 @@
   ✅ Rapport FAM orphelines
   ✅ Set des FAM à supprimer
   ✅ Filtrage FAM orphelines
+
+📦 Conflits relationnels v2.2.6
+  ✅ Conflit sur parents
+  ✅ Conflit sur conjoints
+  ✅ Conflit sur enfants
+  ✅ Valeurs brutes pour tableaux
+  ✅ Option fusionner les deux
+  ✅ Texte option fusionner
 
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (47 tests)       ║
@@ -721,10 +729,10 @@
                               RÉSUMÉ FINAL
 ═══════════════════════════════════════════════════════════════════════════════
 
-  📊 Tests exécutés: 476
-  ✅ Réussis: 476
+  📊 Tests exécutés: 482
+  ✅ Réussis: 482
   ❌ Échoués: 0
-  📋 Attendus: 476
+  📋 Attendus: 482
 
   📁 CATÉGORIES:
      1. Fondamentaux ............ 61 tests
@@ -735,10 +743,10 @@
      6. Suggestions IA .......... 18 tests
      7. Config & déploiement .... 39 tests
      8. Qualité & analyses v2.1.x 68 tests
-     9. Conflits v2.2.0 ......... 30 tests
+     9. Conflits v2.2.0 ......... 36 tests
     10. Scoring/Normalisation ... 47 tests
 
-  🎉 SUCCÈS TOTAL: 476/476 tests passés (100%)
+  🎉 SUCCÈS TOTAL: 482/482 tests passés (100%)
 
   ✅ Version 2.2.6 validée (tests statiques)
 
@@ -750,13 +758,13 @@
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/helpers.test.mjs  (69 tests) 16ms
  ✓ tests/stats.test.mjs  (31 tests) 15ms
- ✓ tests/conflicts.test.mjs  (56 tests) 17ms
- ✓ tests/parser.test.mjs  (30 tests) 13ms
+ ✓ tests/helpers.test.mjs  (69 tests) 17ms
+ ✓ tests/conflicts.test.mjs  (63 tests) 22ms
+ ✓ tests/parser.test.mjs  (30 tests) 14ms
 
  Test Files  4 passed (4)
-      Tests  186 passed (186)
-   Start at  11:26:22
-   Duration  2.16s (transform 151ms, setup 0ms, collect 299ms, tests 61ms, environment 1ms, prepare 3.27s)
+      Tests  193 passed (193)
+   Start at  14:46:48
+   Duration  2.44s (transform 167ms, setup 0ms, collect 316ms, tests 68ms, environment 1ms, prepare 3.58s)
 

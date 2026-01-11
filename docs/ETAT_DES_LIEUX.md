@@ -11,7 +11,7 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| **Tests totaux** | 645 (476 statiques + 186 Vitest) |
+| **Tests totaux** | 645 (482 statiques + 193 Vitest) |
 | **Critères de comparaison** | 18 |
 | **Champs affichés** | 16 |
 | **Catégories de tests** | 9 |
@@ -112,7 +112,7 @@
 
 | Fonctionnalité | Version | Description |
 |----------------|---------|-------------|
-| **Suite 662 tests** | v2.2.6 | 476 statiques + 186 Vitest |
+| **Suite 675 tests** | v2.2.6 | 482 statiques + 193 Vitest |
 | Tests automatiques Netlify | v1.9.3 | Exécution avant chaque build |
 | **Tests Vitest** | v2.1.3 | helpers, parser, stats, conflicts |
 | **10 catégories** | v2.2.6 | Couverture complète |
@@ -247,10 +247,10 @@ gedcom-merger/
 | 6 | Suggestions IA | 18 | generateAiSuggestions |
 | 7 | Config & déploiement | 39 | Netlify, package.json |
 | 8 | Qualité & analyses v2.1.x | 68 | Rapport, chrono, stats, Worker |
-| 9 | Conflits v2.2.x | 30 | Détection, résolution, nettoyage |
+| 9 | Conflits v2.2.x | 36 | Détection, résolution, nettoyage, relationnels |
 | 10 | Scoring/Normalisation | 47 | v2.2.5 couleurs, v2.2.6 API Géo + rawLines |
 | | **Vitest** | +181 | helpers, parser, stats, conflicts |
-| | **TOTAL** | **662** | |
+| | **TOTAL** | **675** | |
 
 ---
 

@@ -196,6 +196,13 @@ export const CONFLICT_FIELDS = [
   { key: 'religion', label: 'Religion', type: 'text' },
 ];
 
+// v2.2.6: Champs tableau pour conflits relationnels
+export const CONFLICT_ARRAY_FIELDS = [
+  { key: 'parents', label: 'Parents', type: 'parents' },
+  { key: 'spouses', label: 'Conjoints', type: 'spouses' },
+  { key: 'children', label: 'Enfants', type: 'children' },
+];
+
 /**
  * Détecte les conflits entre deux personnes avant fusion
  * @param {object} person1 - Première personne
@@ -205,6 +212,7 @@ export const CONFLICT_FIELDS = [
 export const detectMergeConflicts = (person1, person2) => {
   const conflicts = [];
   
+  // Conflits sur champs simples
   CONFLICT_FIELDS.forEach(({ key, label, type }) => {
     const v1 = person1[key];
     const v2 = person2[key];
@@ -225,6 +233,39 @@ export const detectMergeConflicts = (person1, person2) => {
         chosenValue: null,
         chosenSource: null
       });
+    }
+  });
+  
+  // v2.2.6: Conflits sur champs tableau (parents, conjoints, enfants)
+  CONFLICT_ARRAY_FIELDS.forEach(({ key, label, type }) => {
+    const arr1 = person1[key] || [];
+    const arr2 = person2[key] || [];
+    
+    if (arr1.length > 0 && arr2.length > 0) {
+      const set1 = new Set(arr1);
+      const set2 = new Set(arr2);
+      const uniqueToP1 = arr1.filter(x => !set2.has(x));
+      const uniqueToP2 = arr2.filter(x => !set1.has(x));
+      
+      // Conflit si des éléments exclusifs existent des deux côtés
+      if (uniqueToP1.length > 0 && uniqueToP2.length > 0) {
+        conflicts.push({
+          field: key,
+          label,
+          type,
+          value1: arr1.join(', '),
+          value2: arr2.join(', '),
+          rawValue1: arr1,
+          rawValue2: arr2,
+          person1Id: person1.id,
+          person2Id: person2.id,
+          person1Name: person1.names?.[0] || person1.id,
+          person2Name: person2.names?.[0] || person2.id,
+          resolved: false,
+          chosenValue: null,
+          chosenSource: null
+        });
+      }
     }
   });
   

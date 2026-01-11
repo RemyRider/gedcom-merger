@@ -2168,6 +2168,114 @@ const GedcomDuplicateMerger = () => {
       }
     });
     
+    // v2.2.6: Conflit sur les parents
+    if (person1.parents.length > 0 && person2.parents.length > 0) {
+      // Vérifier si les parents sont différents
+      const parents1Set = new Set(person1.parents);
+      const parents2Set = new Set(person2.parents);
+      const sameParents = person1.parents.length === person2.parents.length && 
+                          person1.parents.every(p => parents2Set.has(p));
+      
+      if (!sameParents) {
+        // Trouver les noms des parents pour l'affichage
+        const getParentNames = (parentIds) => {
+          return parentIds.map(id => {
+            const parent = individuals.find(p => p.id === id);
+            return parent ? (parent.names[0] || id) : id;
+          }).join(' + ');
+        };
+        
+        conflicts.push({
+          field: 'parents',
+          label: 'Parents',
+          type: 'parents',
+          value1: getParentNames(person1.parents),
+          value2: getParentNames(person2.parents),
+          rawValue1: person1.parents,
+          rawValue2: person2.parents,
+          person1Id: person1.id,
+          person2Id: person2.id,
+          person1Name: person1.names[0] || person1.id,
+          person2Name: person2.names[0] || person2.id,
+          resolved: false,
+          chosenValue: null,
+          chosenSource: null
+        });
+      }
+    }
+    
+    // v2.2.6: Conflit sur les conjoints
+    if (person1.spouses.length > 0 && person2.spouses.length > 0) {
+      const spouses1Set = new Set(person1.spouses);
+      const spouses2Set = new Set(person2.spouses);
+      // Vérifier s'il y a des conjoints exclusifs (pas en commun)
+      const uniqueToP1 = person1.spouses.filter(s => !spouses2Set.has(s));
+      const uniqueToP2 = person2.spouses.filter(s => !spouses1Set.has(s));
+      
+      if (uniqueToP1.length > 0 && uniqueToP2.length > 0) {
+        // Il y a des conjoints différents des deux côtés
+        const getSpouseNames = (spouseIds) => {
+          return spouseIds.map(id => {
+            const spouse = individuals.find(p => p.id === id);
+            return spouse ? (spouse.names[0] || id) : id;
+          }).join(', ');
+        };
+        
+        conflicts.push({
+          field: 'spouses',
+          label: 'Conjoints',
+          type: 'spouses',
+          value1: getSpouseNames(person1.spouses),
+          value2: getSpouseNames(person2.spouses),
+          rawValue1: person1.spouses,
+          rawValue2: person2.spouses,
+          person1Id: person1.id,
+          person2Id: person2.id,
+          person1Name: person1.names[0] || person1.id,
+          person2Name: person2.names[0] || person2.id,
+          resolved: false,
+          chosenValue: null,
+          chosenSource: null
+        });
+      }
+    }
+    
+    // v2.2.6: Conflit sur les enfants
+    if (person1.children.length > 0 && person2.children.length > 0) {
+      const children1Set = new Set(person1.children);
+      const children2Set = new Set(person2.children);
+      // Vérifier si les enfants sont différents
+      const uniqueToP1 = person1.children.filter(c => !children2Set.has(c));
+      const uniqueToP2 = person2.children.filter(c => !children1Set.has(c));
+      
+      if (uniqueToP1.length > 0 && uniqueToP2.length > 0) {
+        // Il y a des enfants différents des deux côtés
+        const getChildrenNames = (childIds) => {
+          return childIds.map(id => {
+            const child = individuals.find(p => p.id === id);
+            return child ? (child.names[0] || id) : id;
+          }).join(', ');
+        };
+        
+        conflicts.push({
+          field: 'children',
+          label: 'Enfants',
+          type: 'children',
+          value1: getChildrenNames(person1.children),
+          value2: getChildrenNames(person2.children),
+          rawValue1: person1.children,
+          rawValue2: person2.children,
+          person1Id: person1.id,
+          person2Id: person2.id,
+          person1Name: person1.names[0] || person1.id,
+          person2Name: person2.names[0] || person2.id,
+          resolved: false,
+          chosenValue: null,
+          chosenSource: null
+        });
+      }
+    }
+    
     return conflicts;
   };
 
@@ -3533,7 +3641,7 @@ const GedcomDuplicateMerger = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <button
-                      onClick={() => resolveConflict(idx, conflict.value1, 'person1')}
+                      onClick={() => resolveConflict(idx, conflict.rawValue1 || conflict.value1, 'person1')}
                       className={`p-3 rounded-lg border-2 text-left transition-all ${
                         conflict.chosenSource === 'person1' 
                           ? 'border-emerald-500 bg-emerald-100 ring-2 ring-emerald-300' 
@@ -3550,7 +3658,7 @@ const GedcomDuplicateMerger = () => {
                     </button>
                     
                     <button
-                      onClick={() => resolveConflict(idx, conflict.value2, 'person2')}
+                      onClick={() => resolveConflict(idx, conflict.rawValue2 || conflict.value2, 'person2')}
                       className={`p-3 rounded-lg border-2 text-left transition-all ${
                         conflict.chosenSource === 'person2' 
                           ? 'border-emerald-500 bg-emerald-100 ring-2 ring-emerald-300' 
@@ -3567,25 +3675,51 @@ const GedcomDuplicateMerger = () => {
                     </button>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Ou saisissez une valeur manuellement..."
-                      className={`flex-1 px-3 py-2 border rounded-lg text-sm ${
-                        conflict.chosenSource === 'manual' ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-gray-300'
+                  {/* Option fusionner pour parents/conjoints/enfants */}
+                  {(conflict.type === 'parents' || conflict.type === 'spouses' || conflict.type === 'children') && (
+                    <button
+                      onClick={() => {
+                        const merged = [...new Set([...(conflict.rawValue1 || []), ...(conflict.rawValue2 || [])])];
+                        resolveConflict(idx, merged, 'merged');
+                      }}
+                      className={`w-full p-3 rounded-lg border-2 text-left transition-all mb-3 ${
+                        conflict.chosenSource === 'merged' 
+                          ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-300' 
+                          : 'border-blue-200 bg-blue-50 hover:border-blue-400'
                       }`}
-                      onFocus={(e) => {
-                        if (e.target.value) {
-                          resolveConflict(idx, e.target.value, 'manual');
-                        }
-                      }}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          resolveConflict(idx, e.target.value, 'manual');
-                        }
-                      }}
-                    />
-                  </div>
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-4 h-4 rounded-full border-2 ${conflict.chosenSource === 'merged' ? 'bg-blue-500 border-blue-500' : 'border-blue-400'}`}>
+                          {conflict.chosenSource === 'merged' && <div className="w-full h-full flex items-center justify-center text-white text-xs">✓</div>}
+                        </div>
+                        <span className="text-sm font-medium text-blue-700">🔀 Fusionner les deux (garder tous)</span>
+                      </div>
+                      <p className="text-sm text-blue-600">{conflict.value1} + {conflict.value2}</p>
+                    </button>
+                  )}
+                  
+                  {/* Saisie manuelle uniquement pour les types simples */}
+                  {conflict.type !== 'parents' && conflict.type !== 'spouses' && conflict.type !== 'children' && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Ou saisissez une valeur manuellement..."
+                        className={`flex-1 px-3 py-2 border rounded-lg text-sm ${
+                          conflict.chosenSource === 'manual' ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-gray-300'
+                        }`}
+                        onFocus={(e) => {
+                          if (e.target.value) {
+                            resolveConflict(idx, e.target.value, 'manual');
+                          }
+                        }}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            resolveConflict(idx, e.target.value, 'manual');
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -3670,9 +3804,12 @@ const GedcomDuplicateMerger = () => {
                         )}
                       </div>
                       {placeNormSelections[idx] && (
-                        <span className="text-green-600 text-sm font-medium flex items-center gap-1">
-                          ✓ Sélectionné
-                        </span>
+                        <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-lg">
+                          <span className="text-green-600 text-sm font-medium">✓</span>
+                          <span className="text-sm text-green-800 font-medium max-w-md" title={placeNormSelections[idx]}>
+                            {placeNormSelections[idx]}
+                          </span>
+                        </div>
                       )}
                     </div>
                     

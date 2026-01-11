@@ -36,6 +36,13 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 ### 🐛 Corrections
 - Correction bug "people is not defined" → utilise `individuals` correctement
 - Correction téléchargement écran récapitulatif → utilise `downloadNormalizedFile()` avec rawLines
+- **Affichage libellé sélectionné** : le lieu choisi est maintenant affiché clairement dans un badge vert
+
+### 🆕 Gestion des conflits relationnels
+- **Détection des conflits sur les parents** : si les deux personnes ont des parents différents
+- **Détection des conflits sur les conjoints** : si les deux personnes ont des conjoints exclusifs
+- **Détection des conflits sur les enfants** : si les deux personnes ont des enfants différents
+- **Option "Fusionner les deux"** : conserve tous les éléments des deux personnes
 
 ---
 

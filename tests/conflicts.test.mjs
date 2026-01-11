@@ -9,7 +9,8 @@ import {
   detectMergeConflicts,
   cleanOrphanedFamilies,
   isApproximateDate,
-  CONFLICT_FIELDS
+  CONFLICT_FIELDS,
+  CONFLICT_ARRAY_FIELDS
 } from '../src/utils/helpers.mjs';
 
 // ============================================================================
@@ -439,5 +440,83 @@ describe('cleanOrphanedFamilies', () => {
     
     expect(cleanedFamilies.size).toBe(0);
     expect(orphanReport.removed).toHaveLength(1);
+  });
+});
+
+// ============================================================================
+// Tests v2.2.6 - Conflits sur champs tableau (parents, conjoints, enfants)
+// ============================================================================
+describe('Conflits sur champs tableau v2.2.6', () => {
+  it('devrait détecter un conflit sur les parents différents', () => {
+    const p1 = { id: 'I1', names: ['Jean'], parents: ['I10', 'I11'] };
+    const p2 = { id: 'I2', names: ['Jean'], parents: ['I20', 'I21'] };
+    
+    const conflicts = detectMergeConflicts(p1, p2);
+    const parentsConflict = conflicts.find(c => c.field === 'parents');
+    
+    expect(parentsConflict).toBeDefined();
+    expect(parentsConflict.type).toBe('parents');
+    expect(parentsConflict.rawValue1).toEqual(['I10', 'I11']);
+    expect(parentsConflict.rawValue2).toEqual(['I20', 'I21']);
+  });
+
+  it('ne devrait pas détecter de conflit si parents identiques', () => {
+    const p1 = { id: 'I1', names: ['Jean'], parents: ['I10', 'I11'] };
+    const p2 = { id: 'I2', names: ['Jean'], parents: ['I10', 'I11'] };
+    
+    const conflicts = detectMergeConflicts(p1, p2);
+    const parentsConflict = conflicts.find(c => c.field === 'parents');
+    
+    expect(parentsConflict).toBeUndefined();
+  });
+
+  it('ne devrait pas détecter de conflit si un seul a des parents', () => {
+    const p1 = { id: 'I1', names: ['Jean'], parents: ['I10', 'I11'] };
+    const p2 = { id: 'I2', names: ['Jean'], parents: [] };
+    
+    const conflicts = detectMergeConflicts(p1, p2);
+    const parentsConflict = conflicts.find(c => c.field === 'parents');
+    
+    expect(parentsConflict).toBeUndefined();
+  });
+
+  it('devrait détecter un conflit sur les conjoints différents', () => {
+    const p1 = { id: 'I1', names: ['Jean'], spouses: ['I50'] };
+    const p2 = { id: 'I2', names: ['Jean'], spouses: ['I60'] };
+    
+    const conflicts = detectMergeConflicts(p1, p2);
+    const spousesConflict = conflicts.find(c => c.field === 'spouses');
+    
+    expect(spousesConflict).toBeDefined();
+    expect(spousesConflict.type).toBe('spouses');
+  });
+
+  it('ne devrait pas détecter de conflit si conjoints partiellement communs', () => {
+    const p1 = { id: 'I1', names: ['Jean'], spouses: ['I50', 'I60'] };
+    const p2 = { id: 'I2', names: ['Jean'], spouses: ['I50'] };
+    
+    const conflicts = detectMergeConflicts(p1, p2);
+    const spousesConflict = conflicts.find(c => c.field === 'spouses');
+    
+    // Pas de conflit car p2 n'a pas d'élément unique
+    expect(spousesConflict).toBeUndefined();
+  });
+
+  it('devrait détecter un conflit sur les enfants différents', () => {
+    const p1 = { id: 'I1', names: ['Jean'], children: ['I100', 'I101'] };
+    const p2 = { id: 'I2', names: ['Jean'], children: ['I200', 'I201'] };
+    
+    const conflicts = detectMergeConflicts(p1, p2);
+    const childrenConflict = conflicts.find(c => c.field === 'children');
+    
+    expect(childrenConflict).toBeDefined();
+    expect(childrenConflict.type).toBe('children');
+    expect(childrenConflict.rawValue1).toEqual(['I100', 'I101']);
+    expect(childrenConflict.rawValue2).toEqual(['I200', 'I201']);
+  });
+
+  it('devrait avoir CONFLICT_ARRAY_FIELDS avec 3 champs', () => {
+    expect(CONFLICT_ARRAY_FIELDS).toHaveLength(3);
+    expect(CONFLICT_ARRAY_FIELDS.map(f => f.key)).toEqual(['parents', 'spouses', 'children']);
   });
 });

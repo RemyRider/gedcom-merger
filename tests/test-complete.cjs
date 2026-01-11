@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUITE DE TESTS GEDCOM MERGER v2.2.6
-// 476 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// 482 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -35,7 +35,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                      SUITE DE TESTS GEDCOM MERGER v2.2.6');
-console.log('                         476 TESTS STATIQUES AU TOTAL');
+console.log('                         482 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -748,10 +748,10 @@ check(appCode.includes("new Worker('/gedcom-worker.js"), 'App: création du Work
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (30 tests)              ║
+// ║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (36 tests)              ║
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (30 tests)             ║');
+console.log('║              CATÉGORIE 9: GESTION DES CONFLITS v2.2.0 (36 tests)             ║');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -817,6 +817,16 @@ check(appCode.includes('cleanOrphanedFamilies'), 'Fonction cleanOrphanedFamilies
 check(appCode.includes('orphanReport'), 'Rapport FAM orphelines');
 check(appCode.includes('familiesToRemove'), 'Set des FAM à supprimer');
 check(appCode.includes("familiesToRemove.has(currentBlockId)"), 'Filtrage FAM orphelines');
+console.log('');
+
+// Tests v2.2.6: Conflits sur parents/conjoints/enfants
+console.log('📦 Conflits relationnels v2.2.6');
+check(appCode.includes("field: 'parents'") || appCode.includes("type: 'parents'"), 'Conflit sur parents');
+check(appCode.includes("field: 'spouses'") || appCode.includes("type: 'spouses'"), 'Conflit sur conjoints');
+check(appCode.includes("field: 'children'") || appCode.includes("type: 'children'"), 'Conflit sur enfants');
+check(appCode.includes('rawValue1') && appCode.includes('rawValue2'), 'Valeurs brutes pour tableaux');
+check(appCode.includes("chosenSource === 'merged'"), 'Option fusionner les deux');
+check(appCode.includes('Fusionner les deux'), 'Texte option fusionner');
 console.log('');
 
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -912,7 +922,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 476;
+const expectedTotal = 482;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -929,7 +939,7 @@ console.log('     5. Interface utilisateur ... 79 tests');
 console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
-console.log('     9. Conflits v2.2.0 ......... 30 tests');
+console.log('     9. Conflits v2.2.0 ......... 36 tests');
 console.log('    10. Scoring/Normalisation ... 47 tests');
 console.log('');
 

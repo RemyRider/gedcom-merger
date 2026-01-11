@@ -11,7 +11,7 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| **Tests totaux** | 645 (464 statiques + 181 Vitest) |
+| **Tests totaux** | 645 (466 statiques + 181 Vitest) |
 | **Critères de comparaison** | 18 |
 | **Champs affichés** | 16 |
 | **Catégories de tests** | 9 |
@@ -109,7 +109,7 @@
 
 | Fonctionnalité | Version | Description |
 |----------------|---------|-------------|
-| **Suite 645 tests** | v2.2.6 | 464 statiques + 181 Vitest |
+| **Suite 647 tests** | v2.2.6 | 466 statiques + 181 Vitest |
 | Tests automatiques Netlify | v1.9.3 | Exécution avant chaque build |
 | **Tests Vitest** | v2.1.3 | helpers, parser, stats, conflicts |
 | **10 catégories** | v2.2.6 | Couverture complète |
@@ -214,7 +214,7 @@ gedcom-merger/
 ├── public/
 │   └── gedcom-worker.js  # ~54KB, Worker autonome
 ├── tests/
-│   ├── test-complete.cjs # 464 tests statiques
+│   ├── test-complete.cjs # 466 tests statiques
 │   ├── helpers.test.mjs  # 47 tests Vitest
 │   ├── parser.test.mjs   # 30 tests Vitest
 │   ├── stats.test.mjs    # 31 tests Vitest
@@ -232,7 +232,7 @@ gedcom-merger/
 
 ---
 
-## Catégories de Tests (645 total)
+## Catégories de Tests (647 total)
 
 | # | Catégorie | Tests | Description |
 |---|-----------|-------|-------------|
@@ -247,7 +247,7 @@ gedcom-merger/
 | 9 | Conflits v2.2.x | 30 | Détection, résolution, nettoyage |
 | 10 | Scoring/Normalisation | 35 | v2.2.5 couleurs, v2.2.6 API Géo |
 | | **Vitest** | +181 | helpers, parser, stats, conflicts |
-| | **TOTAL** | **645** | |
+| | **TOTAL** | **647** | |
 
 ---
 
@@ -342,7 +342,7 @@ module.exports = {
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   dev       │────▶│   tests     │────▶│   main      │
-│  (travail)  │     │  (645/645)  │     │  (prod)     │
+│  (travail)  │     │  (647/647)  │     │  (prod)     │
 └─────────────┘     └─────────────┘     └─────────────┘
       │                   │                   │
       ▼                   ▼                   ▼
@@ -353,7 +353,7 @@ module.exports = {
 **Commandes** :
 ```bash
 # Tests
-npm run test:static  # 464 tests statiques
+npm run test:static  # 466 tests statiques
 npm run test         # 180 tests Vitest
 npm run test:all     # Les deux
 

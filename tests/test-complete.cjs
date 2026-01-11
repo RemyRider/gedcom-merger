@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUITE DE TESTS GEDCOM MERGER v2.2.6
-// 458 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// 466 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -35,7 +35,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                      SUITE DE TESTS GEDCOM MERGER v2.2.6');
-console.log('                         458 TESTS STATIQUES AU TOTAL');
+console.log('                         466 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -824,7 +824,7 @@ console.log('');
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
-console.log('║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (35 tests)       ║');
+console.log('║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (37 tests)       ║');
 console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
@@ -859,7 +859,7 @@ check(appCode.includes('birthPlaceMatches'), 'Tracking match lieu naissance');
 console.log('');
 
 // Tests v2.2.6: Modal normalisation lieux
-console.log('│ 10.3 Normalisation lieux v2.2.6 - Modal (10 tests)                           │');
+console.log('│ 10.3 Normalisation lieux v2.2.6 - Modal (12 tests)                           │');
 console.log('');
 check(appCode.includes('showPlaceNormModal'), 'État showPlaceNormModal');
 check(appCode.includes('setShowPlaceNormModal'), 'Setter showPlaceNormModal');
@@ -871,6 +871,8 @@ check(appCode.includes('individuals.map(person') && appCode.includes('applyPlace
 check(appCode.includes("'birthPlace', 'deathPlace'"), 'Champs lieux à corriger');
 check(appCode.includes('Tout suggérer'), 'Bouton tout suggérer');
 check(appCode.includes('setShowQualityReport(false)') && appCode.includes('setShowPlaceNormModal(true)'), 'Fermeture modal qualité avant ouverture normalisation');
+check(appCode.includes('hasPlaceNormalizations'), 'État hasPlaceNormalizations');
+check(appCode.includes('downloadNormalizedFile'), 'Fonction downloadNormalizedFile');
 console.log('');
 
 // Tests v2.2.6: API Géo
@@ -895,7 +897,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 458;
+const expectedTotal = 466;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -913,7 +915,7 @@ console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('     9. Conflits v2.2.0 ......... 30 tests');
-console.log('    10. Scoring/Normalisation ... 35 tests');
+console.log('    10. Scoring/Normalisation ... 37 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {

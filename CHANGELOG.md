@@ -15,16 +15,19 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 - Affichage de tous les groupes de variantes avec leurs occurrences
 - Choix de la forme correcte pour chaque groupe (variante existante ou suggestion officielle)
 - Bouton **"Tout suggérer"** pour appliquer les suggestions API ou automatiques
-- Application des corrections sur toutes les personnes concernées
-- Mise à jour automatique des rawLines pour le fichier GEDCOM
 - **Fermeture automatique** du modal qualité lors de l'ouverture du modal normalisation
+- **💾 Téléchargement du fichier normalisé** : Popup de confirmation après application + bouton dédié
 
 ### 🔧 Technique
-- Nouveaux états `placeApiSuggestions` et `loadingPlaceSuggestion`
+- Nouveaux états `placeApiSuggestions`, `loadingPlaceSuggestion`, `hasPlaceNormalizations`
 - Fonction `searchPlaceApi()` pour appeler l'API Géo (geo.api.gouv.fr)
 - Fonction `searchAllPlacesApi()` pour rechercher tous les groupes
 - Fonction `applyPlaceNormalizations()` pour appliquer les corrections
+- Fonction `downloadNormalizedFile()` pour générer le fichier GEDCOM mis à jour
 - Correction des champs : birthPlace, deathPlace, baptismPlace, burialPlace, residence
+
+### 🐛 Corrections
+- Correction bug "people is not defined" → utilise `individuals` correctement
 
 ---
 

@@ -44,6 +44,7 @@ const GedcomDuplicateMerger = () => {
   const [placeNormSelections, setPlaceNormSelections] = useState({});
   const [placeApiSuggestions, setPlaceApiSuggestions] = useState({});
   const [loadingPlaceSuggestion, setLoadingPlaceSuggestion] = useState({});
+  const [hasPlaceNormalizations, setHasPlaceNormalizations] = useState(false);
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -1515,12 +1516,90 @@ const GedcomDuplicateMerger = () => {
     const newVariants = detectPlaceVariants(updatedPeople);
     setPlaceVariants(newVariants);
     
+    // Marquer qu'il y a eu des normalisations
+    setHasPlaceNormalizations(true);
+    
     // Réinitialiser les sélections
     setPlaceNormSelections({});
     setPlaceApiSuggestions({});
     setShowPlaceNormModal(false);
     
-    alert(`✅ ${totalReplacements} lieu(x) normalisé(s) sur ${Object.keys(selections).length} groupe(s)`);
+    // Proposer le téléchargement
+    const downloadNow = window.confirm(
+      `✅ ${totalReplacements} lieu(x) normalisé(s) sur ${Object.keys(selections).length} groupe(s).\n\nVoulez-vous télécharger le fichier GEDCOM mis à jour maintenant ?`
+    );
+    
+    if (downloadNow) {
+      // Appeler la fonction de téléchargement avec les données mises à jour
+      downloadNormalizedFile(updatedPeople);
+    }
+  };
+
+  // v2.2.6 - Téléchargement du fichier GEDCOM avec lieux normalisés
+  const downloadNormalizedFile = (updatedPeopleArg) => {
+    if (!originalGedcom) {
+      alert('Erreur : fichier GEDCOM original non disponible');
+      return;
+    }
+    
+    // Utiliser les personnes passées en argument ou l'état actuel
+    const peopleToUse = updatedPeopleArg || individuals;
+    
+    // Créer une map ID -> rawLines mises à jour
+    const updatedRawLinesMap = new Map();
+    peopleToUse.forEach(person => {
+      if (person.rawLines) {
+        updatedRawLinesMap.set(person.id, person.rawLines);
+      }
+    });
+    
+    const lines = originalGedcom.split('\n');
+    const outputLines = [];
+    let skipCurrentIndi = false;
+    let currentIndiId = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim().replace(/\r/g, '');
+      
+      // Détecter le début d'un bloc (niveau 0)
+      if (trimmed.startsWith('0 ')) {
+        // Si on était en train de sauter un INDI, on a fini
+        skipCurrentIndi = false;
+        currentIndiId = null;
+        
+        // Vérifier si c'est un INDI avec des rawLines mises à jour
+        if (trimmed.includes('INDI')) {
+          const match = trimmed.match(/@([^@]+)@/);
+          if (match && updatedRawLinesMap.has(match[1])) {
+            currentIndiId = match[1];
+            // Insérer les rawLines mises à jour
+            const updatedLines = updatedRawLinesMap.get(currentIndiId);
+            updatedLines.forEach(rawLine => outputLines.push(rawLine));
+            skipCurrentIndi = true;
+            continue;
+          }
+        }
+      }
+      
+      // Sauter les lignes du bloc INDI qu'on a remplacé
+      if (skipCurrentIndi) {
+        continue;
+      }
+      
+      outputLines.push(line);
+    }
+    
+    // Générer le fichier
+    const blob = new Blob([outputLines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'gedcom_normalise_' + new Date().toISOString().slice(0,10) + '.ged';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // v2.2.6 - Recherche de lieu via API Géo du gouvernement français
@@ -3754,17 +3833,27 @@ const GedcomDuplicateMerger = () => {
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="font-semibold text-gray-700">📍 Lieux à normaliser ({placeVariants.length} groupes)</h3>
-                    <button
-                      onClick={() => {
-                        setPlaceNormSelections({});
-                        setPlaceApiSuggestions({});
-                        setShowQualityReport(false); // Fermer le modal qualité
-                        setShowPlaceNormModal(true);
-                      }}
-                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
-                    >
-                      🔧 Normaliser
-                    </button>
+                    <div className="flex gap-2">
+                      {hasPlaceNormalizations && (
+                        <button
+                          onClick={() => downloadNormalizedFile()}
+                          className="px-3 py-1 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700"
+                        >
+                          💾 Télécharger
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setPlaceNormSelections({});
+                          setPlaceApiSuggestions({});
+                          setShowQualityReport(false); // Fermer le modal qualité
+                          setShowPlaceNormModal(true);
+                        }}
+                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                      >
+                        🔧 Normaliser
+                      </button>
+                    </div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
                     {placeVariants.slice(0, 8).map((group, idx) => (
@@ -3774,6 +3863,24 @@ const GedcomDuplicateMerger = () => {
                       </div>
                     ))}
                     {placeVariants.length > 8 && <p className="text-xs text-gray-500 italic">... et {placeVariants.length - 8} autres groupes</p>}
+                  </div>
+                </div>
+              )}
+              
+              {/* Message succès normalisation + téléchargement */}
+              {placeVariants.length === 0 && hasPlaceNormalizations && (
+                <div className="mb-6">
+                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <div>
+                      <h3 className="font-semibold text-emerald-700">✅ Lieux normalisés</h3>
+                      <p className="text-sm text-emerald-600">Tous les lieux ont été normalisés avec succès</p>
+                    </div>
+                    <button
+                      onClick={() => downloadNormalizedFile()}
+                      className="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 flex items-center gap-2"
+                    >
+                      💾 Télécharger le fichier
+                    </button>
                   </div>
                 </div>
               )}

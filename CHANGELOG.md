@@ -2,170 +2,168 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [2.3.0] - 2026-01-11
+## [v2.3.0] - 11 janvier 2026 (Phase 1)
 
-### 🎯 FUSION INTELLIGENTE - Ordre optimal de fusion
+### 🎯 Thème : Fusion intelligente - Ordre optimal de fusion
 
-Cette version introduit un système intelligent pour déterminer l'ordre optimal de fusion des doublons, garantissant la cohérence des relations familiales.
+### ✨ Nouvelles fonctionnalités
 
-### Nouvelles fonctionnalités
+#### Module fusionOrder.mjs
+- **Graphe de dépendances** : Analyse des relations entre doublons (parent/enfant, conjoint)
+- **Tri topologique** : Calcul de l'ordre optimal de fusion (enfants → conjoints → parents)
+- **Score qualité enrichi** : Évaluation plus fine avec précision des dates/lieux et sources
+- **Détection de cycles** : Gestion des cas complexes de dépendances circulaires
 
-#### P1.1 - Graphe de dépendances entre doublons
-- **Nouveau module** `src/utils/fusionOrder.mjs` avec algorithmes de graphe
-- Détection automatique des relations parent/enfant/conjoint entre paires de doublons
-- Identification des dépendances : quels doublons doivent être fusionnés avant d'autres
-- Gestion des chaînes de dépendances (petit-enfant → enfant → parent)
-
-#### P1.2 - Tri topologique pour l'ordre de fusion
-- Calcul automatique du niveau optimal de chaque paire de doublons
-- Principe : **Enfants → Conjoints → Parents**
-- Protection contre les fusions circulaires (détection de cycles)
-- Niveaux de fusion numérotés (0 = fusionner en premier)
-
-#### P1.3 - Score de qualité enrichi
-- `getDatePrecisionScore()` : Score selon la précision des dates (complète = 15, année seule = 8, approximative = 5)
-- `getPlacePrecisionScore()` : Score selon le nombre de niveaux géographiques (4 niveaux = 10 pts)
-- Validation des relations : points bonus pour parents/conjoints/enfants existants dans l'arbre
-- Prise en compte des sources référencées (tag SOUR)
-
-#### P1.4 - Utilitaires pour l'UI
-- `prepareLevelForDisplay()` : Prépare les données d'affichage par niveau
-- `canFuseLevel()` : Vérifie si un niveau peut être fusionné
-- `calculateFusionStats()` : Statistiques globales de complexité
-- Détermination automatique de la personne à conserver (meilleur score qualité)
-
-### Technique
-
-#### Nouveau module : `src/utils/fusionOrder.mjs`
-```javascript
-// Constantes
-export const FUSION_LEVELS = {
-  CHILDREN: 0,    // Fusionner en premier
-  SPOUSES: 1,     // Fusionner ensuite
-  PARENTS: 2,     // Fusionner en dernier
-  INDEPENDENT: 3  // Doublons sans dépendances
-};
-
-// Fonctions principales
-export const buildDependencyGraph = (duplicates, individuals) => {...}
-export const calculateFusionOrder = (graph) => {...}
-export const calculateEnrichedQuality = (person, peopleById) => {...}
+#### Algorithme "Bottom-Up"
+```
+PRINCIPE :
+1. Fusionner les enfants d'abord (niveau 0)
+2. Fusionner les conjoints ensuite (niveau 1)
+3. Fusionner les parents en dernier (niveau 2)
+→ Les relations familiales pointent toujours vers les personnes les plus complètes
 ```
 
-### Tests
-- **45 nouveaux tests statiques** pour la catégorie 11 (Fusion Intelligente)
-- **30 tests Vitest** pour `fusionOrder.mjs`
-- Total : **~720 tests** (675 + 45 statiques)
+### 🧪 Tests
+- **45 nouveaux tests statiques** (Catégorie 11)
+- **32 tests Vitest** pour fusionOrder.mjs
+- Total : **720 tests** (527 statiques + 193 Vitest)
 
-### Fichiers modifiés/ajoutés
-- `src/utils/fusionOrder.mjs` (nouveau)
-- `tests/fusionOrder.test.mjs` (nouveau)
-- `tests/test-v2.3.0-static.cjs` (nouveau)
-- `package.json` (version 2.3.0)
+### 📁 Nouveaux fichiers
+- `src/utils/fusionOrder.mjs` : Module principal (494 lignes)
+- `tests/fusionOrder.test.mjs` : Tests unitaires Vitest
 
----
-
-## [2.2.6] - 2026-01-10
-
-### Outil de normalisation des lieux + API Géo
-
-- **NOUVEAU** : Modal de normalisation des lieux avec détection des variantes
-- **NOUVEAU** : Intégration API Géo du gouvernement français (geo.api.gouv.fr)
-- Suggestions officielles : Commune, Département, Région
-- Saisie manuelle avec autocomplétion en temps réel
-- Conflits relationnels : gestion des parents/conjoints/enfants en conflit
-- Écran récapitulatif après normalisation
-- 675 tests (482 statiques + 193 Vitest)
+### 🔧 Technique
+- Export des constantes : `FUSION_LEVELS`, `FUSION_LEVEL_LABELS`
+- Fonctions principales :
+  - `buildDependencyGraph()` : Construction du graphe
+  - `calculateFusionOrder()` : Tri topologique
+  - `calculateEnrichedQuality()` : Score qualité amélioré
+  - `canFuseLevel()` : Vérification si un niveau peut être fusionné
+  - `prepareLevelForDisplay()` : Préparation données UI
 
 ---
 
-## [2.2.5] - 2026-01-10
+## [v2.2.6] - 11 janvier 2026 ✅ SANCTUARISÉE
 
-### Scoring amélioré
+### 🎯 Thème : Outil de normalisation des lieux + Conflits relationnels
 
-- Couleurs inversées : 🟢 FORT = feu vert pour fusionner
-- Pondération dynamique des noms (rares = +pts, communs = -pts)
-- Bonus combinaison forte nom+naissance+lieu (+15 pts)
-- Malus incohérence lieu naissance contradictoire (-10 pts)
+### ✨ Nouvelles fonctionnalités
+- **Modal de normalisation des lieux** : Interface complète pour corriger les variantes
+- **🌍 Intégration API Géo** : Suggestions officielles depuis l'API du gouvernement français
+  - Bouton "Rechercher officiels" pour obtenir les noms normalisés
+  - Format proposé : **Commune, Département, Région, France**
+  - Recherche individuelle ou globale pour tous les groupes
+- **✏️ Saisie manuelle avec autocomplétion** : 
+  - Champ de saisie libre pour chaque groupe
+  - Suggestions API Géo en temps réel pendant la frappe
+  - Validation manuelle possible (sans API) avec bouton ✓
+- **Fermeture automatique** du modal qualité lors de l'ouverture du modal normalisation
+- **📊 Écran récapitulatif** : Redirection vers l'écran de téléchargement avec statistiques
 
----
-
-## [2.2.4] - 2026-01-05
-
-### Correction fusion en cascade
-
-- **CORRECTION** : Fusion en cascade résolue (A→B→C devient A→C)
-- **CORRECTION** : Références fusionnées REDIRIGÉES via mergeMap
-- **CORRECTION** : cleanOrphanedFamilies utilise mergeMap pour redirections
-- **AMÉLIORATION** : Support clusters de N individus
-
----
-
-## [2.2.0] - 2026-01-04
-
-### Gestion intelligente des conflits de fusion
-
-- **NOUVEAU** : Détection automatique des conflits avant fusion
-- **NOUVEAU** : Modal de résolution des conflits avec choix utilisateur
-- **NOUVEAU** : Comparaison intelligente dates (même année = compatible)
-- **NOUVEAU** : Comparaison intelligente lieux (inclusion = compatible)
-- **NOUVEAU** : Option saisie manuelle pour valeurs personnalisées
-- **NOUVEAU** : Nettoyage automatique des FAM orphelines après fusion
+### 🆕 Gestion des conflits relationnels
+- **Détection des conflits sur les parents** : si les deux personnes ont des parents différents
+- **Détection des conflits sur les conjoints** : si les deux personnes ont des conjoints exclusifs
+- **Détection des conflits sur les enfants** : si les deux personnes ont des enfants différents
+- **Option "Fusionner les deux"** : conserve tous les éléments des deux personnes
 
 ---
 
-## [2.1.4] - 2026-01-03
+## [v2.2.5] - 10 janvier 2026
 
-### Web Worker - Performance optimisée
+### 🎯 Thème : Scoring amélioré avec indicateurs visuels
 
-- **NOUVEAU** : Web Worker pour traitement en arrière-plan
-- Interface toujours réactive pendant l'analyse
-- Progression fluide temps réel avec messages
-- Performance 3-5x plus rapide sur gros fichiers
-
----
-
-## [2.1.0] - 2026-01-02
-
-### Contrôle qualité avancé et analyse généalogique
-
-- Rapport qualité affiché automatiquement après upload
-- Détection incohérences chronologiques (7 règles)
-- Normalisation intelligente des lieux + détection variantes
-- Statistiques généalogiques (répartition sexe, patronymes, périodes)
-- Score de suspicion doublons (FORT/MOYEN/FAIBLE)
+### ✨ Améliorations
+- **Couleurs inversées** pour plus de logique :
+  - 🟢 FORT = haute probabilité = feu vert pour fusionner
+  - 🟡 MOYEN = à vérifier
+  - 🔴 FAIBLE = prudence requise
+- **Pondération des noms** selon leur fréquence
+- **Bonus combinaison** : +15 pts si nom+naissance+lieu
+- **Malus incohérence** : -10 pts si lieux naissance contradictoires
 
 ---
 
-## [2.0.0] - 2025-12-31
+## [v2.2.4] - 5 janvier 2026
 
-### Phase 1 - Préservation complète des données GEDCOM
-
-- rawLines[] stocke TOUTES les lignes GEDCOM originales
-- 18 critères de comparaison (vs 11 avant)
-- Contrôles intégrité AVANT fusion
-- 325 tests (7 catégories)
+### 🐛 Corrections
+- **Fusion en cascade** : Résolution des chaînes A→B→C en A→C
+- **Redirection des références** : HUSB/WIFE/CHIL redirigés via mergeMap
 
 ---
 
-## [1.9.5] - 2025-12-28
+## [v2.2.0] - 4 janvier 2026
 
-### Parsing DATE/PLAC amélioré
-- Support baptême, inhumation, résidence
-- Parsing niveau 2 DATE/PLAC
+### ✨ Nouvelles fonctionnalités
+- **Détection des conflits** avant fusion (10 champs vérifiés)
+- **Modal de résolution** des conflits
+- **Nettoyage des FAM orphelines** après fusion
 
-## [1.9.3] - 2025-12-26
+---
 
-### Onglet À supprimer
-- Filtrage isolés et sans nom
+## [v2.1.4] - 3 janvier 2026 ✅ SANCTUARISÉE
+
+### 🚀 Performance
+- **Web Worker** pour traitement en arrière-plan
+- Interface toujours fluide pendant l'analyse
+- Amélioration 3-5x sur gros fichiers
+
+---
+
+## [v2.1.0] - 2 janvier 2026
+
+### ✨ Nouvelles fonctionnalités
+- **Rapport qualité** à l'upload
+- **Détection des incohérences chronologiques** (7 règles)
+- **Statistiques généalogiques** (âges, prénoms, lieux)
+- **Références orphelines** détectées
+
+---
+
+## [v2.0.0] - 31 décembre 2025 ✅ SANCTUARISÉE
+
+### 🚀 Version majeure
+- **18 critères de comparaison** (vs 12 avant)
+- **rawLines[]** : Préservation de toutes les lignes GEDCOM originales
+- **rawLinesByTag{}** : Indexation par tag pour fusion intelligente
+- **Comparaison par NOM** des parents/conjoints/enfants
+
+---
+
+## [v1.9.5] - 30 décembre 2025
+
+### ✨ Nouvelles fonctionnalités
+- Fusion intelligente avec préservation des données
+- 266 tests
+
+---
+
+## [v1.9.3] - 26 décembre 2025
+
+### ✨ Nouvelles fonctionnalités
 - Bouton flottant
+- Tableau clusters détaillé
+- Onglet "À supprimer"
 
-## [1.9.2] - 2025-12-25
+---
 
-### Anti-faux-positifs
-- Critères suffisants obligatoires
+## [v1.9.2] - 25 décembre 2025
 
-## [1.9.0] - 2025-12-23
+### 🐛 Corrections
+- Anti-faux-positifs (critères suffisants obligatoires)
 
-### Suggestions IA
-- Analyse patterns de doublons
+---
+
+## [v1.9.0] - 28 décembre 2025
+
+### ✨ Nouvelles fonctionnalités
+- Interface 4 onglets
+- Suggestions IA
+
+---
+
+## [v1.0.0] - 29 novembre 2025
+
+### 🚀 Version initiale
+- Algorithme Soundex français
+- Triple indexation (phonétique, année, parents)
+- Détection de doublons généalogiques

@@ -5,11 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.mjs'],
-    exclude: ['node_modules', 'dist'],
     coverage: {
-      provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/utils/**/*.mjs']
-    }
-  }
+    },
+  },
 });

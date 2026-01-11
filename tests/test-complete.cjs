@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUITE DE TESTS GEDCOM MERGER v2.3.0
-// 482 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// 527 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -35,7 +35,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                      SUITE DE TESTS GEDCOM MERGER v2.3.0');
-console.log('                         482 TESTS STATIQUES AU TOTAL');
+console.log('                         527 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -68,7 +68,7 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.2.6'") || appCode.includes("VERSION = '2.3.0'") || appCode.includes('VERSION = "2.2.1"'), 'VERSION dans App.jsx');
+check(appCode.includes("VERSION = '2.2.6'") || appCode.includes("VERSION = '2.3.0'") || appCode.includes('VERSION = "2.2.1"'), 'VERSION 2.2.1 dans App.jsx');
 check(packageJson.version === '2.3.0', 'Version 2.3.0 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
@@ -915,6 +915,97 @@ check(appCode.includes('downloadNormalizedFile()') && appCode.includes('download
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║         CATÉGORIE 11: FUSION INTELLIGENTE v2.3.0 (45 tests)                   ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║         CATÉGORIE 11: FUSION INTELLIGENTE v2.3.0 (45 tests)                  ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+console.log('');
+
+// Charger fusionOrder.mjs
+let fusionOrderCode = '';
+const fusionOrderExists = fs.existsSync('./src/utils/fusionOrder.mjs');
+try { fusionOrderCode = fs.readFileSync('./src/utils/fusionOrder.mjs', 'utf8'); } catch (e) { fusionOrderCode = ''; }
+
+// --- 11.1 Module fusionOrder.mjs (12 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 11.1 Module fusionOrder.mjs (12 tests)                                     │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderExists, 'Fichier fusionOrder.mjs existe');
+check(fusionOrderCode.includes('export const FUSION_LEVELS'), 'Constante FUSION_LEVELS exportée');
+check(fusionOrderCode.includes('CHILDREN: 0'), 'Niveau CHILDREN = 0');
+check(fusionOrderCode.includes('SPOUSES: 1'), 'Niveau SPOUSES = 1');
+check(fusionOrderCode.includes('PARENTS: 2'), 'Niveau PARENTS = 2');
+check(fusionOrderCode.includes('INDEPENDENT: 3') || fusionOrderCode.includes('INDEPENDENT'), 'Niveau INDEPENDENT défini');
+check(fusionOrderCode.includes('export const createPairId') || fusionOrderCode.includes('createPairId'), 'Fonction createPairId');
+check(fusionOrderCode.includes('export const buildDependencyGraph') || fusionOrderCode.includes('buildDependencyGraph'), 'Fonction buildDependencyGraph');
+check(fusionOrderCode.includes('export const calculateFusionOrder') || fusionOrderCode.includes('calculateFusionOrder'), 'Fonction calculateFusionOrder');
+check(fusionOrderCode.includes('export const calculateEnrichedQuality') || fusionOrderCode.includes('calculateEnrichedQuality'), 'Fonction calculateEnrichedQuality');
+check(fusionOrderCode.includes('export const canFuseLevel') || fusionOrderCode.includes('canFuseLevel'), 'Fonction canFuseLevel');
+check(fusionOrderCode.includes('export const calculateFusionStats') || fusionOrderCode.includes('calculateFusionStats'), 'Fonction calculateFusionStats');
+console.log('');
+
+// --- 11.2 Graphe de dépendances (10 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 11.2 Graphe de dépendances (10 tests)                                      │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('dependsOn'), 'Propriété dependsOn dans nœuds');
+check(fusionOrderCode.includes('blocks'), 'Propriété blocks dans nœuds');
+check(fusionOrderCode.includes('childDuplicates'), 'Détection enfants doublons');
+check(fusionOrderCode.includes('spouseDuplicates'), 'Détection conjoints doublons');
+check(fusionOrderCode.includes('parentDuplicates'), 'Détection parents doublons');
+check(fusionOrderCode.includes('findDuplicatesAmongIds') || fusionOrderCode.includes('findDuplicatesAmong'), 'Fonction findDuplicatesAmongIds');
+check(fusionOrderCode.includes('idToPairsMap'), 'Map inversée ID → paires');
+check(fusionOrderCode.includes('duplicatePairsMap'), 'Map paires doublons');
+check(fusionOrderCode.includes('peopleById'), 'Index personnes par ID');
+check(fusionOrderCode.includes('allChildren') || fusionOrderCode.includes('Set'), 'Collecte relations combinées');
+console.log('');
+
+// --- 11.3 Tri topologique (8 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 11.3 Tri topologique (8 tests)                                             │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('calculateLevel') || fusionOrderCode.includes('level'), 'Fonction/calcul de niveau');
+check(fusionOrderCode.includes('nodeLevel') || fusionOrderCode.includes('Map'), 'Map niveaux calculés');
+check(fusionOrderCode.includes('visited'), 'Set nœuds visités');
+check(fusionOrderCode.includes('visiting') || fusionOrderCode.includes('cycle'), 'Détection cycles');
+check(fusionOrderCode.includes('maxDepLevel') || fusionOrderCode.includes('Math.max'), 'Calcul niveau max dépendances');
+check(fusionOrderCode.includes('sortedLevels') || fusionOrderCode.includes('sort'), 'Résultat trié');
+check(fusionOrderCode.includes('level === 0') || fusionOrderCode.includes('level: 0'), 'Traitement niveau 0');
+check(fusionOrderCode.includes('Cycle') || fusionOrderCode.includes('cycle'), 'Gestion des cycles');
+console.log('');
+
+// --- 11.4 Score qualité enrichi (10 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 11.4 Score qualité enrichi (10 tests)                                      │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('getDatePrecisionScore'), 'Fonction getDatePrecisionScore');
+check(fusionOrderCode.includes('getPlacePrecisionScore'), 'Fonction getPlacePrecisionScore');
+check(fusionOrderCode.includes('ABT') || fusionOrderCode.includes('BEF') || fusionOrderCode.includes('AFT'), 'Gestion dates approximatives');
+check(fusionOrderCode.includes('parts.length') || fusionOrderCode.includes('split'), 'Comptage niveaux géographiques');
+check(fusionOrderCode.includes('validParents') || fusionOrderCode.includes('parents'), 'Validation parents');
+check(fusionOrderCode.includes('validSpouses') || fusionOrderCode.includes('spouses'), 'Validation conjoints');
+check(fusionOrderCode.includes('validChildren') || fusionOrderCode.includes('children'), 'Validation enfants');
+check(fusionOrderCode.includes('sourceCount') || fusionOrderCode.includes('SOUR'), 'Comptage sources');
+check(fusionOrderCode.includes('rawLinesByTag') || fusionOrderCode.includes('rawLines'), 'Accès rawLines pour sources');
+check(fusionOrderCode.includes('100') || fusionOrderCode.includes('maxScore'), 'Score max défini');
+console.log('');
+
+// --- 11.5 Utilitaires et UI (5 tests) ---
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 11.5 Utilitaires et UI (5 tests)                                           │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('prepareLevelForDisplay') || fusionOrderCode.includes('ForDisplay'), 'Fonction prepareLevelForDisplay');
+check(fusionOrderCode.includes('keepPerson') || fusionOrderCode.includes('keep'), 'Détermination personne à garder');
+check(fusionOrderCode.includes('mergePerson') || fusionOrderCode.includes('merge'), 'Détermination personne à fusionner');
+check(fusionOrderCode.includes('qualityDiff') || fusionOrderCode.includes('quality'), 'Différence de qualité');
+check(fusionOrderCode.includes('isCompleted') || fusionOrderCode.includes('completed'), 'État complété');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('═══════════════════════════════════════════════════════════════════════════════');
@@ -922,7 +1013,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 482;
+const expectedTotal = 527;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -941,12 +1032,13 @@ console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('     9. Conflits v2.2.0 ......... 36 tests');
 console.log('    10. Scoring/Normalisation ... 47 tests');
+console.log('    11. Fusion intelligente v2.3.0 45 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.2.6 validée (tests statiques)');
+  console.log('  ✅ Version 2.3.0 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

@@ -1,81 +1,83 @@
-# GEDCOM Merger v2.3.0 - Package Phase 1
+# GEDCOM Merger v2.3.0 - Phase 1
 
-## 📦 Contenu de ce package
+## 📦 Contenu du package
 
-Ce package contient les **nouveaux fichiers** de la v2.3.0 Phase 1 (Fusion Intelligente).
+Ce package contient les fichiers pour la **Phase 1 de la v2.3.0** : Module de fusion intelligente.
 
-### Fichiers inclus
-
-```
-gedcom-merger-v2.3.0/
-├── src/
-│   └── utils/
-│       └── fusionOrder.mjs      # 🆕 Module graphe + tri topologique
-├── tests/
-│   ├── fusionOrder.test.mjs     # 🆕 30 tests Vitest
-│   └── test-v2.3.0-static.cjs   # 🆕 45 tests statiques
-├── docs/
-│   └── TEST_REPORT_V2.3.0.md    # Rapport de tests
-├── package.json                  # Mis à jour v2.3.0
-├── CHANGELOG.md                  # Mis à jour
-├── vitest.config.mjs             # Configuration Vitest
-└── README.md                     # Ce fichier
-```
-
----
-
-## 🔧 Installation
-
-### Option 1 : Ajout à un projet v2.2.6 existant
-
-1. Copiez `src/utils/fusionOrder.mjs` dans votre dossier `src/utils/`
-2. Copiez les fichiers de tests dans `tests/`
-3. Mettez à jour `package.json` avec la version 2.3.0
-
-### Option 2 : Déploiement Netlify complet
-
-Ce package doit être fusionné avec les fichiers de base v2.2.6 depuis GitHub :
-- `src/App.jsx`
-- `src/utils/helpers.mjs`
-- `public/gedcom-worker.js`
-- `tests/test-complete.cjs`
-- Fichiers de configuration (tailwind, postcss, vite)
-
----
-
-## 🧪 Tests
+### Fichiers à copier
 
 ```bash
-# Installer les dépendances
-npm install
-
-# Lancer les tests Vitest
-npm run test
-
-# Lancer les tests statiques (nécessite les fichiers v2.2.6)
-npm run test:static
-
-# Tous les tests
-npm run test:all
+# Structure
+package-v2.3.0/
+├── src/utils/fusionOrder.mjs     # 🆕 Module principal (494 lignes)
+├── tests/test-complete.cjs       # ✏️ MODIFIÉ (527 tests, catégorie 11 ajoutée)
+├── tests/fusionOrder.test.mjs    # 🆕 Tests Vitest (32 tests)
+├── docs/ETAT_DES_LIEUX.md        # ✏️ MODIFIÉ (v2.3.0)
+├── package.json                   # ✏️ MODIFIÉ (v2.3.0)
+├── CHANGELOG.md                   # ✏️ MODIFIÉ (v2.3.0 ajouté)
+└── vitest.config.mjs             # Configuration Vitest
 ```
 
----
+## 🚀 Installation
 
-## 📋 Prochaines étapes (Phase 2-4)
+### Commandes Terminal
 
-1. **Phase 2** : Intégration Worker (ajouter fusionOrder au gedcom-worker.js)
-2. **Phase 3** : Interface utilisateur (affichage par niveaux)
-3. **Phase 4** : Tests d'intégration complets
+```bash
+# 1. Dézipper
+cd ~/Downloads
+unzip -o gedcom-v2.3.0-phase1.zip
 
----
+# 2. Aller dans le repo
+cdgedcom
 
-## 📄 Documentation
+# 3. Checkout dev
+git checkout dev
 
-- `CHANGELOG.md` : Historique des versions
-- `docs/TEST_REPORT_V2.3.0.md` : Rapport de tests détaillé
+# 4. Copier TOUS les fichiers
+cp ~/Downloads/package-v2.3.0/src/utils/fusionOrder.mjs src/utils/
+cp ~/Downloads/package-v2.3.0/tests/test-complete.cjs tests/
+cp ~/Downloads/package-v2.3.0/tests/fusionOrder.test.mjs tests/
+cp ~/Downloads/package-v2.3.0/docs/ETAT_DES_LIEUX.md docs/
+cp ~/Downloads/package-v2.3.0/package.json .
+cp ~/Downloads/package-v2.3.0/CHANGELOG.md .
+cp ~/Downloads/package-v2.3.0/vitest.config.mjs .
 
----
+# 5. Commit et push
+git add .
+git commit -m "v2.3.0 Phase 1: Module fusionOrder - graphe dépendances + tri topologique"
+git push origin dev
+```
 
-**Version** : 2.3.0  
-**Date** : 11 janvier 2026  
-**Thème** : Fusion Intelligente - Ordre optimal de fusion
+## 🧪 Tests inclus
+
+| Type | Fichier | Tests |
+|------|---------|-------|
+| Statiques | test-complete.cjs | 527 (dont 45 nouveaux) |
+| Vitest | fusionOrder.test.mjs | 32 |
+
+### Catégorie 11 - Fusion intelligente (45 tests)
+
+- 11.1 Module fusionOrder.mjs (12 tests)
+- 11.2 Graphe de dépendances (10 tests)
+- 11.3 Tri topologique (8 tests)
+- 11.4 Score qualité enrichi (10 tests)
+- 11.5 Utilitaires et UI (5 tests)
+
+## ✅ Validation
+
+Après déploiement sur Netlify, vérifier :
+
+1. **Build réussi** : Pas d'erreur de build
+2. **Tests statiques** : 527/527 ✅
+3. **Tests Vitest** : 193+ tests ✅
+
+## 📝 Notes
+
+- Le fichier `test-complete.cjs` est **complet et prêt à l'emploi** (pas de commandes sed)
+- La documentation `ETAT_DES_LIEUX.md` est mise à jour pour v2.3.0
+- Le `CHANGELOG.md` inclut l'entrée v2.3.0
+
+## 🔜 Phase 2 (à venir)
+
+- Intégration de fusionOrder dans gedcom-worker.js
+- Interface utilisateur pour fusion par étapes

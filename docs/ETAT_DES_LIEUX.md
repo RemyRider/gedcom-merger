@@ -11,7 +11,7 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| **Tests totaux** | 645 (468 statiques + 181 Vitest) |
+| **Tests totaux** | 645 (476 statiques + 186 Vitest) |
 | **Critères de comparaison** | 18 |
 | **Champs affichés** | 16 |
 | **Catégories de tests** | 9 |
@@ -61,9 +61,12 @@
 |----------------|---------|-------------|
 | **Modal normalisation** | v2.2.6 | Interface complète pour corriger les variantes de lieux |
 | **API Géo intégrée** | v2.2.6 | Suggestions officielles depuis geo.api.gouv.fr |
+| **Saisie manuelle** | v2.2.6 | Autocomplétion temps réel pendant la frappe |
 | **Format normalisé** | v2.2.6 | Commune, Département, Région, France |
 | **Fermeture auto modal** | v2.2.6 | Ferme le modal qualité avant ouverture |
-| **Mise à jour GEDCOM** | v2.2.6 | Correction des rawLines pour export cohérent |
+| **Préservation rawLines** | v2.2.6 | Conservation de toutes les données GEDCOM |
+| **Écran récapitulatif** | v2.2.6 | Stats groupes normalisés + lieux corrigés |
+| **Téléchargement adaptatif** | v2.2.6 | Bouton utilise la bonne fonction selon contexte |
 
 ### Interface utilisateur
 
@@ -109,7 +112,7 @@
 
 | Fonctionnalité | Version | Description |
 |----------------|---------|-------------|
-| **Suite 649 tests** | v2.2.6 | 468 statiques + 181 Vitest |
+| **Suite 662 tests** | v2.2.6 | 476 statiques + 186 Vitest |
 | Tests automatiques Netlify | v1.9.3 | Exécution avant chaque build |
 | **Tests Vitest** | v2.1.3 | helpers, parser, stats, conflicts |
 | **10 catégories** | v2.2.6 | Couverture complète |
@@ -232,7 +235,7 @@ gedcom-merger/
 
 ---
 
-## Catégories de Tests (649 total)
+## Catégories de Tests (662 total)
 
 | # | Catégorie | Tests | Description |
 |---|-----------|-------|-------------|
@@ -245,9 +248,9 @@ gedcom-merger/
 | 7 | Config & déploiement | 39 | Netlify, package.json |
 | 8 | Qualité & analyses v2.1.x | 68 | Rapport, chrono, stats, Worker |
 | 9 | Conflits v2.2.x | 30 | Détection, résolution, nettoyage |
-| 10 | Scoring/Normalisation | 35 | v2.2.5 couleurs, v2.2.6 API Géo |
+| 10 | Scoring/Normalisation | 47 | v2.2.5 couleurs, v2.2.6 API Géo + rawLines |
 | | **Vitest** | +181 | helpers, parser, stats, conflicts |
-| | **TOTAL** | **649** | |
+| | **TOTAL** | **662** | |
 
 ---
 
@@ -342,7 +345,7 @@ module.exports = {
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   dev       │────▶│   tests     │────▶│   main      │
-│  (travail)  │     │  (649/649)  │     │  (prod)     │
+│  (travail)  │     │  (662/662)  │     │  (prod)     │
 └─────────────┘     └─────────────┘     └─────────────┘
       │                   │                   │
       ▼                   ▼                   ▼

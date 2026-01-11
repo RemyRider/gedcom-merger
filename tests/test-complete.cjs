@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUITE DE TESTS GEDCOM MERGER v2.2.6
-// 468 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
+// 476 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -35,7 +35,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                      SUITE DE TESTS GEDCOM MERGER v2.2.6');
-console.log('                         468 TESTS STATIQUES AU TOTAL');
+console.log('                         476 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -824,7 +824,7 @@ console.log('');
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
-console.log('║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (39 tests)       ║');
+console.log('║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (47 tests)       ║');
 console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
@@ -891,6 +891,19 @@ check(appCode.includes('suggestion.full'), 'Format complet suggestion');
 check(appCode.includes(', France'), 'Format inclut France');
 console.log('');
 
+// Tests v2.2.6: Préservation données et écran récapitulatif
+console.log('│ 10.5 Normalisation v2.2.6 - Préservation données (8 tests)                   │');
+console.log('');
+check(appCode.includes('updatedRawLinesMap') && appCode.includes('downloadNormalizedFile'), 'Map rawLines dans downloadNormalizedFile');
+check(appCode.includes('person.rawLines') && appCode.includes('downloadNormalizedFile'), 'Accès rawLines par personne');
+check(appCode.includes('rawLines.forEach') || appCode.includes('updatedLines.forEach'), 'Itération sur rawLines');
+check(appCode.includes('normalizedPlaces') && appCode.includes('validationResults'), 'Stats normalizedPlaces');
+check(appCode.includes('normalizedGroups') && appCode.includes('validationResults'), 'Stats normalizedGroups');
+check(appCode.includes('Groupes normalisés'), 'Affichage groupes normalisés');
+check(appCode.includes('Lieux corrigés'), 'Affichage lieux corrigés');
+check(appCode.includes('downloadNormalizedFile()') && appCode.includes('downloadCleanedFile()'), 'Bouton adaptatif téléchargement');
+console.log('');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -899,7 +912,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 468;
+const expectedTotal = 476;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -917,7 +930,7 @@ console.log('     6. Suggestions IA .......... 18 tests');
 console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('     9. Conflits v2.2.0 ......... 30 tests');
-console.log('    10. Scoring/Normalisation ... 39 tests');
+console.log('    10. Scoring/Normalisation ... 47 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {

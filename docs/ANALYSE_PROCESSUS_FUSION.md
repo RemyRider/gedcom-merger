@@ -203,6 +203,39 @@ const response = await fetch(
 - `residence` (résidence)
 - `rawLines` (pour export GEDCOM cohérent)
 
+### Téléchargement du fichier normalisé
+
+La fonction `downloadNormalizedFile()` utilise les rawLines pour préserver toutes les données :
+
+```javascript
+// 1. Créer une map ID -> rawLines mises à jour
+const updatedRawLinesMap = new Map();
+individuals.forEach(person => {
+  if (person.rawLines && person.rawLines.length > 0) {
+    updatedRawLinesMap.set(person.id, person.rawLines);
+  }
+});
+
+// 2. Pour chaque bloc INDI avec rawLines mises à jour
+if (trimmed.includes('INDI') && updatedRawLinesMap.has(match[1])) {
+  // Remplacer le bloc entier par les rawLines (qui contiennent TOUT)
+  updatedRawLinesMap.get(match[1]).forEach(rawLine => outputLines.push(rawLine));
+  skipCurrentIndi = true;
+}
+```
+
+**Avantages** :
+- ✅ Aucune perte de données (notes, sources, événements)
+- ✅ Seuls les lieux sont modifiés via replace ciblé
+- ✅ Préservation de la structure GEDCOM originale
+
+### Écran récapitulatif
+
+Après normalisation, l'utilisateur est redirigé vers l'écran récapitulatif avec :
+- Nombre de groupes normalisés
+- Nombre de lieux corrigés
+- Bouton de téléchargement (appelle `downloadNormalizedFile()`)
+
 ---
 
 ## Étape 3 : SÉLECTION UTILISATEUR

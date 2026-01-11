@@ -28,12 +28,14 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 - Fonction `searchManualPlace()` pour autocomplétion temps réel
 - Fonction `selectManualSuggestion()` pour sélectionner une suggestion
 - Fonction `validateManualInput()` pour valider une saisie sans API
-- Fonction `applyPlaceNormalizations()` pour appliquer les corrections
-- Fonction `downloadNormalizedFile()` pour générer le fichier GEDCOM mis à jour
+- Fonction `applyPlaceNormalizations()` pour appliquer les corrections via rawLines
+- Fonction `downloadNormalizedFile()` pour générer le fichier GEDCOM avec rawLines préservées
+- **Préservation des données** : Utilisation des rawLines pour conserver toutes les informations GEDCOM (notes, sources, événements)
 - Correction des champs : birthPlace, deathPlace, baptismPlace, burialPlace, residence
 
 ### 🐛 Corrections
 - Correction bug "people is not defined" → utilise `individuals` correctement
+- Correction téléchargement écran récapitulatif → utilise `downloadNormalizedFile()` avec rawLines
 
 ---
 

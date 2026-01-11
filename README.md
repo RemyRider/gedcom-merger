@@ -19,8 +19,10 @@ Application React professionnelle pour détecter et fusionner les doublons dans 
 ### 🆕 Normalisation des lieux (v2.2.6)
 - **Modal dédié** pour corriger les variantes de lieux
 - **Intégration API Géo** : suggestions officielles depuis geo.api.gouv.fr
+- **Saisie manuelle** : autocomplétion temps réel pendant la frappe
 - **Format normalisé** : Commune, Département, Région, France
-- **Application sur fichier GEDCOM** : correction des rawLines pour export
+- **Préservation des données** : rawLines conservées pour aucune perte
+- **Écran récapitulatif** : stats groupes normalisés + lieux corrigés
 
 ### Gestion des conflits (v2.2.0)
 - **Détection automatique** des valeurs contradictoires avant fusion
@@ -62,13 +64,13 @@ npm run test:all
 ## 🧪 Tests
 
 ```bash
-# Tests statiques (468 tests)
+# Tests statiques (476 tests)
 npm run test:static
 
-# Tests Vitest (181 tests)
+# Tests Vitest (186 tests)
 npm run test
 
-# Tous les tests (649 total)
+# Tous les tests (662 total)
 npm run test:all
 ```
 
@@ -85,8 +87,8 @@ npm run test:all
 | 8 | Qualité & analyses v2.1.x | 68 |
 | 9 | Conflits v2.2.0 | 30 |
 | 10 | Scoring/Normalisation v2.2.5-6 | 35 |
-| **Total statiques** | | **464** |
-| Vitest | helpers, parser, stats, conflicts | 181 |
+| **Total statiques** | | **476** |
+| Vitest | helpers, parser, stats, conflicts | 186 |
 | **TOTAL** | | **644** |
 
 ## 📦 Structure du projet
@@ -104,7 +106,7 @@ gedcom-merger/
 ├── public/
 │   └── gedcom-worker.js  # Web Worker (~1400 lignes)
 ├── tests/
-│   ├── test-complete.cjs # Tests statiques (464)
+│   ├── test-complete.cjs # Tests statiques (476)
 │   ├── helpers.test.mjs  # Tests Vitest
 │   ├── parser.test.mjs
 │   ├── stats.test.mjs

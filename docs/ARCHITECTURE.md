@@ -49,7 +49,10 @@
 | `downloadCleanedFile()` | Génère le fichier GEDCOM nettoyé |
 | `calculateSurnameStats()` | Calcule fréquence des noms (v2.2.5) |
 | `searchPlaceApi()` | Recherche lieu via API Géo (v2.2.6) |
-| `applyPlaceNormalizations()` | Applique corrections lieux (v2.2.6) |
+| `searchAllPlacesApi()` | Recherche tous les groupes via API (v2.2.6) |
+| `searchManualPlace()` | Autocomplétion saisie manuelle (v2.2.6) |
+| `applyPlaceNormalizations()` | Applique corrections via rawLines (v2.2.6) |
+| `downloadNormalizedFile()` | Génère GEDCOM avec rawLines préservées (v2.2.6) |
 
 ### Critères de comparaison (18)
 

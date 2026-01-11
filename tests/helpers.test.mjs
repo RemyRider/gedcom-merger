@@ -400,3 +400,110 @@ describe('Normalisation lieux v2.2.6', () => {
     expect(formatFull('Grenoble', 'Isère', 'Auvergne-Rhône-Alpes')).toBe('Grenoble, Isère, Auvergne-Rhône-Alpes, France');
   });
 });
+
+// Tests v2.2.6 - Préservation des données via rawLines
+// ============================================================================
+describe('Préservation rawLines v2.2.6', () => {
+  // Simuler la mise à jour des rawLines dans applyPlaceNormalizations
+  const updateRawLinesWithPlace = (rawLines, oldPlace, newPlace) => {
+    return rawLines.map(line => {
+      if (line.includes('PLAC') && line.includes(oldPlace)) {
+        return line.replace(oldPlace, newPlace);
+      }
+      return line;
+    });
+  };
+
+  it('devrait remplacer le lieu dans les rawLines', () => {
+    const rawLines = [
+      '0 @I1@ INDI',
+      '1 NAME Jean /Dupont/',
+      '1 BIRT',
+      '2 DATE 1 JAN 1900',
+      '2 PLAC Grenoble',
+      '1 NOTE Une note importante'
+    ];
+    
+    const updated = updateRawLinesWithPlace(rawLines, 'Grenoble', 'Grenoble, Isère, Auvergne-Rhône-Alpes, France');
+    
+    expect(updated[4]).toBe('2 PLAC Grenoble, Isère, Auvergne-Rhône-Alpes, France');
+    expect(updated.length).toBe(6); // Même nombre de lignes
+  });
+
+  it('devrait préserver les autres lignes non-PLAC', () => {
+    const rawLines = [
+      '0 @I1@ INDI',
+      '1 NAME Jean /Dupont/',
+      '1 BIRT',
+      '2 DATE 1 JAN 1900',
+      '2 PLAC Lyon',
+      '1 SOUR @S1@',
+      '2 PAGE p.42',
+      '1 NOTE Commentaire'
+    ];
+    
+    const updated = updateRawLinesWithPlace(rawLines, 'Lyon', 'Lyon, Rhône, France');
+    
+    expect(updated[0]).toBe('0 @I1@ INDI');
+    expect(updated[1]).toBe('1 NAME Jean /Dupont/');
+    expect(updated[5]).toBe('1 SOUR @S1@');
+    expect(updated[6]).toBe('2 PAGE p.42');
+    expect(updated[7]).toBe('1 NOTE Commentaire');
+  });
+
+  it('devrait gérer plusieurs lieux PLAC dans les rawLines', () => {
+    const rawLines = [
+      '0 @I1@ INDI',
+      '1 BIRT',
+      '2 PLAC Paris',
+      '1 DEAT',
+      '2 PLAC Paris',
+      '1 RESI',
+      '2 PLAC Lyon'
+    ];
+    
+    const updated = updateRawLinesWithPlace(rawLines, 'Paris', 'Paris, Paris, Île-de-France, France');
+    
+    expect(updated[2]).toBe('2 PLAC Paris, Paris, Île-de-France, France');
+    expect(updated[4]).toBe('2 PLAC Paris, Paris, Île-de-France, France');
+    expect(updated[6]).toBe('2 PLAC Lyon'); // Non modifié
+  });
+
+  // Simuler la création de la map pour downloadNormalizedFile
+  const createUpdatedRawLinesMap = (individuals) => {
+    const map = new Map();
+    individuals.forEach(person => {
+      if (person.rawLines && person.rawLines.length > 0) {
+        map.set(person.id, person.rawLines);
+      }
+    });
+    return map;
+  };
+
+  it('devrait créer une map ID -> rawLines', () => {
+    const individuals = [
+      { id: 'I1', name: 'Jean', rawLines: ['0 @I1@ INDI', '1 NAME Jean'] },
+      { id: 'I2', name: 'Marie', rawLines: ['0 @I2@ INDI', '1 NAME Marie'] },
+      { id: 'I3', name: 'Pierre' } // Sans rawLines
+    ];
+    
+    const map = createUpdatedRawLinesMap(individuals);
+    
+    expect(map.size).toBe(2);
+    expect(map.has('I1')).toBe(true);
+    expect(map.has('I2')).toBe(true);
+    expect(map.has('I3')).toBe(false);
+  });
+
+  it('devrait ignorer les personnes avec rawLines vides', () => {
+    const individuals = [
+      { id: 'I1', rawLines: [] },
+      { id: 'I2', rawLines: ['0 @I2@ INDI'] }
+    ];
+    
+    const map = createUpdatedRawLinesMap(individuals);
+    
+    expect(map.size).toBe(1);
+    expect(map.has('I2')).toBe(true);
+  });
+});

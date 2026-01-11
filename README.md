@@ -1,136 +1,81 @@
-# 🧬 GEDCOM Merger v2.2.6
+# GEDCOM Merger v2.3.0 - Package Phase 1
 
-Application React professionnelle pour détecter et fusionner les doublons dans les fichiers GEDCOM.
+## 📦 Contenu de ce package
 
-## 🎯 Fonctionnalités principales
+Ce package contient les **nouveaux fichiers** de la v2.3.0 Phase 1 (Fusion Intelligente).
 
-### Détection de doublons
-- **18 critères de comparaison** : nom, naissance, sexe, parents, fratrie, lieu, conjoints, décès, profession, enfants, baptême, inhumation, résidence, titre, religion
-- **Algorithme Soundex français** adapté aux noms francophones
-- **Anti-faux-positifs** : critères suffisants obligatoires au-delà du nom
-- **Détection de clusters** : groupes de 3+ personnes interconnectées
+### Fichiers inclus
 
-### 🆕 Scoring amélioré (v2.2.5)
-- **Couleurs inversées** : 🟢 FORT (feu vert) / 🟡 MOYEN / 🔴 FAIBLE (prudence)
-- **Pondération dynamique** : noms rares = +pts, noms communs = -pts
-- **Bonus combinaison** : +15 pts si nom+naissance+lieu concordent
-- **Malus incohérence** : -10 pts si lieux de naissance contradictoires
-
-### 🆕 Normalisation des lieux (v2.2.6)
-- **Modal dédié** pour corriger les variantes de lieux
-- **Intégration API Géo** : suggestions officielles depuis geo.api.gouv.fr
-- **Saisie manuelle** : autocomplétion temps réel pendant la frappe
-- **Format normalisé** : Commune, Département, Région, France
-- **Préservation des données** : rawLines conservées pour aucune perte
-- **Écran récapitulatif** : stats groupes normalisés + lieux corrigés
-
-### Gestion des conflits (v2.2.0)
-- **Détection automatique** des valeurs contradictoires avant fusion
-- **Modal de résolution** pour choisir la valeur à conserver
-- **Comparaison intelligente** :
-  - Dates : compatibles si même année
-  - Lieux : compatibles si l'un contient l'autre
-- **Nettoyage automatique** des familles orphelines
-
-### Contrôle qualité (v2.1.x)
-- Rapport qualité à l'upload
-- Détection incohérences chronologiques (7 règles)
-- Normalisation intelligente des lieux
-- Statistiques généalogiques complètes
-- Détection des références orphelines
-
-### Performance (v2.1.4)
-- **Web Worker** pour traitement en arrière-plan
-- Interface toujours réactive
-- Traitement 3-5x plus rapide sur gros fichiers
-
-## 🚀 Installation
-
-```bash
-# Cloner le repository
-git clone https://github.com/RemyRider/gedcom-merger.git
-cd gedcom-merger
-
-# Installer les dépendances
-npm install
-
-# Lancer en développement
-npm run dev
-
-# Lancer les tests
-npm run test:all
 ```
+gedcom-merger-v2.3.0/
+├── src/
+│   └── utils/
+│       └── fusionOrder.mjs      # 🆕 Module graphe + tri topologique
+├── tests/
+│   ├── fusionOrder.test.mjs     # 🆕 30 tests Vitest
+│   └── test-v2.3.0-static.cjs   # 🆕 45 tests statiques
+├── docs/
+│   └── TEST_REPORT_V2.3.0.md    # Rapport de tests
+├── package.json                  # Mis à jour v2.3.0
+├── CHANGELOG.md                  # Mis à jour
+├── vitest.config.mjs             # Configuration Vitest
+└── README.md                     # Ce fichier
+```
+
+---
+
+## 🔧 Installation
+
+### Option 1 : Ajout à un projet v2.2.6 existant
+
+1. Copiez `src/utils/fusionOrder.mjs` dans votre dossier `src/utils/`
+2. Copiez les fichiers de tests dans `tests/`
+3. Mettez à jour `package.json` avec la version 2.3.0
+
+### Option 2 : Déploiement Netlify complet
+
+Ce package doit être fusionné avec les fichiers de base v2.2.6 depuis GitHub :
+- `src/App.jsx`
+- `src/utils/helpers.mjs`
+- `public/gedcom-worker.js`
+- `tests/test-complete.cjs`
+- Fichiers de configuration (tailwind, postcss, vite)
+
+---
 
 ## 🧪 Tests
 
 ```bash
-# Tests statiques (476 tests)
-npm run test:static
+# Installer les dépendances
+npm install
 
-# Tests Vitest (186 tests)
+# Lancer les tests Vitest
 npm run test
 
-# Tous les tests (662 total)
+# Lancer les tests statiques (nécessite les fichiers v2.2.6)
+npm run test:static
+
+# Tous les tests
 npm run test:all
 ```
 
-### Catégories de tests
-| # | Catégorie | Tests |
-|---|-----------|-------|
-| 1 | Fondamentaux | 61 |
-| 2 | Parsing GEDCOM | 52 |
-| 3 | Détection doublons | 42 |
-| 4 | Fusion & suppression | 34 |
-| 5 | Interface utilisateur | 79 |
-| 6 | Suggestions IA | 18 |
-| 7 | Config & déploiement | 39 |
-| 8 | Qualité & analyses v2.1.x | 68 |
-| 9 | Conflits v2.2.0 | 30 |
-| 10 | Scoring/Normalisation v2.2.5-6 | 35 |
-| **Total statiques** | | **476** |
-| Vitest | helpers, parser, stats, conflicts | 186 |
-| **TOTAL** | | **644** |
+---
 
-## 📦 Structure du projet
+## 📋 Prochaines étapes (Phase 2-4)
 
-```
-gedcom-merger/
-├── src/
-│   ├── App.jsx           # Composant principal (~3900 lignes)
-│   ├── utils/
-│   │   ├── helpers.mjs   # Fonctions utilitaires
-│   │   ├── parser.mjs    # Parsing GEDCOM
-│   │   └── stats.mjs     # Statistiques
-│   ├── index.css
-│   └── main.jsx
-├── public/
-│   └── gedcom-worker.js  # Web Worker (~1400 lignes)
-├── tests/
-│   ├── test-complete.cjs # Tests statiques (476)
-│   ├── helpers.test.mjs  # Tests Vitest
-│   ├── parser.test.mjs
-│   ├── stats.test.mjs
-│   └── conflicts.test.mjs
-├── docs/
-│   ├── ETAT_DES_LIEUX.md
-│   ├── ARCHITECTURE.md
-│   ├── ANALYSE_PROCESSUS_FUSION.md
-│   └── ROADMAP_V2_*.md
-├── CHANGELOG.md
-├── README.md
-└── package.json
-```
-
-## 🔗 Liens
-
-- **Production** : https://gedcom-merger.netlify.app
-- **Développement** : https://dev--gedcom-merger.netlify.app
-- **GitHub** : https://github.com/RemyRider/gedcom-merger
-
-## 📜 Licence
-
-MIT © 2025-2026 RemyRider
+1. **Phase 2** : Intégration Worker (ajouter fusionOrder au gedcom-worker.js)
+2. **Phase 3** : Interface utilisateur (affichage par niveaux)
+3. **Phase 4** : Tests d'intégration complets
 
 ---
 
-*Version 2.2.6 - 10 janvier 2026*
+## 📄 Documentation
+
+- `CHANGELOG.md` : Historique des versions
+- `docs/TEST_REPORT_V2.3.0.md` : Rapport de tests détaillé
+
+---
+
+**Version** : 2.3.0  
+**Date** : 11 janvier 2026  
+**Thème** : Fusion Intelligente - Ordre optimal de fusion

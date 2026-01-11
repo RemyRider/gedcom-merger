@@ -9,7 +9,7 @@
 
 ═══════════════════════════════════════════════════════════════════════════════
                       SUITE DE TESTS GEDCOM MERGER v2.2.6
-                         466 TESTS STATIQUES AU TOTAL
+                         468 TESTS STATIQUES AU TOTAL
 ═══════════════════════════════════════════════════════════════════════════════
 
 ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -652,7 +652,7 @@
   ✅ Filtrage FAM orphelines
 
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (37 tests)       ║
+║         CATÉGORIE 10: SCORING v2.2.5 + NORMALISATION v2.2.6 (39 tests)       ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 │ 10.1 Scoring v2.2.5 - Couleurs inversées (8 tests)                           │
@@ -677,7 +677,7 @@
   ✅ Tracking match année naissance
   ✅ Tracking match lieu naissance
 
-│ 10.3 Normalisation lieux v2.2.6 - Modal (12 tests)                           │
+│ 10.3 Normalisation lieux v2.2.6 - Modal (14 tests)                           │
 
   ✅ État showPlaceNormModal
   ✅ Setter showPlaceNormModal
@@ -691,6 +691,8 @@
   ✅ Fermeture modal qualité avant ouverture normalisation
   ✅ État hasPlaceNormalizations
   ✅ Fonction downloadNormalizedFile
+  ✅ État placeManualInput pour saisie manuelle
+  ✅ Fonction searchManualPlace autocomplétion
 
 │ 10.4 Normalisation lieux v2.2.6 - API Géo (9 tests)                          │
 
@@ -708,10 +710,10 @@
                               RÉSUMÉ FINAL
 ═══════════════════════════════════════════════════════════════════════════════
 
-  📊 Tests exécutés: 466
-  ✅ Réussis: 466
+  📊 Tests exécutés: 468
+  ✅ Réussis: 468
   ❌ Échoués: 0
-  📋 Attendus: 466
+  📋 Attendus: 468
 
   📁 CATÉGORIES:
      1. Fondamentaux ............ 61 tests
@@ -723,9 +725,9 @@
      7. Config & déploiement .... 39 tests
      8. Qualité & analyses v2.1.x 68 tests
      9. Conflits v2.2.0 ......... 30 tests
-    10. Scoring/Normalisation ... 37 tests
+    10. Scoring/Normalisation ... 39 tests
 
-  🎉 SUCCÈS TOTAL: 466/466 tests passés (100%)
+  🎉 SUCCÈS TOTAL: 468/468 tests passés (100%)
 
   ✅ Version 2.2.6 validée (tests statiques)
 
@@ -737,13 +739,13 @@
 
  RUN  v1.6.1 /home/claude/gedcom-merger
 
- ✓ tests/stats.test.mjs  (31 tests) 12ms
- ✓ tests/helpers.test.mjs  (64 tests) 15ms
- ✓ tests/conflicts.test.mjs  (56 tests) 17ms
+ ✓ tests/helpers.test.mjs  (64 tests) 14ms
+ ✓ tests/stats.test.mjs  (31 tests) 14ms
+ ✓ tests/conflicts.test.mjs  (56 tests) 16ms
  ✓ tests/parser.test.mjs  (30 tests) 13ms
 
  Test Files  4 passed (4)
       Tests  181 passed (181)
-   Start at  09:50:30
-   Duration  2.18s (transform 163ms, setup 0ms, collect 320ms, tests 57ms, environment 1ms, prepare 3.16s)
+   Start at  10:14:08
+   Duration  2.19s (transform 156ms, setup 0ms, collect 302ms, tests 57ms, environment 1ms, prepare 3.24s)
 

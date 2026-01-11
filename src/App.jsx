@@ -45,6 +45,8 @@ const GedcomDuplicateMerger = () => {
   const [placeApiSuggestions, setPlaceApiSuggestions] = useState({});
   const [loadingPlaceSuggestion, setLoadingPlaceSuggestion] = useState({});
   const [hasPlaceNormalizations, setHasPlaceNormalizations] = useState(false);
+  const [placeManualInput, setPlaceManualInput] = useState({}); // Saisie manuelle par groupe
+  const [placeManualSuggestions, setPlaceManualSuggestions] = useState({}); // Suggestions autocomplétion
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -1463,9 +1465,11 @@ const GedcomDuplicateMerger = () => {
     
     // Créer une map de remplacement : variante → forme choisie
     const replacementMap = new Map();
+    let groupsNormalized = 0;
     placeVariants.forEach((group, idx) => {
       const chosenForm = selections[idx];
       if (chosenForm) {
+        groupsNormalized++;
         group.variants.forEach(variant => {
           if (variant !== chosenForm) {
             replacementMap.set(variant, chosenForm);
@@ -1519,20 +1523,23 @@ const GedcomDuplicateMerger = () => {
     // Marquer qu'il y a eu des normalisations
     setHasPlaceNormalizations(true);
     
-    // Réinitialiser les sélections
+    // Réinitialiser les sélections et fermer le modal
     setPlaceNormSelections({});
     setPlaceApiSuggestions({});
+    setPlaceManualInput({});
+    setPlaceManualSuggestions({});
     setShowPlaceNormModal(false);
     
-    // Proposer le téléchargement
-    const downloadNow = window.confirm(
-      `✅ ${totalReplacements} lieu(x) normalisé(s) sur ${Object.keys(selections).length} groupe(s).\n\nVoulez-vous télécharger le fichier GEDCOM mis à jour maintenant ?`
-    );
-    
-    if (downloadNow) {
-      // Appeler la fonction de téléchargement avec les données mises à jour
-      downloadNormalizedFile(updatedPeople);
-    }
+    // Aller vers l'écran récapitulatif
+    setValidationResults({
+      totalIndividuals: individuals.length,
+      mergedCount: 0,
+      deletedCount: 0,
+      remainingCount: individuals.length,
+      normalizedPlaces: totalReplacements,
+      normalizedGroups: groupsNormalized
+    });
+    setStep('merged');
   };
 
   // v2.2.6 - Téléchargement du fichier GEDCOM avec lieux normalisés
@@ -1663,6 +1670,64 @@ const GedcomDuplicateMerger = () => {
       return searchPlaceApi(searchTerm, idx);
     });
     await Promise.all(promises);
+  };
+
+  // v2.2.6 - Recherche manuelle avec autocomplétion en temps réel
+  const searchManualPlace = async (inputText, groupIdx) => {
+    // Mettre à jour la valeur du champ
+    setPlaceManualInput(prev => ({ ...prev, [groupIdx]: inputText }));
+    
+    // Ne pas rechercher si moins de 2 caractères
+    if (!inputText || inputText.length < 2) {
+      setPlaceManualSuggestions(prev => ({ ...prev, [groupIdx]: [] }));
+      return;
+    }
+    
+    try {
+      const response = await fetch(
+        `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(inputText)}&fields=nom,departement,region&limit=5`
+      );
+      
+      if (!response.ok) throw new Error('Erreur API');
+      
+      const communes = await response.json();
+      
+      if (communes.length > 0) {
+        const suggestions = communes.map(c => ({
+          short: c.nom,
+          medium: `${c.nom}, ${c.departement?.nom || ''}`.replace(/, $/, ''),
+          full: `${c.nom}, ${c.departement?.nom || ''}, ${c.region?.nom || ''}, France`
+            .replace(/, , /g, ', ')
+            .replace(/, , /g, ', ')
+            .replace(/, France$/, ', France'),
+          departement: c.departement?.nom,
+          region: c.region?.nom
+        }));
+        setPlaceManualSuggestions(prev => ({ ...prev, [groupIdx]: suggestions }));
+      } else {
+        setPlaceManualSuggestions(prev => ({ ...prev, [groupIdx]: [] }));
+      }
+    } catch (error) {
+      console.error('Erreur recherche manuelle:', error);
+      setPlaceManualSuggestions(prev => ({ ...prev, [groupIdx]: [] }));
+    }
+  };
+
+  // Sélectionner une suggestion manuelle
+  const selectManualSuggestion = (suggestion, groupIdx) => {
+    setPlaceNormSelections(prev => ({ ...prev, [groupIdx]: suggestion.full }));
+    setPlaceManualInput(prev => ({ ...prev, [groupIdx]: '' }));
+    setPlaceManualSuggestions(prev => ({ ...prev, [groupIdx]: [] }));
+  };
+
+  // Valider la saisie manuelle (sans suggestion API)
+  const validateManualInput = (groupIdx) => {
+    const input = placeManualInput[groupIdx];
+    if (input && input.trim().length > 0) {
+      setPlaceNormSelections(prev => ({ ...prev, [groupIdx]: input.trim() }));
+      setPlaceManualInput(prev => ({ ...prev, [groupIdx]: '' }));
+      setPlaceManualSuggestions(prev => ({ ...prev, [groupIdx]: [] }));
+    }
   };
 
   // P2.1 - Statistiques généalogiques
@@ -3300,11 +3365,23 @@ const GedcomDuplicateMerger = () => {
                 <h2 className="text-2xl font-bold text-gray-800">Traitement terminé !</h2>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div><div className="text-2xl font-bold text-gray-800">{validationResults.totalIndividuals}</div><div className="text-sm text-gray-500">Avant</div></div>
-                  <div><div className="text-2xl font-bold text-red-600">-{validationResults.mergedCount + validationResults.deletedCount}</div><div className="text-sm text-gray-500">{validationResults.mergedCount > 0 && validationResults.deletedCount > 0 ? 'Fusionnés + Supprimés' : validationResults.mergedCount > 0 ? 'Fusionnés' : 'Supprimés'}</div></div>
-                  <div><div className="text-2xl font-bold text-emerald-600">{validationResults.remainingCount}</div><div className="text-sm text-gray-500">Après</div></div>
-                </div>
+                {/* Affichage pour fusion/suppression */}
+                {(validationResults.mergedCount > 0 || validationResults.deletedCount > 0) && (
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div><div className="text-2xl font-bold text-gray-800">{validationResults.totalIndividuals}</div><div className="text-sm text-gray-500">Avant</div></div>
+                    <div><div className="text-2xl font-bold text-red-600">-{validationResults.mergedCount + validationResults.deletedCount}</div><div className="text-sm text-gray-500">{validationResults.mergedCount > 0 && validationResults.deletedCount > 0 ? 'Fusionnés + Supprimés' : validationResults.mergedCount > 0 ? 'Fusionnés' : 'Supprimés'}</div></div>
+                    <div><div className="text-2xl font-bold text-emerald-600">{validationResults.remainingCount}</div><div className="text-sm text-gray-500">Après</div></div>
+                  </div>
+                )}
+                {/* Affichage pour normalisation des lieux */}
+                {validationResults.normalizedPlaces > 0 && (
+                  <div className={`${(validationResults.mergedCount > 0 || validationResults.deletedCount > 0) ? 'mt-4 pt-4 border-t' : ''}`}>
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div><div className="text-2xl font-bold text-blue-600">{validationResults.normalizedGroups}</div><div className="text-sm text-gray-500">Groupes normalisés</div></div>
+                      <div><div className="text-2xl font-bold text-emerald-600">{validationResults.normalizedPlaces}</div><div className="text-sm text-gray-500">Lieux corrigés</div></div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-3">
                 <button onClick={downloadCleanedFile} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex items-center justify-center gap-2"><Download className="w-5 h-5" />Télécharger le fichier nettoyé</button>
@@ -3668,6 +3745,46 @@ const GedcomDuplicateMerger = () => {
                           </div>
                         </button>
                       )}
+                    </div>
+                    
+                    {/* Saisie manuelle avec autocomplétion */}
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 mb-2">✏️ Ou saisir un lieu manuellement :</p>
+                      <div className="relative">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={placeManualInput[idx] || ''}
+                            onChange={(e) => searchManualPlace(e.target.value, idx)}
+                            placeholder="Tapez un nom de commune..."
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <button
+                            onClick={() => validateManualInput(idx)}
+                            disabled={!placeManualInput[idx] || placeManualInput[idx].trim().length === 0}
+                            className="px-3 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            title="Valider cette saisie (sans API)"
+                          >
+                            ✓
+                          </button>
+                        </div>
+                        
+                        {/* Suggestions d'autocomplétion */}
+                        {placeManualSuggestions[idx] && placeManualSuggestions[idx].length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {placeManualSuggestions[idx].map((suggestion, sIdx) => (
+                              <button
+                                key={sIdx}
+                                onClick={() => selectManualSuggestion(suggestion, idx)}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0 flex items-center gap-2"
+                              >
+                                <span className="text-indigo-600">🏛️</span>
+                                <span className="flex-1">{suggestion.full}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

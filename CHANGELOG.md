@@ -2,7 +2,7 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [v2.2.6] - 10 janvier 2026
+## [v2.2.6] - 11 janvier 2026
 
 ### 🎯 Thème : Outil de normalisation des lieux
 
@@ -12,16 +12,22 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
   - Bouton "Rechercher officiels" pour obtenir les noms normalisés
   - Format proposé : **Commune, Département, Région, France**
   - Recherche individuelle ou globale pour tous les groupes
-- Affichage de tous les groupes de variantes avec leurs occurrences
-- Choix de la forme correcte pour chaque groupe (variante existante ou suggestion officielle)
-- Bouton **"Tout suggérer"** pour appliquer les suggestions API ou automatiques
+- **✏️ Saisie manuelle avec autocomplétion** : 
+  - Champ de saisie libre pour chaque groupe
+  - Suggestions API Géo en temps réel pendant la frappe
+  - Validation manuelle possible (sans API) avec bouton ✓
 - **Fermeture automatique** du modal qualité lors de l'ouverture du modal normalisation
-- **💾 Téléchargement du fichier normalisé** : Popup de confirmation après application + bouton dédié
+- **📊 Écran récapitulatif** : Redirection vers l'écran de téléchargement avec statistiques
+  - Affichage du nombre de groupes normalisés
+  - Affichage du nombre de lieux corrigés
 
 ### 🔧 Technique
-- Nouveaux états `placeApiSuggestions`, `loadingPlaceSuggestion`, `hasPlaceNormalizations`
+- Nouveaux états : `placeApiSuggestions`, `loadingPlaceSuggestion`, `hasPlaceNormalizations`, `placeManualInput`, `placeManualSuggestions`
 - Fonction `searchPlaceApi()` pour appeler l'API Géo (geo.api.gouv.fr)
 - Fonction `searchAllPlacesApi()` pour rechercher tous les groupes
+- Fonction `searchManualPlace()` pour autocomplétion temps réel
+- Fonction `selectManualSuggestion()` pour sélectionner une suggestion
+- Fonction `validateManualInput()` pour valider une saisie sans API
 - Fonction `applyPlaceNormalizations()` pour appliquer les corrections
 - Fonction `downloadNormalizedFile()` pour générer le fichier GEDCOM mis à jour
 - Correction des champs : birthPlace, deathPlace, baptismPlace, burialPlace, residence

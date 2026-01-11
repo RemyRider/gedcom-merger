@@ -62,13 +62,13 @@ npm run test:all
 ## 🧪 Tests
 
 ```bash
-# Tests statiques (466 tests)
+# Tests statiques (468 tests)
 npm run test:static
 
 # Tests Vitest (181 tests)
 npm run test
 
-# Tous les tests (647 total)
+# Tous les tests (649 total)
 npm run test:all
 ```
 

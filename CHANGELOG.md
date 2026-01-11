@@ -145,3 +145,27 @@ export const calculateEnrichedQuality = (person, peopleById) => {...}
 - 18 critères de comparaison (vs 11 avant)
 - Contrôles intégrité AVANT fusion
 - 325 tests (7 catégories)
+
+---
+
+## [1.9.5] - 2025-12-28
+
+### Parsing DATE/PLAC amélioré
+- Support baptême, inhumation, résidence
+- Parsing niveau 2 DATE/PLAC
+
+## [1.9.3] - 2025-12-26
+
+### Onglet À supprimer
+- Filtrage isolés et sans nom
+- Bouton flottant
+
+## [1.9.2] - 2025-12-25
+
+### Anti-faux-positifs
+- Critères suffisants obligatoires
+
+## [1.9.0] - 2025-12-23
+
+### Suggestions IA
+- Analyse patterns de doublons

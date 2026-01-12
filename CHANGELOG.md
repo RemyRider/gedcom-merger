@@ -2,7 +2,7 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [v2.3.0] - 11 janvier 2026 (Phase 1)
+## [v2.3.0] - 12 janvier 2026 (Phase 1)
 
 ### 🎯 Thème : Fusion intelligente - Ordre optimal de fusion
 

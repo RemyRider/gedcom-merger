@@ -61,7 +61,7 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.2.6';
+  const VERSION = '2.3.0';
 
   const CHANGELOG = [
     {

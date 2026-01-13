@@ -1013,7 +1013,7 @@ console.log('│ 11.6 Interface fusion guidée Phase 2 (45 tests)               
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 
 // États React pour fusion guidée
-check(appCode.includes('fusionGraph') && appCode.includes('setFusionGraph'), 'État fusionGraph');
+check(appCode.includes('fusionGraphSize') && appCode.includes('setFusionGraphSize'), 'État fusionGraphSize');
 check(appCode.includes('fusionOrder') && appCode.includes('setFusionOrder'), 'État fusionOrder');
 check(appCode.includes('completedLevels') && appCode.includes('setCompletedLevels'), 'État completedLevels');
 check(appCode.includes('selectedGuidedPairs') && appCode.includes('setSelectedGuidedPairs'), 'État selectedGuidedPairs');
@@ -1071,7 +1071,7 @@ check(appCode.includes('Calcule l\'ordre optimal') || appCode.includes('ordre op
 // Statistiques fusion guidée
 check(appCode.includes('paires') && appCode.includes('fusionOrder'), 'Stats nombre paires');
 check(appCode.includes('niveaux') && appCode.includes('completedLevels'), 'Stats niveaux complétés');
-check(appCode.includes('dépendances') && appCode.includes('fusionGraph'), 'Stats dépendances');
+check(appCode.includes('dépendances') && appCode.includes('fusionGraphSize'), 'Stats dépendances');
 
 // Progression
 check(appCode.includes('Progression') && appCode.includes('completedLevels.length'), 'Affichage progression');

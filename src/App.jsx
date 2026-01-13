@@ -49,7 +49,7 @@ const GedcomDuplicateMerger = () => {
   const [placeManualInput, setPlaceManualInput] = useState({}); // Saisie manuelle par groupe
   const [placeManualSuggestions, setPlaceManualSuggestions] = useState({}); // Suggestions autocomplétion
   // v2.3.0 - États pour fusion guidée par étapes
-  const [fusionGraph, setFusionGraph] = useState(null); // Graphe de dépendances
+  const [fusionGraphSize, setFusionGraphSize] = useState(0); // Nombre de dépendances
   const [fusionOrder, setFusionOrder] = useState([]); // Ordre optimal de fusion [{level, pairs}]
   const [completedLevels, setCompletedLevels] = useState([]); // Niveaux complétés (tableau)
   const [selectedGuidedPairs, setSelectedGuidedPairs] = useState([]); // Paires sélectionnées par niveau (tableau)
@@ -3360,7 +3360,7 @@ const GedcomDuplicateMerger = () => {
                         <div className="flex gap-4 text-sm">
                           <span className="px-2 py-1 bg-white rounded">📊 {fusionOrder.reduce((sum, l) => sum + (l.pairIds?.length || 0), 0)} paires</span>
                           <span className="px-2 py-1 bg-white rounded">✅ {completedLevels.length}/{fusionOrder.length} niveaux</span>
-                          <span className="px-2 py-1 bg-white rounded">🔗 {fusionGraph ? fusionGraph.size : 0} dépendances</span>
+                          <span className="px-2 py-1 bg-white rounded">🔗 {fusionGraphSize} dépendances</span>
                         </div>
                       )}
                     </div>
@@ -3380,7 +3380,7 @@ const GedcomDuplicateMerger = () => {
                             }
                             try {
                               const result = buildDependencyGraph(duplicates, individuals);
-                              setFusionGraph(result.graph);
+                              setFusionGraphSize(result.graph ? result.graph.size : 0);
                               const order = calculateFusionOrder(result.graph);
                               setFusionOrder(order);
                               setCompletedLevels([]);
@@ -3493,16 +3493,21 @@ const GedcomDuplicateMerger = () => {
 
                                   {/* Liste des paires */}
                                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                                    {levelPairs.map((pair, pairIdx) => {
+                                    {(() => {
+                                      // Créer un Map pour calculateEnrichedQuality
+                                      const individualsMap = new Map();
+                                      individuals.forEach(p => individualsMap.set(p.id, p));
+                                      
+                                      return levelPairs.map((pair, pairIdx) => {
                                       if (!pair) return null;
                                       const pairId = pair.id || `${pair.person1.id}-${pair.person2.id}`;
                                       const isSelected = selectedGuidedPairs.includes(pairId);
-                                      const quality1 = calculateEnrichedQuality(pair.person1, individuals);
-                                      const quality2 = calculateEnrichedQuality(pair.person2, individuals);
-                                      const keepPerson = quality1 >= quality2 ? pair.person1 : pair.person2;
-                                      const mergePerson = quality1 >= quality2 ? pair.person2 : pair.person1;
-                                      const keepQuality = Math.max(quality1, quality2);
-                                      const mergeQuality = Math.min(quality1, quality2);
+                                      const quality1 = calculateEnrichedQuality(pair.person1, individualsMap);
+                                      const quality2 = calculateEnrichedQuality(pair.person2, individualsMap);
+                                      const keepPerson = quality1.score >= quality2.score ? pair.person1 : pair.person2;
+                                      const mergePerson = quality1.score >= quality2.score ? pair.person2 : pair.person1;
+                                      const keepQuality = Math.max(quality1.score, quality2.score);
+                                      const mergeQuality = Math.min(quality1.score, quality2.score);
                                       const qualityDiff = keepQuality - mergeQuality;
 
                                       return (
@@ -3551,7 +3556,8 @@ const GedcomDuplicateMerger = () => {
                                           </div>
                                         </div>
                                       );
-                                    })}
+                                    });
+                                    })()}
                                   </div>
                                 </div>
                               )}
@@ -3590,7 +3596,7 @@ const GedcomDuplicateMerger = () => {
                               <button
                                 onClick={() => {
                                   setFusionOrder([]);
-                                  setFusionGraph(null);
+                                  setFusionGraphSize(0);
                                   setCompletedLevels([]);
                                   setSelectedGuidedPairs([]);
                                 }}

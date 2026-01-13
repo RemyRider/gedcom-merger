@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield, GitBranch, Lock, Unlock } from 'lucide-react';
-import { FUSION_LEVELS, buildDependencyGraph, calculateFusionOrder, calculateEnrichedQuality, canFuseLevel, prepareLevelForDisplay, calculateFusionStats } from './utils/fusionOrder.mjs';
+import { FUSION_LEVELS, buildDependencyGraph, calculateFusionOrder, calculateEnrichedQuality, canFuseLevel } from './utils/fusionOrder.mjs';
 
 const GedcomDuplicateMerger = () => {
   const [file, setFile] = useState(null);
@@ -3181,7 +3181,7 @@ const GedcomDuplicateMerger = () => {
                 {[
                   { id: 'clusters', label: 'Clusters', icon: '🟠', count: getFilteredClusters().length },
                   { id: 'pairs', label: 'Doublons', icon: '🔵', count: getSimplePairs().length },
-                  { id: 'guided', label: 'Fusion guidée', icon: '🎯', count: fusionOrder.reduce((sum, l) => sum + l.pairs.length, 0) },
+                  { id: 'guided', label: 'Fusion guidée', icon: '🎯', count: fusionOrder.reduce((sum, l) => sum + (l.pairIds?.length || 0), 0) },
                   { id: 'toDelete', label: 'À supprimer', icon: '🗑️', count: toDeletePersons.length },
                   { id: 'ai', label: 'Suggestions IA', icon: '🟣', count: smartSuggestions.length }
                 ].map(tab => (
@@ -3358,7 +3358,7 @@ const GedcomDuplicateMerger = () => {
                       </p>
                       {fusionOrder.length > 0 && (
                         <div className="flex gap-4 text-sm">
-                          <span className="px-2 py-1 bg-white rounded">📊 {fusionOrder.reduce((sum, l) => sum + l.pairs.length, 0)} paires</span>
+                          <span className="px-2 py-1 bg-white rounded">📊 {fusionOrder.reduce((sum, l) => sum + (l.pairIds?.length || 0), 0)} paires</span>
                           <span className="px-2 py-1 bg-white rounded">✅ {completedLevels.size}/{fusionOrder.length} niveaux</span>
                           <span className="px-2 py-1 bg-white rounded">🔗 {fusionGraph ? fusionGraph.size : 0} dépendances</span>
                         </div>
@@ -3370,12 +3370,25 @@ const GedcomDuplicateMerger = () => {
                       <div className="text-center py-8">
                         <button 
                           onClick={() => {
-                            const graph = buildDependencyGraph(duplicates, individuals);
-                            setFusionGraph(graph);
-                            const order = calculateFusionOrder(graph);
-                            setFusionOrder(order);
-                            setCompletedLevels(new Set());
-                            setSelectedGuidedPairs(new Set());
+                            if (!Array.isArray(duplicates) || duplicates.length === 0) {
+                              alert('Aucun doublon à analyser');
+                              return;
+                            }
+                            if (!Array.isArray(individuals) || individuals.length === 0) {
+                              alert('Aucun individu chargé');
+                              return;
+                            }
+                            try {
+                              const result = buildDependencyGraph(duplicates, individuals);
+                              setFusionGraph(result.graph);
+                              const order = calculateFusionOrder(result.graph);
+                              setFusionOrder(order);
+                              setCompletedLevels(new Set());
+                              setSelectedGuidedPairs(new Set());
+                            } catch (err) {
+                              console.error('Erreur analyse dépendances:', err);
+                              alert('Erreur lors de l\'analyse: ' + err.message);
+                            }
                           }}
                           className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 mx-auto"
                         >
@@ -3396,8 +3409,11 @@ const GedcomDuplicateMerger = () => {
                         {fusionOrder.map((levelData, levelIdx) => {
                           const isCompleted = completedLevels.has(levelIdx);
                           const canFuse = canFuseLevel(levelIdx, completedLevels);
-                          const levelInfo = FUSION_LEVELS[levelIdx] || { label: `Niveau ${levelIdx}`, description: '' };
-                          const pairsForDisplay = prepareLevelForDisplay(levelData.pairs, duplicates, individuals);
+                          const levelInfo = FUSION_LEVELS[levelIdx] || { label: levelData.label || `Niveau ${levelIdx}`, description: '' };
+                          // Convertir pairIds en paires complètes
+                          const levelPairs = (levelData.pairIds || []).map(pairId => 
+                            duplicates.find(d => d.id === pairId || `${d.person1.id}-${d.person2.id}` === pairId || `${d.person2.id}-${d.person1.id}` === pairId)
+                          ).filter(Boolean);
                           
                           return (
                             <div key={levelIdx} className={`border rounded-lg overflow-hidden ${isCompleted ? 'border-green-300 bg-green-50' : canFuse ? 'border-emerald-300 bg-white' : 'border-gray-200 bg-gray-50 opacity-75'}`}>
@@ -3413,9 +3429,9 @@ const GedcomDuplicateMerger = () => {
                                   )}
                                   <div>
                                     <div className="font-semibold">
-                                      ÉTAPE {levelIdx + 1}/{fusionOrder.length} - {levelInfo.label}
+                                      ÉTAPE {levelIdx + 1}/{fusionOrder.length} - {levelData.label || levelInfo.label}
                                     </div>
-                                    <div className="text-sm text-gray-600">{levelInfo.description} • {levelData.pairs.length} fusion(s)</div>
+                                    <div className="text-sm text-gray-600">{levelPairs.length} fusion(s)</div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -3436,10 +3452,10 @@ const GedcomDuplicateMerger = () => {
                                   <div className="flex gap-2 mb-4">
                                     <button
                                       onClick={() => {
-                                        const levelPairIds = new Set(levelData.pairs.map(p => p.id || `${p.person1.id}-${p.person2.id}`));
+                                        const ids = new Set(levelData.pairIds || []);
                                         setSelectedGuidedPairs(prev => {
                                           const newSet = new Set(prev);
-                                          levelPairIds.forEach(id => newSet.add(id));
+                                          ids.forEach(id => newSet.add(id));
                                           return newSet;
                                         });
                                       }}
@@ -3449,10 +3465,10 @@ const GedcomDuplicateMerger = () => {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const levelPairIds = new Set(levelData.pairs.map(p => p.id || `${p.person1.id}-${p.person2.id}`));
+                                        const ids = new Set(levelData.pairIds || []);
                                         setSelectedGuidedPairs(prev => {
                                           const newSet = new Set(prev);
-                                          levelPairIds.forEach(id => newSet.delete(id));
+                                          ids.forEach(id => newSet.delete(id));
                                           return newSet;
                                         });
                                       }}
@@ -3462,19 +3478,15 @@ const GedcomDuplicateMerger = () => {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        // Fusionner les paires sélectionnées de ce niveau
-                                        const levelPairIds = levelData.pairs.map(p => p.id || `${p.person1.id}-${p.person2.id}`);
-                                        const toFuse = levelPairIds.filter(id => selectedGuidedPairs.has(id));
+                                        const toFuse = (levelData.pairIds || []).filter(id => selectedGuidedPairs.has(id));
                                         if (toFuse.length > 0) {
-                                          // Ajouter à selectedPairs pour utiliser handleMerge existant
                                           const newSelectedPairs = new Set(selectedPairs);
                                           toFuse.forEach(id => newSelectedPairs.add(id));
                                           setSelectedPairs(newSelectedPairs);
-                                          // Marquer le niveau comme complété après fusion
                                           setCompletedLevels(prev => new Set([...prev, levelIdx]));
                                         }
                                       }}
-                                      disabled={!levelData.pairs.some(p => selectedGuidedPairs.has(p.id || `${p.person1.id}-${p.person2.id}`))}
+                                      disabled={!(levelData.pairIds || []).some(id => selectedGuidedPairs.has(id))}
                                       className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       ▶ Fusionner sélectionnées
@@ -3489,13 +3501,14 @@ const GedcomDuplicateMerger = () => {
 
                                   {/* Liste des paires */}
                                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                                    {pairsForDisplay.map((pairInfo, pairIdx) => {
-                                      const pairId = pairInfo.pair.id || `${pairInfo.pair.person1.id}-${pairInfo.pair.person2.id}`;
+                                    {levelPairs.map((pair, pairIdx) => {
+                                      if (!pair) return null;
+                                      const pairId = pair.id || `${pair.person1.id}-${pair.person2.id}`;
                                       const isSelected = selectedGuidedPairs.has(pairId);
-                                      const quality1 = calculateEnrichedQuality(pairInfo.pair.person1, individuals);
-                                      const quality2 = calculateEnrichedQuality(pairInfo.pair.person2, individuals);
-                                      const keepPerson = quality1 >= quality2 ? pairInfo.pair.person1 : pairInfo.pair.person2;
-                                      const mergePerson = quality1 >= quality2 ? pairInfo.pair.person2 : pairInfo.pair.person1;
+                                      const quality1 = calculateEnrichedQuality(pair.person1, individuals);
+                                      const quality2 = calculateEnrichedQuality(pair.person2, individuals);
+                                      const keepPerson = quality1 >= quality2 ? pair.person1 : pair.person2;
+                                      const mergePerson = quality1 >= quality2 ? pair.person2 : pair.person1;
                                       const keepQuality = Math.max(quality1, quality2);
                                       const mergeQuality = Math.min(quality1, quality2);
                                       const qualityDiff = keepQuality - mergeQuality;
@@ -3508,8 +3521,8 @@ const GedcomDuplicateMerger = () => {
                                           <div className="flex items-center justify-between">
                                             <div className="flex-1">
                                               <div className="flex items-center gap-2">
-                                                <span className={`px-2 py-0.5 rounded text-sm font-medium ${pairInfo.pair.similarity >= 90 ? 'bg-green-100 text-green-800' : pairInfo.pair.similarity >= 80 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                                                  {pairInfo.pair.similarity}%
+                                                <span className={`px-2 py-0.5 rounded text-sm font-medium ${pair.similarity >= 90 ? 'bg-green-100 text-green-800' : pair.similarity >= 80 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                                  {pair.similarity}%
                                                 </span>
                                                 <span className="font-medium">{keepPerson.names?.[0] || keepPerson.id}</span>
                                               </div>
@@ -3523,7 +3536,7 @@ const GedcomDuplicateMerger = () => {
                                             </div>
                                             <div className="flex items-center gap-2">
                                               <button 
-                                                onClick={() => openPreview(pairInfo.pair)} 
+                                                onClick={() => openPreview(pair)} 
                                                 className="px-2 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
                                               >
                                                 Voir

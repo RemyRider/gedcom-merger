@@ -1024,7 +1024,7 @@ check(appCode.includes('FUSION_LEVELS'), 'Import FUSION_LEVELS');
 check(appCode.includes('buildDependencyGraph'), 'Import buildDependencyGraph');
 check(appCode.includes('calculateFusionOrder'), 'Import calculateFusionOrder');
 check(appCode.includes('calculateEnrichedQuality'), 'Import calculateEnrichedQuality');
-check(appCode.includes('canFuseLevel'), 'Import canFuseLevel');
+check(appCode.includes('levelIdx === 0 || completedLevels.includes'), 'Logique canFuse inline');
 check(appCode.includes('levelPairs') || appCode.includes('pairIds'), 'Conversion pairIds en paires');
 
 // Onglet fusion guidée
@@ -1074,7 +1074,7 @@ check(appCode.includes('niveaux') && appCode.includes('completedLevels'), 'Stats
 check(appCode.includes('dépendances') && appCode.includes('fusionGraph'), 'Stats dépendances');
 
 // Progression
-check(appCode.includes('Progression') && appCode.includes('completedLevels.size'), 'Affichage progression');
+check(appCode.includes('Progression') && appCode.includes('completedLevels.length'), 'Affichage progression');
 check(appCode.includes('Réinitialiser') && appCode.includes('setFusionOrder'), 'Bouton réinitialiser');
 check(appCode.includes('Toutes les étapes sont complétées') || appCode.includes('🎉'), 'Message toutes étapes complétées');
 

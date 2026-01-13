@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield, GitBranch, Lock, Unlock } from 'lucide-react';
-import { FUSION_LEVELS, buildDependencyGraph, calculateFusionOrder, calculateEnrichedQuality, canFuseLevel } from './utils/fusionOrder.mjs';
+import { FUSION_LEVELS, buildDependencyGraph, calculateFusionOrder, calculateEnrichedQuality } from './utils/fusionOrder.mjs';
 
 const GedcomDuplicateMerger = () => {
   const [file, setFile] = useState(null);
@@ -51,8 +51,8 @@ const GedcomDuplicateMerger = () => {
   // v2.3.0 - États pour fusion guidée par étapes
   const [fusionGraph, setFusionGraph] = useState(null); // Graphe de dépendances
   const [fusionOrder, setFusionOrder] = useState([]); // Ordre optimal de fusion [{level, pairs}]
-  const [completedLevels, setCompletedLevels] = useState(new Set()); // Niveaux complétés
-  const [selectedGuidedPairs, setSelectedGuidedPairs] = useState(new Set()); // Paires sélectionnées par niveau
+  const [completedLevels, setCompletedLevels] = useState([]); // Niveaux complétés (tableau)
+  const [selectedGuidedPairs, setSelectedGuidedPairs] = useState([]); // Paires sélectionnées par niveau (tableau)
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -3359,7 +3359,7 @@ const GedcomDuplicateMerger = () => {
                       {fusionOrder.length > 0 && (
                         <div className="flex gap-4 text-sm">
                           <span className="px-2 py-1 bg-white rounded">📊 {fusionOrder.reduce((sum, l) => sum + (l.pairIds?.length || 0), 0)} paires</span>
-                          <span className="px-2 py-1 bg-white rounded">✅ {completedLevels.size}/{fusionOrder.length} niveaux</span>
+                          <span className="px-2 py-1 bg-white rounded">✅ {completedLevels.length}/{fusionOrder.length} niveaux</span>
                           <span className="px-2 py-1 bg-white rounded">🔗 {fusionGraph ? fusionGraph.size : 0} dépendances</span>
                         </div>
                       )}
@@ -3383,8 +3383,8 @@ const GedcomDuplicateMerger = () => {
                               setFusionGraph(result.graph);
                               const order = calculateFusionOrder(result.graph);
                               setFusionOrder(order);
-                              setCompletedLevels(new Set());
-                              setSelectedGuidedPairs(new Set());
+                              setCompletedLevels([]);
+                              setSelectedGuidedPairs([]);
                             } catch (err) {
                               console.error('Erreur analyse dépendances:', err);
                               alert('Erreur lors de l\'analyse: ' + err.message);
@@ -3407,8 +3407,8 @@ const GedcomDuplicateMerger = () => {
                     {fusionOrder.length > 0 && (
                       <div className="space-y-4">
                         {fusionOrder.map((levelData, levelIdx) => {
-                          const isCompleted = completedLevels.has(levelIdx);
-                          const canFuse = canFuseLevel(levelIdx, completedLevels);
+                          const isCompleted = completedLevels.includes(levelIdx);
+                          const canFuse = levelIdx === 0 || completedLevels.includes(levelIdx - 1);
                           const levelInfo = FUSION_LEVELS[levelIdx] || { label: levelData.label || `Niveau ${levelIdx}`, description: '' };
                           // Convertir pairIds en paires complètes
                           const levelPairs = (levelData.pairIds || []).map(pairId => 
@@ -3452,12 +3452,8 @@ const GedcomDuplicateMerger = () => {
                                   <div className="flex gap-2 mb-4">
                                     <button
                                       onClick={() => {
-                                        const ids = new Set(levelData.pairIds || []);
-                                        setSelectedGuidedPairs(prev => {
-                                          const newSet = new Set(prev);
-                                          ids.forEach(id => newSet.add(id));
-                                          return newSet;
-                                        });
+                                        const ids = levelData.pairIds || [];
+                                        setSelectedGuidedPairs(prev => [...new Set([...prev, ...ids])]);
                                       }}
                                       className="px-3 py-1 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700"
                                     >
@@ -3465,12 +3461,8 @@ const GedcomDuplicateMerger = () => {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const ids = new Set(levelData.pairIds || []);
-                                        setSelectedGuidedPairs(prev => {
-                                          const newSet = new Set(prev);
-                                          ids.forEach(id => newSet.delete(id));
-                                          return newSet;
-                                        });
+                                        const idsToRemove = new Set(levelData.pairIds || []);
+                                        setSelectedGuidedPairs(prev => prev.filter(id => !idsToRemove.has(id)));
                                       }}
                                       className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
                                     >
@@ -3478,21 +3470,21 @@ const GedcomDuplicateMerger = () => {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const toFuse = (levelData.pairIds || []).filter(id => selectedGuidedPairs.has(id));
+                                        const toFuse = (levelData.pairIds || []).filter(id => selectedGuidedPairs.includes(id));
                                         if (toFuse.length > 0) {
                                           const newSelectedPairs = new Set(selectedPairs);
                                           toFuse.forEach(id => newSelectedPairs.add(id));
                                           setSelectedPairs(newSelectedPairs);
-                                          setCompletedLevels(prev => new Set([...prev, levelIdx]));
+                                          setCompletedLevels(prev => [...new Set([...prev, levelIdx])]);
                                         }
                                       }}
-                                      disabled={!(levelData.pairIds || []).some(id => selectedGuidedPairs.has(id))}
+                                      disabled={!(levelData.pairIds || []).some(id => selectedGuidedPairs.includes(id))}
                                       className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       ▶ Fusionner sélectionnées
                                     </button>
                                     <button
-                                      onClick={() => setCompletedLevels(prev => new Set([...prev, levelIdx]))}
+                                      onClick={() => setCompletedLevels(prev => [...new Set([...prev, levelIdx])])}
                                       className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
                                     >
                                       Passer cette étape
@@ -3504,7 +3496,7 @@ const GedcomDuplicateMerger = () => {
                                     {levelPairs.map((pair, pairIdx) => {
                                       if (!pair) return null;
                                       const pairId = pair.id || `${pair.person1.id}-${pair.person2.id}`;
-                                      const isSelected = selectedGuidedPairs.has(pairId);
+                                      const isSelected = selectedGuidedPairs.includes(pairId);
                                       const quality1 = calculateEnrichedQuality(pair.person1, individuals);
                                       const quality2 = calculateEnrichedQuality(pair.person2, individuals);
                                       const keepPerson = quality1 >= quality2 ? pair.person1 : pair.person2;
@@ -3544,13 +3536,11 @@ const GedcomDuplicateMerger = () => {
                                               <button
                                                 onClick={() => {
                                                   setSelectedGuidedPairs(prev => {
-                                                    const newSet = new Set(prev);
-                                                    if (newSet.has(pairId)) {
-                                                      newSet.delete(pairId);
+                                                    if (prev.includes(pairId)) {
+                                                      return prev.filter(id => id !== pairId);
                                                     } else {
-                                                      newSet.add(pairId);
+                                                      return [...prev, pairId];
                                                     }
-                                                    return newSet;
                                                   });
                                                 }}
                                                 className={`px-3 py-1 text-sm rounded ${isSelected ? 'bg-emerald-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
@@ -3589,9 +3579,9 @@ const GedcomDuplicateMerger = () => {
                         <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">Progression: {completedLevels.size}/{fusionOrder.length} étapes</p>
+                              <p className="font-medium">Progression: {completedLevels.length}/{fusionOrder.length} étapes</p>
                               <p className="text-sm text-gray-600">
-                                {completedLevels.size === fusionOrder.length 
+                                {completedLevels.length === fusionOrder.length 
                                   ? '🎉 Toutes les étapes sont complétées !' 
                                   : 'Continuez les fusions étape par étape'}
                               </p>
@@ -3601,8 +3591,8 @@ const GedcomDuplicateMerger = () => {
                                 onClick={() => {
                                   setFusionOrder([]);
                                   setFusionGraph(null);
-                                  setCompletedLevels(new Set());
-                                  setSelectedGuidedPairs(new Set());
+                                  setCompletedLevels([]);
+                                  setSelectedGuidedPairs([]);
                                 }}
                                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                               >

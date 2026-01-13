@@ -2,60 +2,6 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [v2.3.0] - 13 janvier 2026 (Phase 2)
-
-### 🎯 Thème : Fusion intelligente - Interface par étapes
-
-### ✨ Nouvelles fonctionnalités
-
-#### Interface fusion guidée (Phase 2)
-- **Nouvel onglet "Fusion guidée"** : Interface complète pour la fusion par étapes
-- **Approche Bottom-Up** : Fusion dans l'ordre enfants → conjoints → parents
-- **Niveaux progressifs** : Chaque étape se débloque après la précédente
-- **Score qualité** : Indication automatique de la personne à conserver
-- **Indicateurs visuels** : 🔒 Bloqué / 🔓 Disponible / ✅ Complété
-
-#### Module fusionOrder.mjs (Phase 1)
-- **Graphe de dépendances** : Analyse des relations entre doublons (parent/enfant, conjoint)
-- **Tri topologique** : Calcul de l'ordre optimal de fusion
-- **Score qualité enrichi** : Évaluation plus fine avec précision des dates/lieux et sources
-- **Détection de cycles** : Gestion des cas complexes de dépendances circulaires
-
-### 🧪 Tests
-- **573 tests statiques** (catégorie 11 : 90 tests)
-- **225 tests Vitest**
-- Total : **798 tests**
-
-### 📁 Fichiers modifiés
-- `src/App.jsx` : Nouvel onglet guided, états pour fusion par étapes
-- `src/utils/fusionOrder.mjs` : Module principal (494 lignes)
-- `tests/test-complete.cjs` : 573 tests (90 pour fusion intelligente)
-
----
-
-## [v2.3.0] - 12 janvier 2026 (Phase 1)
-
-### 🎯 Thème : Fusion intelligente - Ordre optimal de fusion
-
-### ✨ Nouvelles fonctionnalités
-
-#### Module fusionOrder.mjs
-- **Graphe de dépendances** : Analyse des relations entre doublons (parent/enfant, conjoint)
-- **Tri topologique** : Calcul de l'ordre optimal de fusion (enfants → conjoints → parents)
-- **Score qualité enrichi** : Évaluation plus fine avec précision des dates/lieux et sources
-- **Détection de cycles** : Gestion des cas complexes de dépendances circulaires
-
-### 🧪 Tests
-- **45 nouveaux tests statiques** (Catégorie 11)
-- **32 tests Vitest** pour fusionOrder.mjs
-- Total : **720 tests** (527 statiques + 193 Vitest)
-
-### 📁 Nouveaux fichiers
-- `src/utils/fusionOrder.mjs` : Module principal (494 lignes)
-- `tests/fusionOrder.test.mjs` : Tests unitaires Vitest
-
----
-
 ## [v2.2.6] - 11 janvier 2026 ✅ SANCTUARISÉE
 
 ### 🎯 Thème : Outil de normalisation des lieux + Conflits relationnels

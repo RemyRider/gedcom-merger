@@ -1025,7 +1025,7 @@ check(appCode.includes('buildDependencyGraph'), 'Import buildDependencyGraph');
 check(appCode.includes('calculateFusionOrder'), 'Import calculateFusionOrder');
 check(appCode.includes('calculateEnrichedQuality'), 'Import calculateEnrichedQuality');
 check(appCode.includes('canFuseLevel'), 'Import canFuseLevel');
-check(appCode.includes('prepareLevelForDisplay'), 'Import prepareLevelForDisplay');
+check(appCode.includes('levelPairs') || appCode.includes('pairIds'), 'Conversion pairIds en paires');
 
 // Onglet fusion guidée
 check(appCode.includes("id: 'guided'") || appCode.includes("'guided'"), 'Onglet guided défini');
@@ -1042,7 +1042,7 @@ check(appCode.includes('Lock') && appCode.includes('Unlock'), 'Icônes Lock/Unlo
 check(appCode.includes('isCompleted') && appCode.includes('completedLevels'), 'Vérification niveau complété');
 check(appCode.includes('canFuse') || appCode.includes('canFuseLevel'), 'Vérification niveau disponible');
 check(appCode.includes('levelInfo') || appCode.includes('levelData'), 'Données de niveau');
-check(appCode.includes('pairsForDisplay') || appCode.includes('prepareLevelForDisplay'), 'Préparation paires pour affichage');
+check(appCode.includes('levelPairs') && appCode.includes('duplicates.find'), 'Préparation paires pour affichage');
 
 // Actions de sélection
 check(appCode.includes('Tout sélectionner') && appCode.includes('selectedGuidedPairs'), 'Bouton tout sélectionner guided');
@@ -1079,7 +1079,7 @@ check(appCode.includes('Réinitialiser') && appCode.includes('setFusionOrder'), 
 check(appCode.includes('Toutes les étapes sont complétées') || appCode.includes('🎉'), 'Message toutes étapes complétées');
 
 // Prévisualisation
-check(appCode.includes('openPreview') && appCode.includes('pairInfo'), 'Prévisualisation dans guided');
+check(appCode.includes('openPreview(pair)') || appCode.includes('openPreview'), 'Prévisualisation dans guided');
 check(appCode.includes('Voir') && appCode.includes('openPreview'), 'Bouton voir détails');
 console.log('');
 

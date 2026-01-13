@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.3.0
+// SUITE DE TESTS GEDCOM MERGER v2.4.0
 // 482 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -34,7 +34,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.3.0');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.4.0');
 console.log('                         527 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
@@ -68,8 +68,8 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.3.0'"), 'VERSION 2.3.0 dans App.jsx');
-check(packageJson.version === '2.3.0', 'Version 2.3.0 dans package.json');
+check(appCode.includes("VERSION = '2.4.0'"), 'VERSION 2.3.0 dans App.jsx');
+check(packageJson.version === '2.4.0', 'Version 2.4.0 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -915,10 +915,10 @@ check(appCode.includes('downloadNormalizedFile()') && appCode.includes('download
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CATÉGORIE 11: MODULE FUSION INTELLIGENTE v2.3.0 (45 tests)
+// CATÉGORIE 11: MODULE FUSION INTELLIGENTE v2.3.0+ (45 tests)
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
-console.log('║         CATÉGORIE 11: MODULE FUSION INTELLIGENTE v2.3.0 (45 tests)           ║');
+console.log('║         CATÉGORIE 11: MODULE FUSION INTELLIGENTE v2.3.0+ (45 tests)           ║');
 console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 
 // Lire le fichier fusionOrder.mjs
@@ -934,9 +934,9 @@ console.log('│ 11.1 Structure du module (12 tests)                            
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 check(fusionOrderCode.length > 0, 'Fichier fusionOrder.mjs existe');
 check(fusionOrderCode.includes('export const FUSION_LEVELS'), 'Constante FUSION_LEVELS exportée');
-check(fusionOrderCode.includes('CHILDREN') && fusionOrderCode.includes('0'), 'Niveau CHILDREN = 0');
-check(fusionOrderCode.includes('SPOUSES') && fusionOrderCode.includes('1'), 'Niveau SPOUSES = 1');
-check(fusionOrderCode.includes('PARENTS') && fusionOrderCode.includes('2'), 'Niveau PARENTS = 2');
+check(fusionOrderCode.includes('NO_PARENT_DUPLICATES') && fusionOrderCode.includes('0'), 'Niveau NO_PARENT_DUPLICATES = 0');
+check(fusionOrderCode.includes('NO_SPOUSE_DUPLICATES') && fusionOrderCode.includes('1'), 'Niveau NO_SPOUSE_DUPLICATES = 1');
+check(fusionOrderCode.includes('HAS_DEPENDENCIES') && fusionOrderCode.includes('2'), 'Niveau HAS_DEPENDENCIES = 2');
 check(fusionOrderCode.includes('INDEPENDENT'), 'Niveau INDEPENDENT défini');
 check(fusionOrderCode.includes('export const createPairId'), 'Fonction createPairId exportée');
 check(fusionOrderCode.includes('export const buildDependencyGraph'), 'Fonction buildDependencyGraph exportée');
@@ -996,6 +996,56 @@ check(fusionOrderCode.includes('isCompleted') || fusionOrderCode.includes('compl
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CATÉGORIE 12: FUSION GUIDÉE CONTEXTUELLE v2.4.0 (30 tests)
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
+console.log('║         CATÉGORIE 12: FUSION GUIDÉE CONTEXTUELLE v2.4.0 (30 tests)           ║');
+console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 12.1 Module fusionOrder - Approche Top-Down (10 tests)                     │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('NO_PARENT_DUPLICATES'), 'Niveau NO_PARENT_DUPLICATES');
+check(fusionOrderCode.includes('NO_SPOUSE_DUPLICATES'), 'Niveau NO_SPOUSE_DUPLICATES');
+check(fusionOrderCode.includes('HAS_DEPENDENCIES'), 'Niveau HAS_DEPENDENCIES');
+check(fusionOrderCode.includes('detectRelatedDuplicates'), 'Fonction detectRelatedDuplicates exportée');
+check(fusionOrderCode.includes('needsGuidedFusion'), 'Fonction needsGuidedFusion exportée');
+check(fusionOrderCode.includes('hasRelatedDuplicates'), 'Propriété hasRelatedDuplicates');
+check(fusionOrderCode.includes('recommendedOrder'), 'Propriété recommendedOrder');
+check(fusionOrderCode.includes('Top-Down') || fusionOrderCode.includes('parents stables'), 'Documentation Top-Down');
+check(fusionOrderCode.includes('calculateFusionImpact'), 'Fonction calculateFusionImpact');
+check(fusionOrderCode.includes('blockedPairs') || fusionOrderCode.includes('dependenciesRemaining'), 'Calcul impact fusion');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 12.2 Interface fusion guidée (12 tests)                                    │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('showGuidedFusionModal'), 'État showGuidedFusionModal');
+check(appCode.includes('guidedFusionContext'), 'État guidedFusionContext');
+check(appCode.includes('handleDirectMerge'), 'Fonction handleDirectMerge');
+check(appCode.includes('handleFuseRelatedPair'), 'Fonction handleFuseRelatedPair');
+check(appCode.includes('handleGuidedFusionNext'), 'Fonction handleGuidedFusionNext');
+check(appCode.includes('handleCancelGuidedFusion'), 'Fonction handleCancelGuidedFusion');
+check(appCode.includes('Relations en doublon détectées'), 'Titre modal fusion guidée');
+check(appCode.includes('Parents en doublon'), 'Section parents doublons');
+check(appCode.includes('Conjoints en doublon'), 'Section conjoints doublons');
+check(appCode.includes('Enfants en doublon'), 'Section enfants doublons');
+check(appCode.includes('Ignorer et fusionner'), 'Bouton ignorer');
+check(appCode.includes('Fusionner la paire principale'), 'Bouton fusion principale');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 12.3 Imports et intégration (8 tests)                                      │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes("import { detectRelatedDuplicates") || appCode.includes("from './utils/fusionOrder.mjs'"), 'Import fusionOrder.mjs');
+check(appCode.includes('AlertTriangle'), 'Import icône AlertTriangle');
+check(appCode.includes('ArrowRight'), 'Import icône ArrowRight');
+check(appCode.includes('Link') || appCode.includes('lucide-react'), 'Import icône Link');
+check(appCode.includes('completedPairs'), 'Gestion paires complétées');
+check(appCode.includes('currentStep'), 'Gestion étape courante');
+check(appCode.includes('allPairsWithRelated'), 'Liste toutes les paires avec dépendances');
+check(appCode.includes('v2.4.0') && appCode.includes('Fusion guidée'), 'Changelog v2.4.0');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('═══════════════════════════════════════════════════════════════════════════════');
@@ -1003,7 +1053,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 527;
+const expectedTotal = 557;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -1022,13 +1072,14 @@ console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('     9. Conflits v2.2.0 ......... 36 tests');
 console.log('    10. Scoring/Normalisation ... 47 tests');
-console.log('    11. Module fusion v2.3.0 .... 45 tests');
+console.log('    11. Module fusion v2.3.0+ .... 45 tests');
+console.log('    12. Fusion guidée v2.4.0 .... 30 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.3.0 validée (tests statiques)');
+  console.log('  ✅ Version 2.4.0 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

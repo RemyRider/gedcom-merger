@@ -1,12 +1,11 @@
 {
   "name": "gedcom-merger",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "test": "vitest run",
-    "test:watch": "vitest",
     "test:static": "node tests/test-complete.cjs",
     "test:all": "npm run test:static && npm run test"
   },

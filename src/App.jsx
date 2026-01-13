@@ -65,10 +65,24 @@ const GedcomDuplicateMerger = () => {
 
   const CHANGELOG = [
     {
-      version: '2.2.6',
-      date: '10 janvier 2026',
+      version: '2.3.0',
+      date: '12 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
+      title: 'Fusion intelligente - Ordre optimal',
+      items: [
+        'NOUVEAU: Module fusionOrder.mjs - Graphe de dépendances',
+        'NOUVEAU: Tri topologique (enfants → conjoints → parents)',
+        'NOUVEAU: Score qualité enrichi (précision dates/lieux, sources)',
+        'NOUVEAU: Détection de cycles dans les dépendances',
+        'TECHNIQUE: 45 nouveaux tests statiques, 32 tests Vitest'
+      ]
+    },
+    {
+      version: '2.2.6',
+      date: '10 janvier 2026',
+      tag: 'PRÉCÉDENTE',
+      color: 'blue',
       title: 'Outil normalisation lieux + API Géo',
       items: [
         'NOUVEAU: Modal de normalisation des lieux',
@@ -107,8 +121,8 @@ const GedcomDuplicateMerger = () => {
     {
       version: '2.2.3',
       date: '4 janvier 2026',
-      tag: 'PRÉCÉDENTE',
-      color: 'blue',
+      tag: '',
+      color: 'gray',
       title: 'Isolation complète doublons/clusters',
       items: [
         'CORRECTION: Bouton "Sélectionner ≥X%" doublons n\'affecte plus les clusters',
@@ -118,8 +132,8 @@ const GedcomDuplicateMerger = () => {
     {
       version: '2.2.2',
       date: '4 janvier 2026',
-      tag: 'PRÉCÉDENTE',
-      color: 'blue',
+      tag: '',
+      color: 'gray',
       title: 'Corrections bugs sélection clusters',
       items: [
         'CORRECTION: Bouton "Sélectionner" cluster encadre maintenant le cluster',

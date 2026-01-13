@@ -35,7 +35,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                      SUITE DE TESTS GEDCOM MERGER v2.3.0');
-console.log('                         527 TESTS STATIQUES AU TOTAL');
+console.log('                         572 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -917,11 +917,11 @@ console.log('');
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
-// ║         CATÉGORIE 11: FUSION INTELLIGENTE v2.3.0 (45 tests)                   ║
+// ║         CATÉGORIE 11: FUSION INTELLIGENTE v2.3.0 (90 tests)                   ║
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 console.log('╔═══════════════════════════════════════════════════════════════════════════════╗');
-console.log('║         CATÉGORIE 11: FUSION INTELLIGENTE v2.3.0 (45 tests)                  ║');
+console.log('║         CATÉGORIE 11: FUSION INTELLIGENTE v2.3.0 (90 tests)                  ║');
 console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
@@ -1006,6 +1006,84 @@ check(fusionOrderCode.includes('isCompleted') || fusionOrderCode.includes('compl
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 11.6 Interface fusion guidée Phase 2 (45 tests)
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 11.6 Interface fusion guidée Phase 2 (45 tests)                            │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+
+// États React pour fusion guidée
+check(appCode.includes('fusionGraph') && appCode.includes('setFusionGraph'), 'État fusionGraph');
+check(appCode.includes('fusionOrder') && appCode.includes('setFusionOrder'), 'État fusionOrder');
+check(appCode.includes('completedLevels') && appCode.includes('setCompletedLevels'), 'État completedLevels');
+check(appCode.includes('selectedGuidedPairs') && appCode.includes('setSelectedGuidedPairs'), 'État selectedGuidedPairs');
+
+// Import du module fusionOrder
+check(appCode.includes("from './utils/fusionOrder.mjs'") || appCode.includes('fusionOrder.mjs'), 'Import fusionOrder.mjs');
+check(appCode.includes('FUSION_LEVELS'), 'Import FUSION_LEVELS');
+check(appCode.includes('buildDependencyGraph'), 'Import buildDependencyGraph');
+check(appCode.includes('calculateFusionOrder'), 'Import calculateFusionOrder');
+check(appCode.includes('calculateEnrichedQuality'), 'Import calculateEnrichedQuality');
+check(appCode.includes('canFuseLevel'), 'Import canFuseLevel');
+check(appCode.includes('prepareLevelForDisplay'), 'Import prepareLevelForDisplay');
+
+// Onglet fusion guidée
+check(appCode.includes("id: 'guided'") || appCode.includes("'guided'"), 'Onglet guided défini');
+check(appCode.includes('Fusion guidée'), 'Label Fusion guidée');
+check(appCode.includes("activeTab === 'guided'"), 'Condition activeTab guided');
+
+// Interface des étapes
+check(appCode.includes('ÉTAPE') || appCode.includes('levelIdx'), 'Affichage numéro étape');
+check(appCode.includes('Bottom-Up') || appCode.includes('enfants → conjoints → parents'), 'Principe Bottom-Up affiché');
+check(appCode.includes('GitBranch'), 'Icône GitBranch importée');
+check(appCode.includes('Lock') && appCode.includes('Unlock'), 'Icônes Lock/Unlock importées');
+
+// Niveaux de fusion
+check(appCode.includes('isCompleted') && appCode.includes('completedLevels'), 'Vérification niveau complété');
+check(appCode.includes('canFuse') || appCode.includes('canFuseLevel'), 'Vérification niveau disponible');
+check(appCode.includes('levelInfo') || appCode.includes('levelData'), 'Données de niveau');
+check(appCode.includes('pairsForDisplay') || appCode.includes('prepareLevelForDisplay'), 'Préparation paires pour affichage');
+
+// Actions de sélection
+check(appCode.includes('Tout sélectionner') && appCode.includes('selectedGuidedPairs'), 'Bouton tout sélectionner guided');
+check(appCode.includes('Désélectionner') && appCode.includes('selectedGuidedPairs'), 'Bouton désélectionner guided');
+check(appCode.includes('Fusionner sélectionnées') || appCode.includes('Fusionner'), 'Bouton fusionner sélectionnées');
+check(appCode.includes('Passer cette étape') || appCode.includes('setCompletedLevels'), 'Option passer étape');
+
+// Score qualité dans l'interface
+check(appCode.includes('quality1') && appCode.includes('quality2'), 'Calcul qualité deux personnes');
+check(appCode.includes('keepPerson') || appCode.includes('keepQuality'), 'Détermination personne à garder UI');
+check(appCode.includes('mergePerson') || appCode.includes('mergeQuality'), 'Détermination personne à fusionner UI');
+check(appCode.includes('qualityDiff') || appCode.includes('Choix clair'), 'Indicateur différence qualité');
+check(appCode.includes('Qualités proches') || appCode.includes('qualityDiff <= 10'), 'Avertissement qualités proches');
+
+// États visuels des niveaux
+check(appCode.includes('border-green') && appCode.includes('isCompleted'), 'Style niveau complété');
+check(appCode.includes('border-emerald') && appCode.includes('canFuse'), 'Style niveau disponible');
+check(appCode.includes('border-gray') || appCode.includes('opacity-75'), 'Style niveau bloqué');
+check(appCode.includes('bg-green-100') || appCode.includes('bg-green-50'), 'Background niveau complété');
+check(appCode.includes('CheckCircle') && appCode.includes('isCompleted'), 'Icône CheckCircle pour complété');
+
+// Bouton analyse dépendances
+check(appCode.includes('Analyser les dépendances') || appCode.includes('buildDependencyGraph'), 'Bouton analyser dépendances');
+check(appCode.includes('Calcule l\'ordre optimal') || appCode.includes('ordre optimal'), 'Description analyse');
+
+// Statistiques fusion guidée
+check(appCode.includes('paires') && appCode.includes('fusionOrder'), 'Stats nombre paires');
+check(appCode.includes('niveaux') && appCode.includes('completedLevels'), 'Stats niveaux complétés');
+check(appCode.includes('dépendances') && appCode.includes('fusionGraph'), 'Stats dépendances');
+
+// Progression
+check(appCode.includes('Progression') && appCode.includes('completedLevels.size'), 'Affichage progression');
+check(appCode.includes('Réinitialiser') && appCode.includes('setFusionOrder'), 'Bouton réinitialiser');
+check(appCode.includes('Toutes les étapes sont complétées') || appCode.includes('🎉'), 'Message toutes étapes complétées');
+
+// Prévisualisation
+check(appCode.includes('openPreview') && appCode.includes('pairInfo'), 'Prévisualisation dans guided');
+check(appCode.includes('Voir') && appCode.includes('openPreview'), 'Bouton voir détails');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('═══════════════════════════════════════════════════════════════════════════════');
@@ -1013,7 +1091,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 527;
+const expectedTotal = 573;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -1032,7 +1110,8 @@ console.log('     7. Config & déploiement .... 39 tests');
 console.log('     8. Qualité & analyses v2.1.x 68 tests');
 console.log('     9. Conflits v2.2.0 ......... 36 tests');
 console.log('    10. Scoring/Normalisation ... 47 tests');
-console.log('    11. Fusion intelligente v2.3.0 45 tests');
+console.log('    11. Fusion intelligente v2.3.0 90 tests');
+console.log('        (45 module + 45 interface)');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {

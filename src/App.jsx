@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield } from 'lucide-react';
+import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield, GitBranch, Lock, Unlock } from 'lucide-react';
+import { FUSION_LEVELS, buildDependencyGraph, calculateFusionOrder, calculateEnrichedQuality, canFuseLevel, prepareLevelForDisplay, calculateFusionStats } from './utils/fusionOrder.mjs';
 
 const GedcomDuplicateMerger = () => {
   const [file, setFile] = useState(null);
@@ -47,6 +48,11 @@ const GedcomDuplicateMerger = () => {
   const [hasPlaceNormalizations, setHasPlaceNormalizations] = useState(false);
   const [placeManualInput, setPlaceManualInput] = useState({}); // Saisie manuelle par groupe
   const [placeManualSuggestions, setPlaceManualSuggestions] = useState({}); // Suggestions autocomplétion
+  // v2.3.0 - États pour fusion guidée par étapes
+  const [fusionGraph, setFusionGraph] = useState(null); // Graphe de dépendances
+  const [fusionOrder, setFusionOrder] = useState([]); // Ordre optimal de fusion [{level, pairs}]
+  const [completedLevels, setCompletedLevels] = useState(new Set()); // Niveaux complétés
+  const [selectedGuidedPairs, setSelectedGuidedPairs] = useState(new Set()); // Paires sélectionnées par niveau
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -66,16 +72,17 @@ const GedcomDuplicateMerger = () => {
   const CHANGELOG = [
     {
       version: '2.3.0',
-      date: '12 janvier 2026',
+      date: '13 janvier 2026',
       tag: 'ACTUELLE',
       color: 'green',
       title: 'Fusion intelligente - Ordre optimal',
       items: [
+        'NOUVEAU: Onglet "Fusion guidée" avec étapes Bottom-Up',
+        'NOUVEAU: Interface par niveaux (enfants → conjoints → parents)',
+        'NOUVEAU: Score qualité enrichi pour choix automatique',
         'NOUVEAU: Module fusionOrder.mjs - Graphe de dépendances',
-        'NOUVEAU: Tri topologique (enfants → conjoints → parents)',
-        'NOUVEAU: Score qualité enrichi (précision dates/lieux, sources)',
         'NOUVEAU: Détection de cycles dans les dépendances',
-        'TECHNIQUE: 45 nouveaux tests statiques, 32 tests Vitest'
+        'TECHNIQUE: 572 tests statiques, 225 tests Vitest'
       ]
     },
     {
@@ -3174,6 +3181,7 @@ const GedcomDuplicateMerger = () => {
                 {[
                   { id: 'clusters', label: 'Clusters', icon: '🟠', count: getFilteredClusters().length },
                   { id: 'pairs', label: 'Doublons', icon: '🔵', count: getSimplePairs().length },
+                  { id: 'guided', label: 'Fusion guidée', icon: '🎯', count: fusionOrder.reduce((sum, l) => sum + l.pairs.length, 0) },
                   { id: 'toDelete', label: 'À supprimer', icon: '🗑️', count: toDeletePersons.length },
                   { id: 'ai', label: 'Suggestions IA', icon: '🟣', count: smartSuggestions.length }
                 ].map(tab => (
@@ -3332,6 +3340,272 @@ const GedcomDuplicateMerger = () => {
                             {pair.sufficientCriteria && pair.sufficientCriteria.length > 0 && <div className="mt-2 text-xs text-emerald-600">Critères validants: {pair.sufficientCriteria.join(', ')}</div>}
                           </div>
                         );})}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'guided' && (
+                  <div>
+                    {/* En-tête avec statistiques */}
+                    <div className="mb-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <GitBranch className="w-5 h-5 text-emerald-600" />
+                        <h3 className="font-semibold text-emerald-800">Fusion par étapes (Bottom-Up)</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Fusionnez dans l'ordre optimal : <strong>enfants → conjoints → parents</strong> pour garantir que les relations familiales pointent vers les personnes les plus complètes.
+                      </p>
+                      {fusionOrder.length > 0 && (
+                        <div className="flex gap-4 text-sm">
+                          <span className="px-2 py-1 bg-white rounded">📊 {fusionOrder.reduce((sum, l) => sum + l.pairs.length, 0)} paires</span>
+                          <span className="px-2 py-1 bg-white rounded">✅ {completedLevels.size}/{fusionOrder.length} niveaux</span>
+                          <span className="px-2 py-1 bg-white rounded">🔗 {fusionGraph ? fusionGraph.size : 0} dépendances</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bouton pour calculer l'ordre de fusion */}
+                    {fusionOrder.length === 0 && duplicates.length > 0 && (
+                      <div className="text-center py-8">
+                        <button 
+                          onClick={() => {
+                            const graph = buildDependencyGraph(duplicates, individuals);
+                            setFusionGraph(graph);
+                            const order = calculateFusionOrder(graph);
+                            setFusionOrder(order);
+                            setCompletedLevels(new Set());
+                            setSelectedGuidedPairs(new Set());
+                          }}
+                          className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 mx-auto"
+                        >
+                          <GitBranch className="w-5 h-5" />
+                          Analyser les dépendances ({duplicates.length} paires)
+                        </button>
+                        <p className="text-sm text-gray-500 mt-2">Calcule l'ordre optimal de fusion basé sur les relations familiales</p>
+                      </div>
+                    )}
+
+                    {fusionOrder.length === 0 && duplicates.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">Aucun doublon détecté. Chargez un fichier GEDCOM pour commencer.</p>
+                    )}
+
+                    {/* Affichage des niveaux de fusion */}
+                    {fusionOrder.length > 0 && (
+                      <div className="space-y-4">
+                        {fusionOrder.map((levelData, levelIdx) => {
+                          const isCompleted = completedLevels.has(levelIdx);
+                          const canFuse = canFuseLevel(levelIdx, completedLevels);
+                          const levelInfo = FUSION_LEVELS[levelIdx] || { label: `Niveau ${levelIdx}`, description: '' };
+                          const pairsForDisplay = prepareLevelForDisplay(levelData.pairs, duplicates, individuals);
+                          
+                          return (
+                            <div key={levelIdx} className={`border rounded-lg overflow-hidden ${isCompleted ? 'border-green-300 bg-green-50' : canFuse ? 'border-emerald-300 bg-white' : 'border-gray-200 bg-gray-50 opacity-75'}`}>
+                              {/* En-tête du niveau */}
+                              <div className={`px-4 py-3 flex items-center justify-between ${isCompleted ? 'bg-green-100' : canFuse ? 'bg-emerald-50' : 'bg-gray-100'}`}>
+                                <div className="flex items-center gap-3">
+                                  {isCompleted ? (
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                  ) : canFuse ? (
+                                    <Unlock className="w-6 h-6 text-emerald-600" />
+                                  ) : (
+                                    <Lock className="w-6 h-6 text-gray-400" />
+                                  )}
+                                  <div>
+                                    <div className="font-semibold">
+                                      ÉTAPE {levelIdx + 1}/{fusionOrder.length} - {levelInfo.label}
+                                    </div>
+                                    <div className="text-sm text-gray-600">{levelInfo.description} • {levelData.pairs.length} fusion(s)</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {isCompleted && <span className="px-2 py-1 bg-green-200 text-green-800 text-sm rounded">✓ Complété</span>}
+                                  {!isCompleted && canFuse && (
+                                    <span className="px-2 py-1 bg-emerald-200 text-emerald-800 text-sm rounded">Disponible</span>
+                                  )}
+                                  {!isCompleted && !canFuse && (
+                                    <span className="px-2 py-1 bg-gray-200 text-gray-600 text-sm rounded">🔒 Bloqué</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Contenu du niveau */}
+                              {canFuse && !isCompleted && (
+                                <div className="p-4">
+                                  {/* Boutons d'action */}
+                                  <div className="flex gap-2 mb-4">
+                                    <button
+                                      onClick={() => {
+                                        const levelPairIds = new Set(levelData.pairs.map(p => p.id || `${p.person1.id}-${p.person2.id}`));
+                                        setSelectedGuidedPairs(prev => {
+                                          const newSet = new Set(prev);
+                                          levelPairIds.forEach(id => newSet.add(id));
+                                          return newSet;
+                                        });
+                                      }}
+                                      className="px-3 py-1 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700"
+                                    >
+                                      Tout sélectionner
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const levelPairIds = new Set(levelData.pairs.map(p => p.id || `${p.person1.id}-${p.person2.id}`));
+                                        setSelectedGuidedPairs(prev => {
+                                          const newSet = new Set(prev);
+                                          levelPairIds.forEach(id => newSet.delete(id));
+                                          return newSet;
+                                        });
+                                      }}
+                                      className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+                                    >
+                                      Désélectionner
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        // Fusionner les paires sélectionnées de ce niveau
+                                        const levelPairIds = levelData.pairs.map(p => p.id || `${p.person1.id}-${p.person2.id}`);
+                                        const toFuse = levelPairIds.filter(id => selectedGuidedPairs.has(id));
+                                        if (toFuse.length > 0) {
+                                          // Ajouter à selectedPairs pour utiliser handleMerge existant
+                                          const newSelectedPairs = new Set(selectedPairs);
+                                          toFuse.forEach(id => newSelectedPairs.add(id));
+                                          setSelectedPairs(newSelectedPairs);
+                                          // Marquer le niveau comme complété après fusion
+                                          setCompletedLevels(prev => new Set([...prev, levelIdx]));
+                                        }
+                                      }}
+                                      disabled={!levelData.pairs.some(p => selectedGuidedPairs.has(p.id || `${p.person1.id}-${p.person2.id}`))}
+                                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      ▶ Fusionner sélectionnées
+                                    </button>
+                                    <button
+                                      onClick={() => setCompletedLevels(prev => new Set([...prev, levelIdx]))}
+                                      className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+                                    >
+                                      Passer cette étape
+                                    </button>
+                                  </div>
+
+                                  {/* Liste des paires */}
+                                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                                    {pairsForDisplay.map((pairInfo, pairIdx) => {
+                                      const pairId = pairInfo.pair.id || `${pairInfo.pair.person1.id}-${pairInfo.pair.person2.id}`;
+                                      const isSelected = selectedGuidedPairs.has(pairId);
+                                      const quality1 = calculateEnrichedQuality(pairInfo.pair.person1, individuals);
+                                      const quality2 = calculateEnrichedQuality(pairInfo.pair.person2, individuals);
+                                      const keepPerson = quality1 >= quality2 ? pairInfo.pair.person1 : pairInfo.pair.person2;
+                                      const mergePerson = quality1 >= quality2 ? pairInfo.pair.person2 : pairInfo.pair.person1;
+                                      const keepQuality = Math.max(quality1, quality2);
+                                      const mergeQuality = Math.min(quality1, quality2);
+                                      const qualityDiff = keepQuality - mergeQuality;
+
+                                      return (
+                                        <div 
+                                          key={pairIdx}
+                                          className={`p-3 rounded-lg border ${isSelected ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}`}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2">
+                                                <span className={`px-2 py-0.5 rounded text-sm font-medium ${pairInfo.pair.similarity >= 90 ? 'bg-green-100 text-green-800' : pairInfo.pair.similarity >= 80 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                                  {pairInfo.pair.similarity}%
+                                                </span>
+                                                <span className="font-medium">{keepPerson.names?.[0] || keepPerson.id}</span>
+                                              </div>
+                                              <div className="text-sm text-gray-600 mt-1">
+                                                <span className="text-green-600">✓ {keepPerson.id}</span> (qualité: {keepQuality})
+                                                <span className="mx-2">←</span>
+                                                <span className="text-gray-500">{mergePerson.id}</span> (qualité: {mergeQuality})
+                                                {qualityDiff > 20 && <span className="ml-2 text-green-600">⚡ Choix clair (+{qualityDiff})</span>}
+                                                {qualityDiff <= 10 && <span className="ml-2 text-yellow-600">⚠️ Qualités proches</span>}
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <button 
+                                                onClick={() => openPreview(pairInfo.pair)} 
+                                                className="px-2 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                                              >
+                                                Voir
+                                              </button>
+                                              <button
+                                                onClick={() => {
+                                                  setSelectedGuidedPairs(prev => {
+                                                    const newSet = new Set(prev);
+                                                    if (newSet.has(pairId)) {
+                                                      newSet.delete(pairId);
+                                                    } else {
+                                                      newSet.add(pairId);
+                                                    }
+                                                    return newSet;
+                                                  });
+                                                }}
+                                                className={`px-3 py-1 text-sm rounded ${isSelected ? 'bg-emerald-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                              >
+                                                {isSelected ? '✓' : 'Sélectionner'}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Message pour niveau bloqué */}
+                              {!canFuse && !isCompleted && (
+                                <div className="p-4 text-center text-gray-500">
+                                  <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                  <p>Complétez d'abord l'étape {levelIdx} pour débloquer</p>
+                                </div>
+                              )}
+
+                              {/* Message pour niveau complété */}
+                              {isCompleted && (
+                                <div className="p-4 text-center text-green-600">
+                                  <CheckCircle className="w-8 h-8 mx-auto mb-2" />
+                                  <p>Étape complétée !</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* Actions finales */}
+                        <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Progression: {completedLevels.size}/{fusionOrder.length} étapes</p>
+                              <p className="text-sm text-gray-600">
+                                {completedLevels.size === fusionOrder.length 
+                                  ? '🎉 Toutes les étapes sont complétées !' 
+                                  : 'Continuez les fusions étape par étape'}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setFusionOrder([]);
+                                  setFusionGraph(null);
+                                  setCompletedLevels(new Set());
+                                  setSelectedGuidedPairs(new Set());
+                                }}
+                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                              >
+                                Réinitialiser
+                              </button>
+                              {selectedPairs.size > 0 && (
+                                <button
+                                  onClick={handleMerge}
+                                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                >
+                                  Exécuter {selectedPairs.size} fusion(s)
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

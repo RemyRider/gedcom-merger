@@ -2928,46 +2928,56 @@ const GedcomDuplicateMerger = () => {
     setMergedIds(newMergedIds);
     
     // Mettre à jour le contexte de fusion guidée
-    setGuidedFusionContext(prev => ({
-      ...prev,
-      completedPairs: [...prev.completedPairs, relatedPair.pairId]
-    }));
+    setGuidedFusionContext(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        completedPairs: [...(prev.completedPairs || []), relatedPair.pairId]
+      };
+    });
     
     // Recalculer les doublons liés pour la paire originale
     setTimeout(() => {
-      if (guidedFusionContext) {
+      setGuidedFusionContext(prev => {
+        if (!prev || !prev.originalPair) return prev;
         try {
           const updatedRelated = detectRelatedDuplicates(
-            guidedFusionContext.originalPair, 
+            prev.originalPair, 
             duplicates.filter(d => d.id !== fullPair.id), 
             individuals
           );
-          setGuidedFusionContext(prev => ({
+          return {
             ...prev,
             relatedDuplicates: updatedRelated
-          }));
+          };
         } catch (e) {
           console.warn('Erreur recalcul:', e);
+          return prev;
         }
-      }
+      });
     }, 100);
   };
 
   // v2.4.0: Passer à l'étape suivante de la fusion guidée
   const handleGuidedFusionNext = () => {
-    if (!guidedFusionContext) return;
+    if (!guidedFusionContext || !guidedFusionContext.relatedDuplicates) return;
     
     const { relatedDuplicates, currentStep } = guidedFusionContext;
     
     // Déterminer l'étape suivante
-    if (currentStep === 'parents' && relatedDuplicates.spouses.length > 0) {
-      setGuidedFusionContext(prev => ({ ...prev, currentStep: 'spouses' }));
+    if (currentStep === 'parents' && relatedDuplicates.spouses && relatedDuplicates.spouses.length > 0) {
+      setGuidedFusionContext(prev => prev ? { ...prev, currentStep: 'spouses' } : prev);
     } else if (currentStep === 'spouses' || currentStep === 'parents') {
       // Toutes les dépendances traitées, fusionner l'original
       setShowGuidedFusionModal(false);
       // Ajouter la paire originale à la sélection et fusionner
-      const originalId = guidedFusionContext.originalPair.id || 
-        `${guidedFusionContext.originalPair.person1.id}-${guidedFusionContext.originalPair.person2.id}`;
+      const originalPair = guidedFusionContext.originalPair;
+      if (!originalPair || !originalPair.person1 || !originalPair.person2) {
+        setGuidedFusionContext(null);
+        return;
+      }
+      const originalId = originalPair.id || 
+        `${originalPair.person1.id}-${originalPair.person2.id}`;
       setSelectedPairs(new Set([originalId]));
       setTimeout(() => {
         handleDirectMerge();
@@ -3993,22 +4003,22 @@ const GedcomDuplicateMerger = () => {
               </div>
 
               {/* Doublons liés - Parents */}
-              {guidedFusionContext.relatedDuplicates.parents.length > 0 && (
+              {guidedFusionContext?.relatedDuplicates?.parents?.length || 0 > 0 && (
                 <div className="mb-4">
                   <h3 className="font-semibold text-emerald-700 mb-2 flex items-center gap-2">
-                    👴 Parents en doublon ({guidedFusionContext.relatedDuplicates.parents.length})
+                    👴 Parents en doublon ({guidedFusionContext?.relatedDuplicates?.parents?.length || 0})
                     <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">Recommandé : fusionner d'abord</span>
                   </h3>
                   <div className="space-y-2">
-                    {guidedFusionContext.relatedDuplicates.parents.map((parent, idx) => (
+                    {(guidedFusionContext?.relatedDuplicates?.parents || []).map((parent, idx) => (
                       <div key={idx} className={`p-3 rounded-lg border ${
-                        guidedFusionContext.completedPairs.includes(parent.pairId) 
+                        guidedFusionContext?.completedPairs?.includes(parent.pairId) 
                           ? 'bg-green-50 border-green-300' 
                           : 'bg-emerald-50 border-emerald-200'
                       }`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {guidedFusionContext.completedPairs.includes(parent.pairId) && (
+                            {guidedFusionContext?.completedPairs?.includes(parent.pairId) && (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             )}
                             <span className="font-medium">{parent.person1.names?.[0] || parent.person1.id}</span>
@@ -4016,7 +4026,7 @@ const GedcomDuplicateMerger = () => {
                             <span className="font-medium">{parent.person2.names?.[0] || parent.person2.id}</span>
                             <span className="text-sm text-gray-500">({parent.score}%)</span>
                           </div>
-                          {!guidedFusionContext.completedPairs.includes(parent.pairId) && (
+                          {!guidedFusionContext?.completedPairs?.includes(parent.pairId) && (
                             <button
                               onClick={() => handleFuseRelatedPair(parent)}
                               className="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm"
@@ -4032,21 +4042,21 @@ const GedcomDuplicateMerger = () => {
               )}
 
               {/* Doublons liés - Conjoints */}
-              {guidedFusionContext.relatedDuplicates.spouses.length > 0 && (
+              {guidedFusionContext?.relatedDuplicates?.spouses?.length || 0 > 0 && (
                 <div className="mb-4">
                   <h3 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
-                    💑 Conjoints en doublon ({guidedFusionContext.relatedDuplicates.spouses.length})
+                    💑 Conjoints en doublon ({guidedFusionContext?.relatedDuplicates?.spouses?.length || 0})
                   </h3>
                   <div className="space-y-2">
-                    {guidedFusionContext.relatedDuplicates.spouses.map((spouse, idx) => (
+                    {(guidedFusionContext?.relatedDuplicates?.spouses || []).map((spouse, idx) => (
                       <div key={idx} className={`p-3 rounded-lg border ${
-                        guidedFusionContext.completedPairs.includes(spouse.pairId) 
+                        guidedFusionContext?.completedPairs?.includes(spouse.pairId) 
                           ? 'bg-green-50 border-green-300' 
                           : 'bg-blue-50 border-blue-200'
                       }`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {guidedFusionContext.completedPairs.includes(spouse.pairId) && (
+                            {guidedFusionContext?.completedPairs?.includes(spouse.pairId) && (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             )}
                             <span className="font-medium">{spouse.person1.names?.[0] || spouse.person1.id}</span>
@@ -4054,7 +4064,7 @@ const GedcomDuplicateMerger = () => {
                             <span className="font-medium">{spouse.person2.names?.[0] || spouse.person2.id}</span>
                             <span className="text-sm text-gray-500">({spouse.score}%)</span>
                           </div>
-                          {!guidedFusionContext.completedPairs.includes(spouse.pairId) && (
+                          {!guidedFusionContext?.completedPairs?.includes(spouse.pairId) && (
                             <button
                               onClick={() => handleFuseRelatedPair(spouse)}
                               className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
@@ -4070,10 +4080,10 @@ const GedcomDuplicateMerger = () => {
               )}
 
               {/* Doublons liés - Enfants (info seulement) */}
-              {guidedFusionContext.relatedDuplicates.children.length > 0 && (
+              {guidedFusionContext?.relatedDuplicates?.children?.length || 0 > 0 && (
                 <div className="mb-4">
                   <h3 className="font-semibold text-purple-700 mb-2 flex items-center gap-2">
-                    👶 Enfants en doublon ({guidedFusionContext.relatedDuplicates.children.length})
+                    👶 Enfants en doublon ({guidedFusionContext?.relatedDuplicates?.children?.length || 0})
                     <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">À fusionner après</span>
                   </h3>
                   <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-sm text-purple-800">
@@ -4109,10 +4119,10 @@ const GedcomDuplicateMerger = () => {
                 >
                   ⏭️ Ignorer et fusionner
                 </button>
-                {(guidedFusionContext.relatedDuplicates.parents.every(p => 
-                  guidedFusionContext.completedPairs.includes(p.pairId)
-                ) && guidedFusionContext.relatedDuplicates.spouses.every(s => 
-                  guidedFusionContext.completedPairs.includes(s.pairId)
+                {((guidedFusionContext?.relatedDuplicates?.parents || []).every(p => 
+                  guidedFusionContext?.completedPairs?.includes(p.pairId)
+                ) && (guidedFusionContext?.relatedDuplicates?.spouses || []).every(s => 
+                  guidedFusionContext?.completedPairs?.includes(s.pairId)
                 )) && (
                   <button
                     onClick={handleGuidedFusionNext}

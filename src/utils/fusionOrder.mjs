@@ -2,7 +2,7 @@
  * GEDCOM Merger v2.4.0 - Fusion intelligente contextuelle
  * 
  * Module pour calculer l'ordre optimal de fusion des doublons.
- * Principe Top-Down : fusionner les parents stables avant les conjoints avant les enfants.
+ * Principe Bottom-Up : fusionner les enfants avant les conjoints avant les parents.
  * 
  * @module fusionOrder
  */
@@ -12,42 +12,37 @@
 // ============================================================================
 
 /**
- * Niveaux de fusion Top-Down (ordre croissant = fusionner en premier)
- * 
- * LOGIQUE :
- * - Niveau 0 : Individus SANS parents doublons → ancêtres stables
- * - Niveau 1 : Individus SANS conjoints doublons → relations matrimoniales stables
- * - Niveau 2 : Individus AVEC dépendances → fusionner après leurs dépendances
- * - Niveau 3 : Indépendants → aucune relation avec d'autres doublons
+ * Niveaux de fusion (ordre croissant = fusionner en premier)
+ * Bottom-Up : Enfants d'abord, puis conjoints, puis parents
  */
 export const FUSION_LEVELS = {
-  NO_PARENT_DUPLICATES: 0,    // Pas de parents doublons → fusionner en premier
-  NO_SPOUSE_DUPLICATES: 1,    // Pas de conjoints doublons
-  HAS_DEPENDENCIES: 2,        // A des dépendances → fusionner en dernier
-  INDEPENDENT: 3              // Aucune relation avec d'autres doublons
+  CHILDREN: 0,      // Enfants - fusionner en premier
+  SPOUSES: 1,       // Conjoints - fusionner ensuite
+  PARENTS: 2,       // Parents - fusionner en dernier
+  INDEPENDENT: 3    // Doublons sans dépendances relationnelles
 };
 
 /**
  * Labels pour l'affichage UI
  */
 export const FUSION_LEVEL_LABELS = {
-  [FUSION_LEVELS.NO_PARENT_DUPLICATES]: { 
-    label: 'Parents stables', 
-    emoji: '👴', 
+  [FUSION_LEVELS.CHILDREN]: { 
+    label: 'Enfants', 
+    emoji: '👶', 
     color: 'emerald',
-    description: 'Individus sans parents en doublon - fusionner en premier'
+    description: 'Enfants à fusionner en premier'
   },
-  [FUSION_LEVELS.NO_SPOUSE_DUPLICATES]: { 
-    label: 'Conjoints stables', 
+  [FUSION_LEVELS.SPOUSES]: { 
+    label: 'Conjoints', 
     emoji: '💑', 
     color: 'blue',
-    description: 'Individus sans conjoints en doublon'
+    description: 'Conjoints à fusionner ensuite'
   },
-  [FUSION_LEVELS.HAS_DEPENDENCIES]: { 
-    label: 'Avec dépendances', 
-    emoji: '🔗', 
+  [FUSION_LEVELS.PARENTS]: { 
+    label: 'Parents', 
+    emoji: '👴', 
     color: 'amber',
-    description: 'Individus avec des relations qui sont aussi des doublons'
+    description: 'Parents à fusionner en dernier'
   },
   [FUSION_LEVELS.INDEPENDENT]: { 
     label: 'Indépendants', 
@@ -81,6 +76,8 @@ export const createPairId = (id1, id2) => {
 export const findDuplicatesAmongIds = (ids, duplicatePairsMap, idToPairsMap) => {
   const foundPairIds = new Set();
   
+  if (!ids || !Array.isArray(ids)) return [];
+  
   ids.forEach(id => {
     const pairIds = idToPairsMap.get(id);
     if (pairIds) {
@@ -109,13 +106,24 @@ export const findDuplicatesAmongIds = (ids, duplicatePairsMap, idToPairsMap) => 
 export const buildDependencyGraph = (duplicates, individuals) => {
   const graph = new Map();
   
+  // Vérifications de sécurité
+  if (!duplicates || !Array.isArray(duplicates)) {
+    return { graph, stats: { totalPairs: 0 }, duplicatePairsMap: new Map(), idToPairsMap: new Map(), peopleById: new Map() };
+  }
+  
+  if (!individuals || !Array.isArray(individuals)) {
+    return { graph, stats: { totalPairs: 0 }, duplicatePairsMap: new Map(), idToPairsMap: new Map(), peopleById: new Map() };
+  }
+  
   // Index pour accès rapide
-  const peopleById = new Map(individuals.map(p => [p.id, p]));
+  const peopleById = new Map(individuals.filter(p => p && p.id).map(p => [p.id, p]));
   const duplicatePairsMap = new Map();
   const idToPairsMap = new Map();
   
   // Construire les index
   duplicates.forEach(pair => {
+    if (!pair || !pair.person1 || !pair.person2 || !pair.person1.id || !pair.person2.id) return;
+    
     const pairId = createPairId(pair.person1.id, pair.person2.id);
     duplicatePairsMap.set(pairId, pair);
     
@@ -127,6 +135,8 @@ export const buildDependencyGraph = (duplicates, individuals) => {
   
   // Pour chaque paire, analyser les dépendances
   duplicates.forEach(pair => {
+    if (!pair || !pair.person1 || !pair.person2 || !pair.person1.id || !pair.person2.id) return;
+    
     const pairId = createPairId(pair.person1.id, pair.person2.id);
     const p1 = pair.person1;
     const p2 = pair.person2;
@@ -141,10 +151,10 @@ export const buildDependencyGraph = (duplicates, individuals) => {
     const spouseDuplicates = findDuplicatesAmongIds(allSpouses, duplicatePairsMap, idToPairsMap);
     const childDuplicates = findDuplicatesAmongIds(allChildren, duplicatePairsMap, idToPairsMap);
     
-    // Top-Down : les parents doublons sont des dépendances (à fusionner AVANT)
-    // Les enfants doublons sont des bloqués (à fusionner APRÈS)
-    const dependsOn = [...parentDuplicates, ...spouseDuplicates];
-    const blocks = childDuplicates;
+    // Bottom-Up : les enfants doublons sont des dépendances (à fusionner AVANT)
+    // Les parents doublons sont des bloqués (à fusionner APRÈS)
+    const dependsOn = [...childDuplicates, ...spouseDuplicates];
+    const blocks = parentDuplicates;
     
     graph.set(pairId, {
       pairId,
@@ -176,11 +186,11 @@ export const buildDependencyGraph = (duplicates, individuals) => {
 };
 
 // ============================================================================
-// CALCUL DE L'ORDRE DE FUSION (TOP-DOWN)
+// CALCUL DE L'ORDRE DE FUSION (BOTTOM-UP)
 // ============================================================================
 
 /**
- * Calcule l'ordre de fusion optimal selon l'approche Top-Down
+ * Calcule l'ordre de fusion optimal selon l'approche Bottom-Up
  * 
  * @param {Map} graph - Graphe de dépendances
  * @returns {Array} - Niveaux de fusion ordonnés
@@ -188,11 +198,10 @@ export const buildDependencyGraph = (duplicates, individuals) => {
 export const calculateFusionOrder = (graph) => {
   const levels = new Map();
   const nodeLevel = new Map();
-  const visited = new Set();
   const visiting = new Set();
   
   /**
-   * DFS pour calculer le niveau d'un nœud (Top-Down)
+   * DFS pour calculer le niveau d'un nœud (Bottom-Up)
    * Niveau = max(niveaux des dépendances) + 1, ou 0 si pas de dépendances
    */
   const calculateLevel = (pairId) => {
@@ -212,22 +221,11 @@ export const calculateFusionOrder = (graph) => {
       return FUSION_LEVELS.INDEPENDENT;
     }
     
-    // Pas de dépendances = niveau 0 (parents stables, fusionner en premier)
+    // Pas de dépendances = niveau 0 (enfants, fusionner en premier)
     if (!node.dependsOn || node.dependsOn.length === 0) {
       visiting.delete(pairId);
-      
-      // Sous-classification selon le type
-      let level;
-      if (!node.hasParentDuplicates && !node.hasSpouseDuplicates) {
-        level = FUSION_LEVELS.NO_PARENT_DUPLICATES;
-      } else if (!node.hasSpouseDuplicates) {
-        level = FUSION_LEVELS.NO_SPOUSE_DUPLICATES;
-      } else {
-        level = FUSION_LEVELS.INDEPENDENT;
-      }
-      
-      nodeLevel.set(pairId, level);
-      return level;
+      nodeLevel.set(pairId, FUSION_LEVELS.CHILDREN);
+      return FUSION_LEVELS.CHILDREN;
     }
     
     // Calculer récursivement le niveau max des dépendances
@@ -240,7 +238,7 @@ export const calculateFusionOrder = (graph) => {
     }
     
     // Le niveau de ce nœud = max des dépendances + 1
-    const level = maxDepLevel >= 0 ? FUSION_LEVELS.HAS_DEPENDENCIES : FUSION_LEVELS.NO_PARENT_DUPLICATES;
+    const level = maxDepLevel >= 0 ? maxDepLevel + 1 : FUSION_LEVELS.CHILDREN;
     
     visiting.delete(pairId);
     nodeLevel.set(pairId, level);
@@ -288,6 +286,37 @@ export const calculateFusionOrder = (graph) => {
  * @returns {Object} - { hasRelatedDuplicates, parents[], spouses[], children[] }
  */
 export const detectRelatedDuplicates = (pair, duplicates, individuals) => {
+  // Vérifications de sécurité
+  if (!pair || !pair.person1 || !pair.person2 || !pair.person1.id || !pair.person2.id) {
+    return {
+      hasRelatedDuplicates: false,
+      parents: [],
+      spouses: [],
+      children: [],
+      total: 0
+    };
+  }
+  
+  if (!duplicates || !Array.isArray(duplicates) || duplicates.length === 0) {
+    return {
+      hasRelatedDuplicates: false,
+      parents: [],
+      spouses: [],
+      children: [],
+      total: 0
+    };
+  }
+  
+  if (!individuals || !Array.isArray(individuals)) {
+    return {
+      hasRelatedDuplicates: false,
+      parents: [],
+      spouses: [],
+      children: [],
+      total: 0
+    };
+  }
+
   const { graph, duplicatePairsMap, peopleById } = buildDependencyGraph(duplicates, individuals);
   
   const pairId = createPairId(pair.person1.id, pair.person2.id);
@@ -328,8 +357,8 @@ export const detectRelatedDuplicates = (pair, duplicates, individuals) => {
     spouses,
     children,
     total: parents.length + spouses.length + children.length,
-    // Ordre recommandé (Top-Down)
-    recommendedOrder: [...parents, ...spouses, ...children]
+    // Ordre recommandé (Bottom-Up : enfants d'abord)
+    recommendedOrder: [...children, ...spouses, ...parents]
   };
 };
 
@@ -353,35 +382,35 @@ export const needsGuidedFusion = (pair, duplicates, individuals) => {
 /**
  * Calcule la précision d'une date
  * @param {string} dateStr - Date au format GEDCOM
- * @returns {number} - Score 0-100
+ * @returns {number} - Score 0-15
  */
 export const getDatePrecisionScore = (dateStr) => {
   if (!dateStr) return 0;
   
-  const d = dateStr.toUpperCase();
-  
-  // Date complète exacte : "15 MAR 1850"
-  if (/^\d{1,2}\s+[A-Z]{3}\s+\d{4}$/.test(d)) return 100;
-  
-  // Mois et année : "MAR 1850"
-  if (/^[A-Z]{3}\s+\d{4}$/.test(d)) return 70;
-  
-  // Année seule : "1850"
-  if (/^\d{4}$/.test(d)) return 50;
+  const d = dateStr.toUpperCase().trim();
   
   // Date approximative : "ABT 1850", "BEF 1850", "AFT 1850"
-  if (/^(ABT|BEF|AFT|EST|CAL)\s+/.test(d)) return 30;
+  if (/^(ABT|BEF|AFT|EST|CAL)\s+/.test(d)) return 5;
   
   // Période : "BET 1850 AND 1860"
-  if (/^BET\s+\d{4}\s+AND\s+\d{4}$/.test(d)) return 40;
+  if (/^BET\s+\d{4}\s+AND\s+\d{4}$/.test(d)) return 6;
   
-  return 10; // Autre format
+  // Date complète exacte : "15 MAR 1850"
+  if (/^\d{1,2}\s+[A-Z]{3}\s+\d{4}$/.test(d)) return 15;
+  
+  // Mois et année : "MAR 1850"
+  if (/^[A-Z]{3}\s+\d{4}$/.test(d)) return 12;
+  
+  // Année seule : "1850"
+  if (/^\d{4}$/.test(d)) return 8;
+  
+  return 3; // Autre format
 };
 
 /**
  * Calcule la précision d'un lieu
  * @param {string} place - Lieu au format GEDCOM
- * @returns {number} - Score 0-100
+ * @returns {number} - Score 0-10
  */
 export const getPlacePrecisionScore = (place) => {
   if (!place) return 0;
@@ -389,16 +418,16 @@ export const getPlacePrecisionScore = (place) => {
   const parts = place.split(',').map(p => p.trim()).filter(Boolean);
   
   // 4+ niveaux : "Rue, Ville, Département, Région, Pays"
-  if (parts.length >= 4) return 100;
+  if (parts.length >= 4) return 10;
   
   // 3 niveaux : "Ville, Département, Pays"
-  if (parts.length === 3) return 80;
+  if (parts.length === 3) return 8;
   
   // 2 niveaux : "Ville, Pays"
-  if (parts.length === 2) return 60;
+  if (parts.length === 2) return 6;
   
   // 1 niveau : "Pays" ou "Ville"
-  if (parts.length === 1) return 30;
+  if (parts.length === 1) return 4;
   
   return 0;
 };
@@ -409,24 +438,30 @@ export const getPlacePrecisionScore = (place) => {
  * 
  * @param {Object} person - Personne à évaluer
  * @param {Map} peopleById - Index des personnes par ID
- * @returns {Object} - { total, breakdown }
+ * @returns {Object} - { score, details }
  */
 export const calculateEnrichedQuality = (person, peopleById = new Map()) => {
-  let total = 0;
-  const breakdown = {};
+  if (!person) {
+    return { score: 0, details: [] };
+  }
   
-  // 1. Précision des dates (max 25 pts)
+  let score = 0;
+  const details = [];
+  
+  // 1. Précision des dates (max 45 pts = 3 * 15)
   const birthPrecision = getDatePrecisionScore(person.birth);
   const deathPrecision = getDatePrecisionScore(person.death);
   const baptismPrecision = getDatePrecisionScore(person.baptism);
-  breakdown.datePrecision = Math.round((birthPrecision + deathPrecision + baptismPrecision) / 12);
-  total += breakdown.datePrecision;
+  const dateScore = birthPrecision + deathPrecision + baptismPrecision;
+  score += dateScore;
+  if (dateScore > 0) details.push(`Dates: +${dateScore}`);
   
-  // 2. Précision des lieux (max 20 pts)
+  // 2. Précision des lieux (max 20 pts = 2 * 10)
   const birthPlacePrecision = getPlacePrecisionScore(person.birthPlace);
   const deathPlacePrecision = getPlacePrecisionScore(person.deathPlace);
-  breakdown.placePrecision = Math.round((birthPlacePrecision + deathPlacePrecision) / 10);
-  total += breakdown.placePrecision;
+  const placeScore = birthPlacePrecision + deathPlacePrecision;
+  score += placeScore;
+  if (placeScore > 0) details.push(`Lieux: +${placeScore}`);
   
   // 3. Relations valides (max 30 pts)
   let validParents = 0, validSpouses = 0, validChildren = 0;
@@ -441,8 +476,11 @@ export const calculateEnrichedQuality = (person, peopleById = new Map()) => {
     if (peopleById.has(childId)) validChildren++;
   });
   
-  breakdown.validRelations = Math.min(30, validParents * 5 + validSpouses * 5 + validChildren * 3);
-  total += breakdown.validRelations;
+  const relationScore = Math.min(30, validParents * 5 + validSpouses * 5 + validChildren * 3);
+  score += relationScore;
+  if (validParents > 0) details.push(`Parents valides: ${validParents}`);
+  if (validSpouses > 0) details.push(`Conjoints valides: ${validSpouses}`);
+  if (validChildren > 0) details.push(`Enfants valides: ${validChildren}`);
   
   // 4. Sources et notes (max 15 pts)
   let sourceCount = 0;
@@ -452,20 +490,25 @@ export const calculateEnrichedQuality = (person, peopleById = new Map()) => {
   } else if (person.rawLines) {
     sourceCount = person.rawLines.filter(l => l.includes(' SOUR ') || l.includes(' NOTE ')).length;
   }
-  breakdown.sources = Math.min(15, sourceCount * 3);
-  total += breakdown.sources;
+  const sourceScore = Math.min(15, sourceCount * 3);
+  score += sourceScore;
+  if (sourceCount > 0) details.push(`Sources/Notes: ${sourceCount}`);
   
   // 5. Complétude des champs (max 10 pts)
   let filledFields = 0;
   ['name', 'birth', 'birthPlace', 'death', 'deathPlace', 'occupation', 'sex'].forEach(field => {
     if (person[field]) filledFields++;
   });
-  breakdown.completeness = Math.round((filledFields / 7) * 10);
-  total += breakdown.completeness;
+  // Vérifier aussi names
+  if (person.names && person.names.length > 0) filledFields++;
+  
+  const completenessScore = Math.round((filledFields / 8) * 10);
+  score += completenessScore;
+  if (completenessScore > 0) details.push(`Complétude: +${completenessScore}`);
   
   return {
-    total: Math.min(100, total),
-    breakdown,
+    score: Math.min(100, score),
+    details,
     person: person.id
   };
 };
@@ -501,9 +544,9 @@ export const prepareLevelForDisplay = (levelData, graph, duplicatePairsMap, peop
       level: pair.level,
       quality1,
       quality2,
-      keepPerson: quality1.total >= quality2.total ? pair.person1 : pair.person2,
-      mergePerson: quality1.total >= quality2.total ? pair.person2 : pair.person1,
-      qualityDiff: Math.abs(quality1.total - quality2.total),
+      keepPerson: quality1.score >= quality2.score ? pair.person1 : pair.person2,
+      mergePerson: quality1.score >= quality2.score ? pair.person2 : pair.person1,
+      qualityDiff: Math.abs(quality1.score - quality2.score),
       dependencies: node ? {
         parents: node.parentDuplicates.length,
         spouses: node.spouseDuplicates.length,
@@ -541,7 +584,7 @@ export const canFuseLevel = (level, completedLevels) => {
 export const calculateFusionStats = (fusionOrder, graph) => {
   const totalPairs = fusionOrder.reduce((sum, level) => sum + level.count, 0);
   const withDependencies = Array.from(graph.values()).filter(n => n.dependsOn.length > 0).length;
-  const independent = Array.from(graph.values()).filter(n => 
+  const independentPairs = Array.from(graph.values()).filter(n => 
     !n.hasParentDuplicates && !n.hasSpouseDuplicates && !n.hasChildDuplicates
   ).length;
   
@@ -549,7 +592,8 @@ export const calculateFusionStats = (fusionOrder, graph) => {
     totalPairs,
     totalLevels: fusionOrder.length,
     withDependencies,
-    independent,
+    independentPairs,
+    independent: independentPairs, // Alias pour compatibilité
     levelBreakdown: fusionOrder.map(l => ({ level: l.level, label: l.label, count: l.count }))
   };
 };

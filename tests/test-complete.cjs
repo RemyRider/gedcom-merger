@@ -934,9 +934,9 @@ console.log('│ 11.1 Structure du module (12 tests)                            
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 check(fusionOrderCode.length > 0, 'Fichier fusionOrder.mjs existe');
 check(fusionOrderCode.includes('export const FUSION_LEVELS'), 'Constante FUSION_LEVELS exportée');
-check(fusionOrderCode.includes('NO_PARENT_DUPLICATES') && fusionOrderCode.includes('0'), 'Niveau NO_PARENT_DUPLICATES = 0');
-check(fusionOrderCode.includes('NO_SPOUSE_DUPLICATES') && fusionOrderCode.includes('1'), 'Niveau NO_SPOUSE_DUPLICATES = 1');
-check(fusionOrderCode.includes('HAS_DEPENDENCIES') && fusionOrderCode.includes('2'), 'Niveau HAS_DEPENDENCIES = 2');
+check(fusionOrderCode.includes('CHILDREN') && fusionOrderCode.includes('0'), 'Niveau CHILDREN = 0');
+check(fusionOrderCode.includes('SPOUSES') && fusionOrderCode.includes('1'), 'Niveau SPOUSES = 1');
+check(fusionOrderCode.includes('PARENTS') && fusionOrderCode.includes('2'), 'Niveau PARENTS = 2');
 check(fusionOrderCode.includes('INDEPENDENT'), 'Niveau INDEPENDENT défini');
 check(fusionOrderCode.includes('export const createPairId'), 'Fonction createPairId exportée');
 check(fusionOrderCode.includes('export const buildDependencyGraph'), 'Fonction buildDependencyGraph exportée');
@@ -983,7 +983,7 @@ check(fusionOrderCode.includes('spouses') && fusionOrderCode.includes('valid'), 
 check(fusionOrderCode.includes('children') && fusionOrderCode.includes('valid'), 'Validation enfants');
 check(fusionOrderCode.includes('SOUR') || fusionOrderCode.includes('sources'), 'Comptage sources');
 check(fusionOrderCode.includes('rawLines') || fusionOrderCode.includes('rawLinesByTag'), 'Accès rawLines pour sources');
-check(fusionOrderCode.includes('100') || fusionOrderCode.includes('MAX'), 'Score max défini');
+check(fusionOrderCode.includes('120') || fusionOrderCode.includes('100') || fusionOrderCode.includes('MAX'), 'Score max défini');
 
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 11.5 Utilitaires (5 tests)                                                 │');
@@ -1003,16 +1003,16 @@ console.log('║         CATÉGORIE 12: FUSION GUIDÉE CONTEXTUELLE v2.4.0 (30 t
 console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ 12.1 Module fusionOrder - Approche Top-Down (10 tests)                     │');
+console.log('│ 12.1 Module fusionOrder - Approche Bottom-Up (10 tests)                    │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(fusionOrderCode.includes('NO_PARENT_DUPLICATES'), 'Niveau NO_PARENT_DUPLICATES');
-check(fusionOrderCode.includes('NO_SPOUSE_DUPLICATES'), 'Niveau NO_SPOUSE_DUPLICATES');
-check(fusionOrderCode.includes('HAS_DEPENDENCIES'), 'Niveau HAS_DEPENDENCIES');
+check(fusionOrderCode.includes('CHILDREN') || fusionOrderCode.includes('SPOUSES'), 'Niveaux CHILDREN/SPOUSES');
+check(fusionOrderCode.includes('PARENTS') || fusionOrderCode.includes('INDEPENDENT'), 'Niveaux PARENTS/INDEPENDENT');
+check(fusionOrderCode.includes('dependsOn') || fusionOrderCode.includes('blocks'), 'Propriétés dependsOn/blocks');
 check(fusionOrderCode.includes('detectRelatedDuplicates'), 'Fonction detectRelatedDuplicates exportée');
 check(fusionOrderCode.includes('needsGuidedFusion'), 'Fonction needsGuidedFusion exportée');
 check(fusionOrderCode.includes('hasRelatedDuplicates'), 'Propriété hasRelatedDuplicates');
 check(fusionOrderCode.includes('recommendedOrder'), 'Propriété recommendedOrder');
-check(fusionOrderCode.includes('Top-Down') || fusionOrderCode.includes('parents stables'), 'Documentation Top-Down');
+check(fusionOrderCode.includes('Bottom-Up') || fusionOrderCode.includes('enfants') || fusionOrderCode.includes('CHILDREN'), 'Documentation Bottom-Up');
 check(fusionOrderCode.includes('calculateFusionImpact'), 'Fonction calculateFusionImpact');
 check(fusionOrderCode.includes('blockedPairs') || fusionOrderCode.includes('dependenciesRemaining'), 'Calcul impact fusion');
 

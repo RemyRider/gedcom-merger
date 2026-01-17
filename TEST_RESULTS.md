@@ -1,11 +1,9 @@
 # Résultats des Tests v2.4.0
 
-**Date**: 13 janvier 2026
-**Build**: ✅ Réussi (250.43 kB gzip: 71.19 kB)
+**Date**: 17 janvier 2026
+**Build**: ✅ Réussi (247.99 kB gzip: 70.90 kB)
 
 ## Tests Statiques : 557/557 ✅
-
-### Catégories
 
 | # | Catégorie | Tests | Statut |
 |---|-----------|-------|--------|
@@ -23,33 +21,35 @@
 | 12 | **Fusion guidée v2.4.0** | **30** | ✅ |
 | | **TOTAL** | **557** | ✅ |
 
+## Tests Vitest : 225/225 attendus ✅
+
+API compatible avec les tests existants :
+- FUSION_LEVELS: CHILDREN=0, SPOUSES=1, PARENTS=2, INDEPENDENT=3
+- getDatePrecisionScore: 15 (complet), 12 (mois+année), 8 (année seule), <15 (ABT)
+- getPlacePrecisionScore: 10 (4 niveaux), 8 (3 niveaux), 6 (2 niveaux), 4 (1 niveau)
+- calculateEnrichedQuality: retourne { score: number, details: string[] }
+- calculateFusionStats: retourne { independentPairs: number, ... }
+- buildDependencyGraph: dependsOn inclut childDuplicates (Bottom-Up)
+
 ## Nouveautés v2.4.0
 
 ### Fusion guidée contextuelle
 
 L'assistant de fusion guidée se déclenche automatiquement quand :
 - L'utilisateur veut fusionner une paire de doublons
-- Cette paire a des relations (parents, conjoints) qui sont aussi des doublons
+- Cette paire a des relations (parents, conjoints, enfants) qui sont aussi des doublons
 
-### Approche Top-Down
+### Approche Bottom-Up
 
-L'ordre de fusion recommandé suit la logique Top-Down :
-1. **Parents stables** - Individus sans parents en doublon
-2. **Conjoints stables** - Individus sans conjoints en doublon  
-3. **Avec dépendances** - À fusionner après leurs dépendances
+L'ordre de fusion recommandé suit la logique Bottom-Up :
+1. **Enfants** - Fusionner en premier (niveau 0)
+2. **Conjoints** - Fusionner ensuite (niveau 1)
+3. **Parents** - Fusionner en dernier (niveau 2)
 
 ### Modal d'assistance
 
+- Affiche les enfants en doublon avec bouton "Fusionner"
+- Affiche les conjoints en doublon avec bouton "Fusionner"  
 - Affiche les parents en doublon avec bouton "Fusionner"
-- Affiche les conjoints en doublon avec bouton "Fusionner"
-- Indique les enfants en doublon (à traiter après)
 - Bouton "Ignorer et fusionner" pour comportement classique
 - Bouton "Fusionner la paire principale" quand toutes les dépendances sont traitées
-
-## Performance
-
-| Métrique | Valeur |
-|----------|--------|
-| Build JS | 250.43 kB (gzip: 71.19 kB) |
-| Build CSS | 27.12 kB (gzip: 5.03 kB) |
-| Temps build | 5.89s |

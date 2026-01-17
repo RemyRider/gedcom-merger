@@ -1,285 +1,160 @@
-# État des Lieux - GEDCOM Merger
+# État des Lieux - GEDCOM Merger v2.4.0
 
-> **Version actuelle : v2.3.0** (13 janvier 2026)
-> **Repository** : https://github.com/RemyRider/gedcom-merger  
-> **Production** : https://gedcom-merger.netlify.app  
-> **Développement** : https://dev--gedcom-merger.netlify.app
+**Date** : 17 janvier 2026  
+**Statut** : Production  
+**Build** : 248 KB (gzip: 71 KB)
 
----
-
-## 🎯 Résumé v2.3.0
+## Métriques Clés
 
 | Métrique | Valeur |
 |----------|--------|
-| **Tests totaux** | 720 (527 statiques + 193 Vitest) |
-| **Critères de comparaison** | 18 |
-| **Champs affichés** | 16 |
-| **Catégories de tests** | 11 |
-| **Performance** | Web Worker (traitement arrière-plan) |
-| **Nouveauté** | Module fusionOrder.mjs |
+| Tests statiques | 557 |
+| Tests Vitest | 225 |
+| **Total tests** | **782** |
+| Critères de comparaison | 18 |
+| Catégories de tests | 12 |
+| Lignes App.jsx | ~4750 |
+| Taille fusionOrder.mjs | ~630 lignes |
 
----
+## Fonctionnalités par Version
 
-## Nouveautés v2.3.0
+### v2.4.0 (Actuelle)
+- ✅ Fusion guidée contextuelle
+- ✅ Approche Bottom-Up (enfants → conjoints → parents)
+- ✅ Modal d'assistance avec recommandations
+- ✅ Détection automatique des doublons liés
+- ✅ Option "Ignorer et fusionner"
 
-### Module fusionOrder.mjs (préparation v2.4.0)
+### v2.3.0
+- ✅ Module fusionOrder.mjs
+- ✅ Graphe de dépendances
+- ✅ Tri topologique
+- ✅ Score de qualité enrichi
 
-| Fonctionnalité | Description |
-|----------------|-------------|
-| **Graphe de dépendances** | Analyse des relations entre doublons (parents, conjoints, enfants) |
-| **Tri topologique** | Calcul de l'ordre optimal de fusion |
-| **Score de qualité enrichi** | Précision des dates, lieux, nombre de sources, validité des relations |
-| **Constantes FUSION_LEVELS** | CHILDREN=0, SPOUSES=1, PARENTS=2, INDEPENDENT=3 |
-| **Détection de cycles** | Gestion des boucles généalogiques |
+### v2.2.0
+- ✅ Normalisation des lieux (API Géo)
+- ✅ Conflits relationnels (parents/conjoints/enfants)
+- ✅ Écran récapitulatif pré-fusion
 
-### Fonctions exportées
+### v2.1.0
+- ✅ Web Workers (performance 3-5x)
+- ✅ Rapport qualité
+- ✅ Analyse chronologique
+- ✅ Statistiques avancées
+- ✅ Références orphelines
+- ✅ Score de suspicion
 
+### v2.0.0
+- ✅ 16 champs systématiques
+- ✅ Matching phonétique français
+- ✅ 40+ variantes orthographiques
+- ✅ Export GEDCOM préservé
+
+## Architecture Technique
+
+### Stack
+- **Frontend** : React 18, Vite 5
+- **Styles** : Tailwind CSS 3.4
+- **Tests** : Vitest 1.x, tests statiques custom
+- **Déploiement** : Netlify (auto-deploy)
+
+### Fichiers Principaux
+
+```
+src/
+├── App.jsx              # 4750 lignes - Composant principal
+├── utils/
+│   └── fusionOrder.mjs  # 630 lignes - Module fusion
+└── main.jsx             # Point d'entrée
+
+public/
+└── gedcom-worker.js     # 54 KB - Web Worker
+
+tests/
+└── test-complete.cjs    # 557 tests statiques
+```
+
+### Module fusionOrder.mjs
+
+#### Constantes
 ```javascript
-// Constantes
-export const FUSION_LEVELS = { CHILDREN: 0, SPOUSES: 1, PARENTS: 2, INDEPENDENT: 3 };
-export const FUSION_LEVEL_LABELS = { ... };
-
-// Fonctions principales
-export const createPairId = (id1, id2) => ...;
-export const buildDependencyGraph = (duplicates, individuals) => ...;
-export const calculateFusionOrder = (graph) => ...;
-export const calculateEnrichedQuality = (person, peopleById) => ...;
-
-// Utilitaires
-export const getDatePrecisionScore = (dateStr) => ...;
-export const getPlacePrecisionScore = (place) => ...;
-export const prepareLevelForDisplay = (levelData, graph, duplicatePairsMap, peopleById) => ...;
-export const canFuseLevel = (level, completedLevels) => ...;
-export const calculateFusionStats = (fusionOrder, graph) => ...;
-```
-
----
-
-## Fonctionnalités Implémentées (héritées)
-
-### Core - Détection de doublons
-
-| Fonctionnalité | Version | Description |
-|----------------|---------|-------------|
-| Algorithme Soundex français | v1.0.0 | Détection phonétique adaptée aux noms français |
-| Triple indexation | v1.0.0 | Optimisation O(n) via index phonétique, année, parents |
-| **Scoring hybride 18 critères** | v2.0.0 | Nom, naissance, sexe, parents, fratrie, lieu naissance, conjoints, décès, lieu décès, profession, enfants, baptême, lieu baptême, inhumation, lieu inhumation, résidence, titre, religion |
-| Détection clusters | v1.6.0 | Groupes de 3+ personnes interconnectées |
-| Anti-faux-positifs | v1.9.2 | Critères suffisants obligatoires au-delà du nom |
-| **Comparaison par NOM** | v2.0.0 | Parents/conjoints/enfants comparés par nom si IDs différents |
-| Suggestions IA | v1.9.0 | Analyse de patterns nom/période avec score de confiance |
-| **Web Worker** | v2.1.4 | Traitement en arrière-plan, interface fluide |
-
-### Gestion des conflits (v2.2.x)
-
-| Fonctionnalité | Version | Description |
-|----------------|---------|-------------|
-| **Détection conflits** | v2.2.0 | 10 champs vérifiés avant fusion |
-| **Modal résolution** | v2.2.0 | Interface de choix pour chaque conflit |
-| **Nettoyage FAM orphelines** | v2.2.1 | Suppression familles sans membres |
-| **Détection dates précises** | v2.2.2 | "29 NOV 2025" ≠ "12 NOV 2025" = CONFLIT |
-| **Isolation doublons/clusters** | v2.2.3 | Sélections complètement indépendantes |
-| **Fusion en cascade** | v2.2.4 | A→B→C résolu en A→C (clusters N individus) |
-| **Redirection références** | v2.2.4 | HUSB/WIFE/CHIL redirigés via mergeMap |
-
-### Scoring amélioré (v2.2.5)
-
-| Fonctionnalité | Version | Description |
-|----------------|---------|-------------|
-| **Couleurs inversées** | v2.2.5 | 🟢 FORT (feu vert), 🟡 MOYEN, 🔴 FAIBLE (prudence) |
-| **Pondération noms rares** | v2.2.5 | Noms rares = +35 pts, très communs = 20 pts |
-| **Bonus combinaison** | v2.2.5 | +15 pts si nom+naissance+lieu, +8 pts si nom+naissance |
-| **Malus incohérence** | v2.2.5 | -10 pts si lieux naissance contradictoires |
-
-### Normalisation des lieux (v2.2.6)
-
-| Fonctionnalité | Version | Description |
-|----------------|---------|-------------|
-| **Modal normalisation** | v2.2.6 | Interface complète pour corriger les variantes de lieux |
-| **API Géo intégrée** | v2.2.6 | Suggestions officielles depuis geo.api.gouv.fr |
-| **Saisie manuelle** | v2.2.6 | Autocomplétion temps réel pendant la frappe |
-| **Format normalisé** | v2.2.6 | Commune, Département, Région, France |
-| **Préservation rawLines** | v2.2.6 | Conservation de toutes les données GEDCOM |
-| **Écran récapitulatif** | v2.2.6 | Stats groupes normalisés + lieux corrigés |
-
----
-
-## Critères de Comparaison
-
-| # | Critère | Points max | Suffisant |
-|---|---------|------------|-----------|
-| 1 | Noms | 30 | - |
-| 2 | Date naissance | 25 | ✅ |
-| 3 | Sexe | 15 | - |
-| 4 | Parents | 20 | ✅ |
-| 5 | Fratrie | 15 | ✅ |
-| 6 | Lieu naissance | 10 | ✅ |
-| 7 | Conjoints | 8 | ✅ |
-| 8 | Date décès | 15 | ✅ |
-| 9 | Lieu décès | 8 | ✅ |
-| 10 | Profession | 5 | ✅ |
-| 11 | Enfants | 15 | ✅ |
-| 12 | Baptême | 5 | - |
-| 13 | Lieu baptême | 4 | - |
-| 14 | Lieu inhumation | 4 | - |
-| 15 | Résidence | 4 | - |
-| 16 | Titre | 3 | - |
-| 17 | Religion | 3 | - |
-| 18 | Inhumation | 5 | - |
-| | **Total possible** | **190** | |
-
----
-
-## Architecture v2.3.0
-
-### Structure des fichiers
-
-```
-gedcom-merger/
-├── src/
-│   ├── App.jsx              # ~4400 lignes, composant principal
-│   ├── utils/
-│   │   └── fusionOrder.mjs  # NOUVEAU - Module ordre de fusion (17KB)
-│   ├── index.css
-│   └── main.jsx
-├── public/
-│   └── gedcom-worker.js     # ~54KB, Worker autonome
-├── tests/
-│   ├── test-complete.cjs    # 527 tests statiques
-│   ├── helpers.test.mjs     # 47 tests Vitest
-│   ├── parser.test.mjs      # 30 tests Vitest
-│   ├── stats.test.mjs       # 31 tests Vitest
-│   └── conflicts.test.mjs   # 56 tests Vitest
-├── CHANGELOG.md
-├── DEPLOIEMENT.md
-├── TEST_RESULTS.md
-└── package.json
-```
-
-### Module fusionOrder.mjs - Détails
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        MODULE fusionOrder.mjs                                   │
-└─────────────────────────────────────────────────────────────────────────────────┘
-
-  ENTRÉE                  TRAITEMENT                          SORTIE
-  ───────────────────────────────────────────────────────────────────────────────
-  duplicates[]     ──►    buildDependencyGraph()    ──►    graph (Map)
-  individuals[]           - Indexe les paires                - pairId → node
-                          - Détecte relations                - dependsOn[]
-                          - Calcule dépendances              - blocks[]
-                                   │
-                                   ▼
-                          calculateFusionOrder()    ──►    fusionOrder[]
-                          - DFS récursif                     - level
-                          - Détection cycles                 - pairIds[]
-                          - Tri topologique                  - label
-                                   │
-                                   ▼
-                          calculateEnrichedQuality() ──►   score (0-100)
-                          - Précision dates                  - datePrecision
-                          - Précision lieux                  - placePrecision
-                          - Validité relations               - validRelations
-                          - Nombre sources                   - sourceCount
-```
-
----
-
-## Catégories de Tests (720 total)
-
-| # | Catégorie | Tests | Description |
-|---|-----------|-------|-------------|
-| 1 | Fondamentaux | 61 | Structure, imports, exports |
-| 2 | Parsing GEDCOM | 52 | parseGedcom, CONT/CONC, rawLines |
-| 3 | Détection doublons | 42 | findDuplicates, calculateSimilarity |
-| 4 | Fusion & suppression | 34 | mergePersonData, handleMerge |
-| 5 | Interface utilisateur | 79 | Onglets, boutons, états |
-| 6 | Suggestions IA | 18 | generateAiSuggestions |
-| 7 | Config & déploiement | 39 | Netlify, package.json |
-| 8 | Qualité & analyses v2.1.x | 68 | Rapport, chrono, stats, Worker |
-| 9 | Conflits v2.2.x | 36 | Détection, résolution, nettoyage |
-| 10 | Scoring/Normalisation | 47 | v2.2.5 couleurs, v2.2.6 API Géo |
-| 11 | **Module fusion v2.3.0** | **45** | Structure, graphe, tri, qualité |
-| | **Vitest** | +193 | helpers, parser, stats, conflicts |
-| | **TOTAL** | **720** | |
-
----
-
-## À venir (v2.4.0)
-
-| Fonctionnalité | Priorité | Description |
-|----------------|----------|-------------|
-| **Fusion guidée contextuelle** | P1 | Assistant déclenché lors de fusions avec dépendances |
-| **Ordre Top-Down** | P1 | Parents stables → Conjoints → Enfants |
-| **Recalcul dynamique** | P1 | Mise à jour après chaque fusion |
-| Export CSV | P2 | Export individus, familles, doublons |
-| Export JSON | P2 | Format structuré pour analyse externe |
-
----
-
-## Historique des versions
-
-| Version | Date | Type | Changements clés |
-|---------|------|------|------------------|
-| **v1.0.0** | 29/11/2025 | 🚀 Initial | Soundex français, triple indexation |
-| **v1.6.0** | 10/12/2025 | ✨ Feature | Premiers Web Workers, variants orthographiques |
-| **v1.8.6** | 16/12/2025 | ✨ Feature | HEAD/TRLR automatiques, conformité GEDCOM 5.5.1 |
-| **v1.9.0** | 28/12/2025 | ✨ Feature | 4 onglets, suggestions IA |
-| **v2.0.0** | 31/12/2025 | 🚀 Major | 18 critères, rawLines, 295 tests |
-| **v2.1.0** | 02/01/2026 | ✨ Feature | Rapport qualité, chrono, stats, 377 tests |
-| **v2.1.4** | 03/01/2026 | 🚀 Perf | Web Worker, 501 tests, 3-5x plus rapide |
-| **v2.2.0** | 04/01/2026 | ✨ Feature | Détection conflits, modal résolution |
-| **v2.2.4** | 05/01/2026 | 🐛 Fix | Fusion cascade, redirection références |
-| **v2.2.5** | 10/01/2026 | ✨ Feature | Scoring amélioré, couleurs inversées |
-| **v2.2.6** | 10/01/2026 | ✨ Feature | Outil de normalisation des lieux |
-| **v2.3.0** | 13/01/2026 | 🔧 Tech | Module fusionOrder.mjs (préparation v2.4.0) |
-
----
-
-## Stack technique
-
-| Composant | Technologie | Version |
-|-----------|-------------|---------|
-| Framework | React | 18.2.0 |
-| Build | Vite | 5.4.21 |
-| CSS | Tailwind CSS | 3.4.0 |
-| Icônes | Lucide React | 0.263.1 |
-| Tests unitaires | Vitest | 1.0.0 |
-| Minification | esbuild | (via Vite) |
-| Hébergement | Netlify | - |
-
-### ⚠️ Configuration critique
-
-```javascript
-// postcss.config.cjs - DOIT être CommonJS
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-
-// tailwind.config.cjs - DOIT être CommonJS  
-module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  theme: { extend: {} },
-  plugins: [],
+FUSION_LEVELS = {
+  CHILDREN: 0,      // Fusionner en premier
+  SPOUSES: 1,       // Fusionner ensuite
+  PARENTS: 2,       // Fusionner en dernier
+  INDEPENDENT: 3    // Sans dépendances
 }
 ```
 
-**NE PAS utiliser `export default`** (ESM) sinon erreur Netlify build.
+#### Fonctions Exportées
+| Fonction | Description |
+|----------|-------------|
+| `createPairId(id1, id2)` | Identifiant canonique de paire |
+| `buildDependencyGraph(duplicates, individuals)` | Construit le graphe |
+| `calculateFusionOrder(graph)` | Ordre optimal de fusion |
+| `detectRelatedDuplicates(pair, duplicates, individuals)` | Doublons liés |
+| `needsGuidedFusion(pair, duplicates, individuals)` | Nécessite assistant? |
+| `calculateEnrichedQuality(person, peopleById)` | Score qualité |
+| `getDatePrecisionScore(dateStr)` | Précision date (0-15) |
+| `getPlacePrecisionScore(place)` | Précision lieu (0-10) |
+| `calculateFusionStats(order, graph)` | Statistiques |
+| `calculateFusionImpact(pair, graph)` | Impact d'une fusion |
 
----
+## Tests par Catégorie
 
-## Performance v2.3.0
+| # | Catégorie | Tests |
+|---|-----------|-------|
+| 1 | Fondamentaux | 61 |
+| 2 | Parsing GEDCOM | 52 |
+| 3 | Détection doublons | 42 |
+| 4 | Fusion & suppression | 34 |
+| 5 | Interface utilisateur | 79 |
+| 6 | Suggestions IA | 18 |
+| 7 | Config & déploiement | 39 |
+| 8 | Qualité & analyses | 68 |
+| 9 | Conflits v2.2.0 | 36 |
+| 10 | Scoring/Normalisation | 47 |
+| 11 | Module fusion v2.3.0+ | 45 |
+| 12 | **Fusion guidée v2.4.0** | **30** |
+| | **TOTAL** | **557** |
 
-| Fichier | Sans Worker | Avec Worker |
-|---------|-------------|-------------|
-| 1000 individus | ~5s bloqué | ~2s fluide |
-| 3000 individus | ~15s bloqué | ~5s fluide |
-| 7000 individus | ~30s bloqué | ~8s fluide |
+### Tests Vitest
+| Fichier | Tests |
+|---------|-------|
+| fusionOrder.test.mjs | 32 |
+| parser.test.mjs | 30 |
+| helpers.test.mjs | ~50 |
+| stats.test.mjs | ~50 |
+| conflicts.test.mjs | ~60 |
+| **TOTAL** | **~225** |
 
----
+## Points d'Attention
 
-*Document mis à jour le 13 janvier 2026 - v2.3.0*
+### Configuration Critique
+- `postcss.config.cjs` : **DOIT** être CommonJS
+- `tailwind.config.cjs` : **DOIT** être CommonJS
+- Netlify requiert `npm ci && npm run test:all && npm run build`
+
+### Contraintes Techniques
+- Fichiers GEDCOM jusqu'à 7000+ individus testés
+- rawLines obligatoire pour préservation données
+- Web Worker pour parsing asynchrone
+
+### Dépendances
+```json
+{
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "lucide-react": "^0.263.1",
+  "vite": "^5.0.0",
+  "vitest": "^1.0.0",
+  "tailwindcss": "^3.4.0"
+}
+```
+
+## Prochaines Étapes
+
+Voir `docs/ROADMAP.md` pour les évolutions planifiées :
+- v2.5.0 : Export CSV/JSON des doublons
+- v2.6.0 : Fusion par lot avec confirmation groupée
+- v3.0.0 : Multi-fichiers GEDCOM

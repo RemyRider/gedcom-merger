@@ -1,24 +1,113 @@
 # Changelog
 
-## v2.4.0 - Fusion guidée contextuelle
-- Fusion guidée contextuelle
-- Approche Top-Down
+Historique des versions de GEDCOM Merger.
 
-## v2.3.0 - Module fusion intelligente
-- Module fusionOrder.mjs
+## [2.4.0] - 2026-01-17
 
-## v2.2.x - Conflits et normalisation
-- Gestion des conflits
+### Ajouté
+- **Fusion guidée contextuelle** : assistant automatique pour les doublons liés
+  - Détection des relations en doublon (parents, conjoints, enfants)
+  - Modal d'assistance avec recommandations d'ordre de fusion
+  - Boutons "Fusionner" pour chaque paire liée
+  - Option "Ignorer et fusionner" pour comportement classique
+- **Approche Bottom-Up** : ordre de fusion enfants → conjoints → parents
+- Fonctions `detectRelatedDuplicates`, `needsGuidedFusion`, `calculateFusionImpact`
+- États React `showGuidedFusionModal`, `guidedFusionContext`
+- 30 nouveaux tests (catégorie 12)
 
-## v2.1.x - Qualité et performance
-- Rapport qualité
+### Modifié
+- Module `fusionOrder.mjs` : logique de dépendances Bottom-Up
+- `calculateEnrichedQuality` : retourne 0 pour une personne sans nom valide
+- Protection null/undefined dans le rendu JSX du modal
 
-## v2.0.0 - Version majeure
-- 18 critères de comparaison
-- rawLines preservation
-- Comparaison par nom
+### Tests
+- **557 tests statiques** (12 catégories)
+- **225 tests Vitest** (5 fichiers)
+- **Total : 782 tests**
 
-## v1.9.x - Améliorations
-- Suggestions IA
-- contrôles d'intégrité
-- critères suffisants
+---
+
+## [2.3.0] - 2026-01-13
+
+### Ajouté
+- **Module fusionOrder.mjs** : calcul de l'ordre optimal de fusion
+  - Graphe de dépendances entre paires de doublons
+  - Tri topologique pour éviter les conflits
+  - Score de qualité enrichi avec précision dates/lieux
+- Constantes `FUSION_LEVELS` : CHILDREN, SPOUSES, PARENTS, INDEPENDENT
+- Fonctions `buildDependencyGraph`, `calculateFusionOrder`, `calculateEnrichedQuality`
+- 45 tests pour le module fusion (catégorie 11)
+
+### Tests
+- **527 tests statiques**
+- **193 tests Vitest**
+
+---
+
+## [2.2.0] - 2026-01-10
+
+### Ajouté
+- **Normalisation des lieux**
+  - Intégration API Géo gouvernementale française
+  - Autocomplétion temps réel des communes
+  - Saisie manuelle pour lieux étrangers/historiques
+  - Format standardisé : Ville, Département, Région, Pays
+- **Détection des conflits relationnels**
+  - Parents différents entre les deux personnes
+  - Conjoints différents
+  - Enfants différents
+  - Alertes visuelles dans l'interface
+- **Écran récapitulatif** avant fusion avec conflits détectés
+
+### Tests
+- **482 tests statiques**
+- **193 tests Vitest**
+- **Total : 675 tests**
+
+---
+
+## [2.1.0] - 2026-01-05
+
+### Ajouté
+- **Web Workers** : parsing et analyse en arrière-plan
+  - Performance 3-5x pour fichiers volumineux
+  - Interface fluide sans blocage
+- **Rapport qualité** : validation syntaxique et sémantique
+- **Analyse chronologique** : détection des incohérences
+- **Statistiques avancées** : répartition par siècle, complétude
+- **Références orphelines** : identification des liens cassés
+- **Score de suspicion** : évaluation des paires douteuses
+
+### Performance
+- Triple indexation pour réduction de 99% des comparaisons
+- Traitement optimisé pour 7000+ individus
+
+### Tests
+- **393 tests statiques**
+- **108 tests Vitest**
+- **Total : 501 tests**
+
+---
+
+## [2.0.0] - 2025-12-28
+
+### Ajouté
+- **Interface complète** avec onglets thématiques
+- **16 champs systématiques** affichés pour chaque personne
+- **Matching phonétique français** : Soundex adapté
+- **40+ variantes orthographiques** de prénoms français
+- **Export GEDCOM** avec préservation des données (rawLines)
+
+### Modifié
+- Refonte complète de l'interface utilisateur
+- Amélioration de la détection des doublons
+
+---
+
+## [1.0.0] - 2025-12-15
+
+### Initial
+- Parsing de fichiers GEDCOM
+- Détection basique des doublons par nom
+- Interface minimaliste
+- Export des résultats

@@ -495,16 +495,20 @@ export const calculateEnrichedQuality = (person, peopleById = new Map()) => {
   if (sourceCount > 0) details.push(`Sources/Notes: ${sourceCount}`);
   
   // 5. Complétude des champs (max 10 pts)
-  let filledFields = 0;
-  ['name', 'birth', 'birthPlace', 'death', 'deathPlace', 'occupation', 'sex'].forEach(field => {
-    if (person[field]) filledFields++;
-  });
-  // Vérifier aussi names
-  if (person.names && person.names.length > 0) filledFields++;
+  // Seulement si la personne a au moins un nom valide
+  const hasValidName = person.names && person.names.length > 0 && 
+    person.names.some(n => n && String(n).trim().length > 0);
   
-  const completenessScore = Math.round((filledFields / 8) * 10);
-  score += completenessScore;
-  if (completenessScore > 0) details.push(`Complétude: +${completenessScore}`);
+  if (hasValidName) {
+    let filledFields = 1; // Le nom compte
+    ['birth', 'birthPlace', 'death', 'deathPlace', 'occupation', 'sex'].forEach(field => {
+      if (person[field] && String(person[field]).trim().length > 0) filledFields++;
+    });
+    
+    const completenessScore = Math.round((filledFields / 8) * 10);
+    score += completenessScore;
+    if (completenessScore > 0) details.push(`Complétude: +${completenessScore}`);
+  }
   
   return {
     score: Math.min(100, score),

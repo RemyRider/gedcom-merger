@@ -28,9 +28,9 @@ const postcssConfig = fs.readFileSync('./postcss.config.cjs', 'utf8');
 
 let changelogMd = '', readmeMd = '', deploiementMd = '', architectureMd = '';
 try { changelogMd = fs.readFileSync('./CHANGELOG.md', 'utf8'); } catch (e) { changelogMd = 'v2.2.0 v2.1.4 v2.1.3 v2.0.0 conflits rawLines'; }
-try { readmeMd = fs.readFileSync('./README.md', 'utf8'); } catch (e) { readmeMd = 'GEDCOM npm Netlify'; }
-try { deploiementMd = fs.readFileSync('./DEPLOIEMENT.md', 'utf8'); } catch (e) { deploiementMd = 'git Netlify'; }
-try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catch (e) { architectureMd = 'App.jsx parseGedcom'; }
+try { readmeMd = fs.readFileSync('./README_v2.4.0.md', 'utf8'); } catch (e) { readmeMd = 'GEDCOM npm Netlify'; }
+try { deploiementMd = fs.readFileSync('./DEPLOIEMENT_v2.4.0.md', 'utf8'); } catch (e) { deploiementMd = 'git Netlify'; }
+try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE_v2.4.0.md', 'utf8'); } catch (e) { architectureMd = 'App.jsx parseGedcom'; }
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
@@ -586,10 +586,10 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 7.3 Documentation (20 tests)                                               │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(fs.existsSync('./README.md'), 'README.md existe');
+check(fs.existsSync('./README_v2.4.0.md'), 'README.md existe');
 check(fs.existsSync('./CHANGELOG.md'), 'CHANGELOG.md existe');
-check(fs.existsSync('./DEPLOIEMENT.md'), 'DEPLOIEMENT.md existe');
-check(fs.existsSync('./ARCHITECTURE.md') || true, 'ARCHITECTURE.md existe');
+check(fs.existsSync('./DEPLOIEMENT_v2.4.0.md'), 'DEPLOIEMENT.md existe');
+check(fs.existsSync('./docs/ARCHITECTURE_v2.4.0.md') || true, 'ARCHITECTURE.md existe');
 check(readmeMd.includes('GEDCOM') || readmeMd.includes('gedcom'), 'README: GEDCOM');
 check(readmeMd.includes('npm'), 'README: npm');
 check(readmeMd.includes('Netlify') || readmeMd.includes('netlify'), 'README: Netlify');

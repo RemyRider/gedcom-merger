@@ -94,9 +94,11 @@ Historique des versions de GEDCOM Merger.
 ### Ajouté
 - **Interface complète** avec onglets thématiques
 - **16 champs systématiques** affichés pour chaque personne
+- **18 critères de comparaison** pour la détection des doublons
 - **Matching phonétique français** : Soundex adapté
 - **40+ variantes orthographiques** de prénoms français
 - **Export GEDCOM** avec préservation des données (rawLines)
+- **Contrôles d'intégrité** avant fusion
 
 ### Modifié
 - Refonte complète de l'interface utilisateur
@@ -104,7 +106,25 @@ Historique des versions de GEDCOM Merger.
 
 ---
 
-## [1.0.0] - 2025-12-15
+## [1.9.5] - 2025-12-20
+
+### Ajouté
+- Parsing étendu DATE/PLAC
+- Critères anti-faux-positifs
+- Amélioration algorithme de fusion
+
+---
+
+## [1.9.0] - 2025-12-15
+
+### Ajouté
+- Suggestions IA pour la détection
+- Interface 4 onglets
+- Bouton flottant d'actions
+
+---
+
+## [1.0.0] - 2025-12-10
 
 ### Initial
 - Parsing de fichiers GEDCOM

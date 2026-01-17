@@ -35,7 +35,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE.md', 'utf8'); } catc
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('                      SUITE DE TESTS GEDCOM MERGER v2.4.0');
-console.log('                         527 TESTS STATIQUES AU TOTAL');
+console.log('                         557 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 

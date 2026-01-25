@@ -2066,7 +2066,18 @@ const GedcomDuplicateMerger = () => {
   };
 
   const getClusterAverageScore = (cluster) => cluster.avgScore || 0;
-  const getFilteredClusters = () => clusters.filter(cluster => getClusterAverageScore(cluster) >= clusterScoreFilter);
+  // v2.4.2: Calcule le score de facilité moyen d'un cluster (cleanlinessScore moyen de ses paires)
+  const getClusterCleanlinessScore = (cluster) => {
+    const clusterPairs = duplicates.filter(d => cluster.ids.includes(d.person1.id) && cluster.ids.includes(d.person2.id));
+    if (clusterPairs.length === 0) return 100;
+    const totalScore = clusterPairs.reduce((sum, p) => sum + (p.cleanlinessScore ?? 100), 0);
+    return Math.round(totalScore / clusterPairs.length);
+  };
+  
+  // v2.4.2: Tri par cleanlinessScore (facilité) - les clusters les plus faciles en premier
+  const getFilteredClusters = () => clusters
+    .filter(cluster => getClusterAverageScore(cluster) >= clusterScoreFilter)
+    .sort((a, b) => getClusterCleanlinessScore(b) - getClusterCleanlinessScore(a));
   const autoSelectHighConfidenceClusters = () => {
     const newSelectedClusters = new Set();
     const newSelectedPairs = new Set(selectedPairs);
@@ -2691,7 +2702,28 @@ const GedcomDuplicateMerger = () => {
               setPlaceVariants(data.placeVariants);
               setGenealogyStats(data.genealogyStats);
               setOrphanRefs(data.orphanRefs);
-              setDuplicates(data.duplicates);
+              
+              // v2.4.2: Enrichir les doublons avec cleanlinessScore et trier par facilité
+              let enrichedDuplicates = data.duplicates;
+              try {
+                const { graph } = buildDependencyGraph(data.duplicates, data.people);
+                enrichedDuplicates = data.duplicates.map(dup => {
+                  const pairId = createPairId(dup.person1.id, dup.person2.id);
+                  const node = graph.get(pairId);
+                  return {
+                    ...dup,
+                    cleanlinessScore: node?.cleanlinessScore ?? 100,
+                    dependencyCount: node?.dependencyCount ?? 0
+                  };
+                });
+                // Trier par cleanlinessScore décroissant (plus facile à fusionner en premier)
+                enrichedDuplicates.sort((a, b) => b.cleanlinessScore - a.cleanlinessScore);
+                console.log('Doublons triés par facilité de fusion');
+              } catch (e) {
+                console.warn('Erreur enrichissement doublons:', e);
+              }
+              setDuplicates(enrichedDuplicates);
+              
               setClusters(data.clusters);
               setToDeletePersons(data.toDeletePersons);
               setSmartSuggestions(data.smartSuggestions);
@@ -3393,11 +3425,15 @@ const GedcomDuplicateMerger = () => {
     setMergeConflicts([]); setShowConflictModal(false); setPendingMergePair(null);
   };
 
-  const getFilteredDuplicates = () => duplicates.filter(pair => pair.similarity >= filterScore && (!searchTerm || pair.person1.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase())) || pair.person2.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase()))));
+  // v2.4.2: Tri par cleanlinessScore (facilité de fusion) - les plus faciles en premier
+  const getFilteredDuplicates = () => duplicates
+    .filter(pair => pair.similarity >= filterScore && (!searchTerm || pair.person1.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase())) || pair.person2.names.some(n => n.toLowerCase().includes(searchTerm.toLowerCase()))))
+    .sort((a, b) => (b.cleanlinessScore ?? 100) - (a.cleanlinessScore ?? 100));
   const getSimplePairs = () => {
     const clusterIds = new Set();
     clusters.forEach(c => c.ids.forEach(id => clusterIds.add(id)));
-    return getFilteredDuplicates().filter(pair => !clusterIds.has(pair.person1.id) && !clusterIds.has(pair.person2.id));
+    return getFilteredDuplicates()
+      .filter(pair => !clusterIds.has(pair.person1.id) && !clusterIds.has(pair.person2.id));
   };
 
   return (

@@ -3,17 +3,18 @@
 ## [2.4.2] - 2026-01-25
 
 ### Amélioré
+- **Tri global par facilité de fusion** : Partout, les paires avec moins de contraintes sont proposées en premier
+  - **Doublons (onglet Paires)** : Triés par cleanlinessScore décroissant
+  - **Clusters** : Triés par score de facilité moyen de leurs paires
+  - **Modal fusion guidée** : Relations liées triées par facilité
 - **Workflow fusion guidée** : Clic sur "Fusionner" ouvre le modal cherry-picking
   - Le modal de fusion guidée se ferme automatiquement
   - Retour automatique au modal après la fusion avec mise à jour
-- **Tri par facilité de fusion** : Les paires avec le moins de contraintes sont en premier
-  - Tri par cleanlinessScore décroissant
-  - Badge "Recommandé" sur la première paire
-  - Badge "Propreté: X%" pour chaque paire
 - **UX améliorée** : 
-  - Surbrillance de la paire recommandée (première de la liste)
+  - Badge "Recommandé" sur la première paire (la plus facile)
+  - Badge "Propreté: X%" pour chaque paire
+  - Surbrillance de la paire recommandée
   - Animation pulse sur le bouton Fusionner recommandé
-  - Affichage du score de propreté avec code couleur
 
 ### Corrigé
 - **Bug modal "Relations en doublon"** : affichait le nombre (212) au lieu des sections

@@ -565,13 +565,29 @@ export const detectRelatedDuplicates = (pair, duplicates, individuals) => {
   const node = graph.get(pairId);
   if (!node) return { hasRelatedDuplicates: false, parents: [], spouses: [], children: [], total: 0, recommendedOrder: [] };
   
-  const getRelated = (ids) => ids.map(pid => { const p = duplicatePairsMap.get(pid); return p ? { pairId: pid, person1: p.person1, person2: p.person2, score: p.score } : null; }).filter(Boolean);
+  // Récupérer les paires liées avec leur cleanlinessScore
+  const getRelated = (ids) => ids.map(pid => { 
+    const p = duplicatePairsMap.get(pid); 
+    const relatedNode = graph.get(pid);
+    return p ? { 
+      pairId: pid, 
+      person1: p.person1, 
+      person2: p.person2, 
+      score: p.score,
+      cleanlinessScore: relatedNode?.cleanlinessScore || 0,
+      dependencyCount: relatedNode?.dependencyCount || 0
+    } : null; 
+  }).filter(Boolean);
   
-  const parents = getRelated(node.parentDuplicates);
-  const spouses = getRelated(node.spouseDuplicates);
-  const children = getRelated(node.childDuplicates);
+  // Trier par cleanlinessScore décroissant (les plus "propres" d'abord = moins de contraintes)
+  const sortByCleanest = (arr) => arr.sort((a, b) => b.cleanlinessScore - a.cleanlinessScore);
+  
+  const parents = sortByCleanest(getRelated(node.parentDuplicates));
+  const spouses = sortByCleanest(getRelated(node.spouseDuplicates));
+  const children = sortByCleanest(getRelated(node.childDuplicates));
   
   // Ordre recommandé : enfants d'abord, puis conjoints, puis parents (bottom-up)
+  // Au sein de chaque catégorie, les plus propres en premier
   const recommendedOrder = [...children, ...spouses, ...parents];
   
   return { hasRelatedDuplicates: node.dependencyCount > 0, parents, spouses, children, total: node.dependencyCount, cleanlinessScore: node.cleanlinessScore, cleanlinessDetails: node.cleanlinessDetails, recommendedOrder };

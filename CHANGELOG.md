@@ -1,5 +1,24 @@
 # Changelog - GEDCOM Merger
 
+## [2.4.2] - 2026-01-25
+
+### Amélioré
+- **Workflow fusion guidée** : Clic sur "Fusionner" ouvre le modal cherry-picking
+  - Le modal de fusion guidée se ferme automatiquement
+  - Retour automatique au modal après la fusion avec mise à jour
+- **Tri par facilité de fusion** : Les paires avec le moins de contraintes sont en premier
+  - Tri par cleanlinessScore décroissant
+  - Badge "Recommandé" sur la première paire
+  - Badge "Propreté: X%" pour chaque paire
+- **UX améliorée** : 
+  - Surbrillance de la paire recommandée (première de la liste)
+  - Animation pulse sur le bouton Fusionner recommandé
+  - Affichage du score de propreté avec code couleur
+
+### Corrigé
+- **Bug modal "Relations en doublon"** : affichait le nombre (212) au lieu des sections
+  - Condition JSX mal parenthésée : `length || 0 > 0` → `(length || 0) > 0`
+
 ## [2.4.1] - 2026-01-17
 
 ### Ajouté
@@ -94,6 +113,3 @@
 - Détection doublons simple
 - Fusion manuelle
 
-### Corrigé (hotfix 25/01/2026)
-- **Bug modal "Relations en doublon"** : affichait le nombre au lieu des sections
-  - Condition JSX mal parenthésée : `length || 0 > 0` → `(length || 0) > 0`

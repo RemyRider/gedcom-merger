@@ -4319,7 +4319,7 @@ const GedcomDuplicateMerger = () => {
               </div>
 
               {/* Doublons liés - Parents */}
-              {guidedFusionContext?.relatedDuplicates?.parents?.length || 0 > 0 && (
+              {(guidedFusionContext?.relatedDuplicates?.parents?.length || 0) > 0 && (
                 <div className="mb-4">
                   <h3 className="font-semibold text-emerald-700 mb-2 flex items-center gap-2">
                     👴 Parents en doublon ({guidedFusionContext?.relatedDuplicates?.parents?.length || 0})
@@ -4358,7 +4358,7 @@ const GedcomDuplicateMerger = () => {
               )}
 
               {/* Doublons liés - Conjoints */}
-              {guidedFusionContext?.relatedDuplicates?.spouses?.length || 0 > 0 && (
+              {(guidedFusionContext?.relatedDuplicates?.spouses?.length || 0) > 0 && (
                 <div className="mb-4">
                   <h3 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
                     💑 Conjoints en doublon ({guidedFusionContext?.relatedDuplicates?.spouses?.length || 0})
@@ -4396,7 +4396,7 @@ const GedcomDuplicateMerger = () => {
               )}
 
               {/* Doublons liés - Enfants (info seulement) */}
-              {guidedFusionContext?.relatedDuplicates?.children?.length || 0 > 0 && (
+              {(guidedFusionContext?.relatedDuplicates?.children?.length || 0) > 0 && (
                 <div className="mb-4">
                   <h3 className="font-semibold text-purple-700 mb-2 flex items-center gap-2">
                     👶 Enfants en doublon ({guidedFusionContext?.relatedDuplicates?.children?.length || 0})

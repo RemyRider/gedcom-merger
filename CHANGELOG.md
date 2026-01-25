@@ -93,3 +93,7 @@
 - Parsing GEDCOM basique
 - Détection doublons simple
 - Fusion manuelle
+
+### Corrigé (hotfix 25/01/2026)
+- **Bug modal "Relations en doublon"** : affichait le nombre au lieu des sections
+  - Condition JSX mal parenthésée : `length || 0 > 0` → `(length || 0) > 0`

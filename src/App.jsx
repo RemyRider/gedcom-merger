@@ -80,7 +80,7 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.4.0';
+  const VERSION = '2.4.2';
 
   const CHANGELOG = [
     {

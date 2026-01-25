@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.4.0
+// SUITE DE TESTS GEDCOM MERGER v2.4.2
 // 482 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -34,7 +34,7 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE_v2.4.0.md', 'utf8');
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.4.0');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.4.2');
 console.log('                         557 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
@@ -68,8 +68,8 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.4.0'"), 'VERSION 2.3.0 dans App.jsx');
-check(packageJson.version === '2.4.1', 'Version 2.4.1 dans package.json');
+check(appCode.includes("VERSION = '2.4.2'"), 'VERSION 2.4.2 dans App.jsx');
+check(packageJson.version === '2.4.2', 'Version 2.4.2 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -1173,7 +1173,7 @@ console.log('');
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.4.1 validée (tests statiques)');
+  console.log('  ✅ Version 2.4.2 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

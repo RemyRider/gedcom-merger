@@ -3575,12 +3575,17 @@ const GedcomDuplicateMerger = () => {
                     </div>
                     {getFilteredClusters().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun cluster trouvé avec ce filtre</p> : (
                       <div className="space-y-3">
-                        {getFilteredClusters().map((cluster, idx) => (
-                          <div key={idx} className={`border rounded-lg p-3 ${selectedClusters.has(idx) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
+                        {getFilteredClusters().map((cluster, idx) => {
+                          const clusterCleanScore = getClusterCleanlinessScore(cluster);
+                          const isRecommended = idx === 0;
+                          return (
+                          <div key={idx} className={`border rounded-lg p-3 ${selectedClusters.has(idx) ? 'border-indigo-500 bg-indigo-50' : isRecommended ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-200'}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
+                                {isRecommended && <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full">Recommandé</span>}
                                 <span className="font-medium">{cluster.size} personnes</span>
                                 <span className={`px-2 py-0.5 rounded text-sm ${cluster.avgScore >= 95 ? 'bg-green-100 text-green-800' : cluster.avgScore >= 90 ? 'bg-yellow-100 text-yellow-800' : 'bg-orange-100 text-orange-800'}`}>Score: {cluster.avgScore}%</span>
+                                <span className={`px-2 py-0.5 rounded text-xs ${clusterCleanScore >= 80 ? 'bg-blue-100 text-blue-700' : clusterCleanScore >= 50 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`} title="Facilité de fusion moyenne">🧹 {clusterCleanScore}%</span>
                               </div>
                               <div className="flex gap-2">
                                 <button onClick={() => toggleClusterExpand(idx)} className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 flex items-center gap-1">
@@ -3638,7 +3643,7 @@ const GedcomDuplicateMerger = () => {
                               </div>
                             )}
                           </div>
-                        ))}
+                        );})}
                       </div>
                     )}
                   </div>
@@ -3673,17 +3678,23 @@ const GedcomDuplicateMerger = () => {
                     </div>
                     {getSimplePairs().length === 0 ? <p className="text-center text-gray-500 py-8">Aucun doublon simple trouvé</p> : (
                       <div className="space-y-2">
-                        {getSimplePairs().slice(0, 50).map((pair) => {
+                        {getSimplePairs().slice(0, 50).map((pair, pairIndex) => {
                           const suspicion = getSuspicionLevel(pair.similarity, pair.sufficientCriteria?.length || 0);
+                          const cleanScore = pair.cleanlinessScore ?? 100;
+                          const isRecommended = pairIndex === 0;
                           return (
-                          <div key={pair.id} className={`border rounded-lg p-3 ${selectedPairs.has(pair.id) ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
+                          <div key={pair.id} className={`border rounded-lg p-3 ${selectedPairs.has(pair.id) ? 'border-emerald-500 bg-emerald-50' : isRecommended ? 'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200' : 'border-gray-200'}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
-                                <div className="font-medium">{pair.person1.names[0] || pair.person1.id}</div>
+                                <div className="flex items-center gap-2">
+                                  {isRecommended && <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full">Recommandé</span>}
+                                  <span className="font-medium">{pair.person1.names[0] || pair.person1.id}</span>
+                                </div>
                                 <div className="text-sm text-gray-500">↔ {pair.person2.names[0] || pair.person2.id}</div>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded text-sm font-medium ${suspicion.level === 'FORT' ? 'bg-red-100 text-red-800' : suspicion.level === 'MOYEN' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{suspicion.emoji} {pair.similarity}%</span>
+                                <span className={`px-2 py-1 rounded text-xs ${cleanScore >= 80 ? 'bg-blue-100 text-blue-700' : cleanScore >= 50 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`} title="Score de facilité de fusion">🧹 {cleanScore}%</span>
                                 <button onClick={() => openPreview(pair)} className="px-2 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">Prévisualiser</button>
                                 <button onClick={() => togglePairSelection(pair.id)} className={`px-2 py-1 text-sm rounded ${selectedPairs.has(pair.id) ? 'bg-emerald-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>{selectedPairs.has(pair.id) ? '✓' : 'Sélectionner'}</button>
                               </div>

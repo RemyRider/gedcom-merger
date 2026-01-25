@@ -1,133 +1,95 @@
-# Changelog
+# Changelog - GEDCOM Merger
 
-Historique des versions de GEDCOM Merger.
+## [2.4.1] - 2026-01-17
+
+### Ajouté
+- **Score de propreté** pour trier les doublons par risque de fusion
+  - 100 pts = fusion propre
+  - -20 pts par relation déjà en doublon
+  - -10 pts par potentiel doublon après fusion
+- **Détection potentiels doublons** après fusion (similarité ≥50%)
+- **Modal Cherry-picking** : sélection valeur par valeur
+  - Champs simples : Radio A / B
+  - Noms : Checkboxes individuelles
+  - Relations : Checkboxes avec noms des personnes
+- **Suggestions automatiques** avec pré-sélection intelligente
+  - Dates : plus précise (jour > mois > année > ABT)
+  - Lieux : plus complet (4 niveaux > 3 > 2)
+  - Textes : plus détaillé (longueur)
+  - Listes : union de toutes les valeurs
+- **Interface modal fusion détaillée** avec affichage groupé par catégorie
+- **55 nouveaux tests** pour le cherry-picking (total : 612 tests statiques)
+
+### Modifié
+- Tri des doublons par cleanlinessScore (propreté décroissante)
+- handleMerge ouvre désormais le modal cherry-picking
+- Statistiques enrichies : cleanPairs, riskyPairs
 
 ## [2.4.0] - 2026-01-17
 
 ### Ajouté
-- **Fusion guidée contextuelle** : assistant automatique pour les doublons liés
-  - Détection des relations en doublon (parents, conjoints, enfants)
-  - Modal d'assistance avec recommandations d'ordre de fusion
-  - Boutons "Fusionner" pour chaque paire liée
-  - Option "Ignorer et fusionner" pour comportement classique
-- **Approche Bottom-Up** : ordre de fusion enfants → conjoints → parents
-- Fonctions `detectRelatedDuplicates`, `needsGuidedFusion`, `calculateFusionImpact`
-- États React `showGuidedFusionModal`, `guidedFusionContext`
-- 30 nouveaux tests (catégorie 12)
+- **Tri par dépendances** : paires avec moins de dépendances en premier
+- **Alerte relations en doublon** : notification visuelle
+- **calculateFusionImpact** : calcul de l'impact d'une fusion
+- **recommendedOrder** : ordre recommandé pour les relations liées
 
-### Modifié
-- Module `fusionOrder.mjs` : logique de dépendances Bottom-Up
-- `calculateEnrichedQuality` : retourne 0 pour une personne sans nom valide
-- Protection null/undefined dans le rendu JSX du modal
-
-### Tests
-- **557 tests statiques** (12 catégories)
-- **225 tests Vitest** (5 fichiers)
-- **Total : 782 tests**
-
----
-
-## [2.3.0] - 2026-01-13
+## [2.3.0] - 2026-01-15
 
 ### Ajouté
-- **Module fusionOrder.mjs** : calcul de l'ordre optimal de fusion
-  - Graphe de dépendances entre paires de doublons
-  - Tri topologique pour éviter les conflits
-  - Score de qualité enrichi avec précision dates/lieux
-- Constantes `FUSION_LEVELS` : CHILDREN, SPOUSES, PARENTS, INDEPENDENT
-- Fonctions `buildDependencyGraph`, `calculateFusionOrder`, `calculateEnrichedQuality`
-- 45 tests pour le module fusion (catégorie 11)
+- **Module fusionOrder.mjs** externalisé
+- **Graphe de dépendances** entre paires de doublons
+- **Score qualité enrichi** avec précision dates/lieux
+- **45 tests** pour le module fusion
 
-### Tests
-- **527 tests statiques**
-- **193 tests Vitest**
-
----
-
-## [2.2.0] - 2026-01-10
+## [2.2.6] - 2026-01-10
 
 ### Ajouté
-- **Normalisation des lieux**
-  - Intégration API Géo gouvernementale française
-  - Autocomplétion temps réel des communes
-  - Saisie manuelle pour lieux étrangers/historiques
-  - Format standardisé : Ville, Département, Région, Pays
-- **Détection des conflits relationnels**
-  - Parents différents entre les deux personnes
-  - Conjoints différents
-  - Enfants différents
-  - Alertes visuelles dans l'interface
-- **Écran récapitulatif** avant fusion avec conflits détectés
+- **Normalisation lieux** avec API Géo gouvernement français
+- **Saisie manuelle** avec autocomplétion
+- **Conflits relationnels** : parents, conjoints, enfants
+- **Écran récapitulatif** après normalisation
 
-### Tests
-- **482 tests statiques**
-- **193 tests Vitest**
-- **Total : 675 tests**
+## [2.2.4] - 2026-01-05
 
----
+### Corrigé
+- **Résolution chaînes fusion** : A→B→C résolu en A→C
+- **Nettoyage familles orphelines** avec mergeMap
+- **Références cassées** redirigées correctement
 
-## [2.1.0] - 2026-01-05
+## [2.1.4] - 2025-12-30
 
 ### Ajouté
-- **Web Workers** : parsing et analyse en arrière-plan
-  - Performance 3-5x pour fichiers volumineux
-  - Interface fluide sans blocage
-- **Rapport qualité** : validation syntaxique et sémantique
-- **Analyse chronologique** : détection des incohérences
-- **Statistiques avancées** : répartition par siècle, complétude
-- **Références orphelines** : identification des liens cassés
-- **Score de suspicion** : évaluation des paires douteuses
-
-### Performance
-- Triple indexation pour réduction de 99% des comparaisons
-- Traitement optimisé pour 7000+ individus
-
-### Tests
-- **393 tests statiques**
-- **108 tests Vitest**
-- **Total : 501 tests**
-
----
+- **Web Worker** pour performances (3-5x)
+- **Rapport qualité** des données
+- **Analyse chronologique**
+- **Statistiques** détaillées
+- **Références orphelines** détection
+- **Score suspicion** pour doublons
 
 ## [2.0.0] - 2025-12-28
 
 ### Ajouté
-- **Interface complète** avec onglets thématiques
-- **16 champs systématiques** affichés pour chaque personne
-- **18 critères de comparaison** pour la détection des doublons
-- **Matching phonétique français** : Soundex adapté
-- **40+ variantes orthographiques** de prénoms français
-- **Export GEDCOM** avec préservation des données (rawLines)
+- **16 champs systématiques** affichés
+- **18 critères de comparaison** pour détection
+- **Matching phonétique** Soundex français
 - **Contrôles d'intégrité** avant fusion
-
-### Modifié
-- Refonte complète de l'interface utilisateur
-- Amélioration de la détection des doublons
-
----
+- **rawLines** pour préservation données
 
 ## [1.9.5] - 2025-12-20
 
 ### Ajouté
 - Parsing étendu DATE/PLAC
 - Critères anti-faux-positifs
-- Amélioration algorithme de fusion
-
----
 
 ## [1.9.0] - 2025-12-15
 
 ### Ajouté
-- Suggestions IA pour la détection
+- Suggestions IA basiques
 - Interface 4 onglets
-- Bouton flottant d'actions
 
----
-
-## [1.0.0] - 2025-12-10
+## [1.0.0] - 2025-12-01
 
 ### Initial
-- Parsing de fichiers GEDCOM
-- Détection basique des doublons par nom
-- Interface minimaliste
-- Export des résultats
+- Parsing GEDCOM basique
+- Détection doublons simple
+- Fusion manuelle

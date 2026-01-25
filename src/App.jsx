@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield, AlertTriangle, ArrowRight, Link } from 'lucide-react';
-import { detectRelatedDuplicates, needsGuidedFusion, calculateEnrichedQuality, FUSION_LEVEL_LABELS } from './utils/fusionOrder.mjs';
+import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield, AlertTriangle, ArrowRight, Link, Edit3, Check } from 'lucide-react';
+import { detectRelatedDuplicates, needsGuidedFusion, calculateEnrichedQuality, FUSION_LEVEL_LABELS, prepareCherryPickingData, applyMergeChoices, analyzeFieldDifferences, sortByCleanlinessScore, buildDependencyGraph, FIELD_TYPES, MERGE_FIELDS_CONFIG } from './utils/fusionOrder.mjs';
 
 const GedcomDuplicateMerger = () => {
   const [file, setFile] = useState(null);
@@ -59,6 +59,13 @@ const GedcomDuplicateMerger = () => {
   //   completedPairs: [],
   //   currentStep: 'parents' | 'spouses' | 'original'
   // }
+
+  // v2.4.1 - États pour modal Cherry-Picking
+  const [showCherryPickModal, setShowCherryPickModal] = useState(false);
+  const [cherryPickData, setCherryPickData] = useState(null);
+  const [cherryPickChoices, setCherryPickChoices] = useState({});
+  // Structure cherryPickData: résultat de prepareCherryPickingData()
+  // Structure cherryPickChoices: { fieldName: { source: 'A'|'B'|'manual'|'merge', value/selected } }
 
   // v2.1.4 - Référence au Web Worker
   const workerRef = useRef(null);
@@ -2841,8 +2848,120 @@ const GedcomDuplicateMerger = () => {
       if (!proceed) return;
     }
     
-    // Procéder à la fusion (pas de conflits)
-    executeMerge();
+    // v2.4.1: Ouvrir le modal cherry-picking pour la première paire sélectionnée
+    const firstSelectedPair = duplicates.find(p => selectedPairs.has(p.id));
+    if (firstSelectedPair) {
+      openCherryPickModal(firstSelectedPair);
+    }
+  };
+
+  // v2.4.1: Ouvrir le modal de cherry-picking pour une paire
+  const openCherryPickModal = (pair) => {
+    const peopleById = new Map(individuals.filter(p => p && p.id).map(p => [p.id, p]));
+    const data = prepareCherryPickingData(pair, peopleById);
+    
+    if (!data) {
+      console.error('Erreur préparation cherry-picking');
+      return;
+    }
+    
+    // Initialiser les choix avec les suggestions automatiques
+    const initialChoices = { ...data.suggestions };
+    
+    setCherryPickData(data);
+    setCherryPickChoices(initialChoices);
+    setShowCherryPickModal(true);
+  };
+
+  // v2.4.1: Appliquer la fusion avec les choix de cherry-picking
+  const applyCherryPickMerge = () => {
+    if (!cherryPickData || !cherryPickData.pair) return;
+    
+    const { pair, identical } = cherryPickData;
+    const merged = applyMergeChoices(pair.person1, pair.person2, cherryPickChoices, identical);
+    
+    // Fermer le modal
+    setShowCherryPickModal(false);
+    setCherryPickData(null);
+    setCherryPickChoices({});
+    
+    // Exécuter la fusion avec les données fusionnées
+    executeMergeWithData(pair, merged);
+  };
+
+  // v2.4.1: Exécuter la fusion avec des données prédéfinies
+  const executeMergeWithData = (pair, mergedData) => {
+    const p1 = pair.person1;
+    const p2 = pair.person2;
+    const keepId = mergedData.id;
+    const removeId = mergedData.removedId;
+    
+    // Déterminer qui garde et qui est supprimé
+    const keepPerson = keepId === p1.id ? p1 : p2;
+    const removePerson = removeId === p1.id ? p1 : p2;
+    
+    // Mettre à jour les individus
+    const newIndividuals = individuals.map(ind => {
+      if (ind.id === keepId) {
+        // Appliquer les données fusionnées
+        return {
+          ...ind,
+          names: mergedData.names || ind.names,
+          birth: mergedData.birth || ind.birth,
+          birthPlace: mergedData.birthPlace || ind.birthPlace,
+          death: mergedData.death || ind.death,
+          deathPlace: mergedData.deathPlace || ind.deathPlace,
+          baptism: mergedData.baptism || ind.baptism,
+          baptismPlace: mergedData.baptismPlace || ind.baptismPlace,
+          burial: mergedData.burial || ind.burial,
+          burialPlace: mergedData.burialPlace || ind.burialPlace,
+          occupation: mergedData.occupation || ind.occupation,
+          religion: mergedData.religion || ind.religion,
+          sex: mergedData.sex || ind.sex,
+          title: mergedData.title || ind.title,
+          residence: mergedData.residence || ind.residence,
+          parents: mergedData.parents || ind.parents,
+          spouses: mergedData.spouses || ind.spouses,
+          children: mergedData.children || ind.children,
+          mergedFrom: [p1.id, p2.id]
+        };
+      }
+      return ind;
+    }).filter(ind => ind.id !== removeId);
+    
+    // Mettre à jour les références
+    const updatedIndividuals = newIndividuals.map(ind => ({
+      ...ind,
+      parents: (ind.parents || []).map(pid => pid === removeId ? keepId : pid).filter((v, i, a) => a.indexOf(v) === i),
+      spouses: (ind.spouses || []).map(sid => sid === removeId ? keepId : sid).filter((v, i, a) => a.indexOf(v) === i),
+      children: (ind.children || []).map(cid => cid === removeId ? keepId : cid).filter((v, i, a) => a.indexOf(v) === i)
+    }));
+    
+    setIndividuals(updatedIndividuals);
+    
+    // Mettre à jour les doublons
+    const newDuplicates = duplicates
+      .filter(d => d.id !== pair.id)
+      .map(d => ({
+        ...d,
+        person1: d.person1.id === removeId ? updatedIndividuals.find(i => i.id === keepId) || d.person1 : d.person1,
+        person2: d.person2.id === removeId ? updatedIndividuals.find(i => i.id === keepId) || d.person2 : d.person2
+      }))
+      .filter(d => d.person1.id !== d.person2.id);
+    
+    setDuplicates(newDuplicates);
+    setSelectedPairs(new Set());
+    setMergeHistory(prev => [...prev, { action: 'merge', keepId, removeId, timestamp: new Date() }]);
+    
+    // Continuer avec les autres paires sélectionnées
+    const remainingSelected = new Set([...selectedPairs].filter(id => id !== pair.id));
+    if (remainingSelected.size > 0) {
+      const nextPair = newDuplicates.find(p => remainingSelected.has(p.id));
+      if (nextPair) {
+        setSelectedPairs(new Set([nextPair.id]));
+        setTimeout(() => openCherryPickModal(nextPair), 300);
+      }
+    }
   };
 
   // v2.4.0: Fusionner directement en ignorant les doublons liés
@@ -3819,6 +3938,203 @@ const GedcomDuplicateMerger = () => {
             </div>
             <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t">
               <button onClick={() => setShowIntegrityModal(false)} className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cherry-Picking v2.4.1 */}
+      {showCherryPickModal && cherryPickData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            {/* En-tête */}
+            <div className="sticky top-0 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Edit3 className="w-6 h-6" />
+                  FUSION DÉTAILLÉE
+                </h2>
+                <button onClick={() => { setShowCherryPickModal(false); setCherryPickData(null); }} className="p-2 hover:bg-white/20 rounded-lg">✕</button>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-indigo-100 text-sm">
+                <span className="font-medium">{cherryPickData.personA?.names?.[0] || 'Personne A'}</span>
+                <ArrowRight className="w-4 h-4" />
+                <span className="font-medium">{cherryPickData.personB?.names?.[0] || 'Personne B'}</span>
+              </div>
+              <div className="flex gap-4 mt-2 text-xs">
+                <span className="bg-white/20 px-2 py-1 rounded">✅ {cherryPickData.stats?.identicalCount || 0} champs identiques</span>
+                <span className="bg-white/20 px-2 py-1 rounded">⚠️ {cherryPickData.stats?.differentCount || 0} champs différents</span>
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
+              {/* Champs différents (à choisir) */}
+              {cherryPickData.different?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-orange-500" />
+                    Champs différents - Sélectionnez la valeur à conserver
+                  </h3>
+                  <div className="space-y-4">
+                    {cherryPickData.different.map((field, idx) => (
+                      <div key={field.field || idx} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div className="font-medium text-gray-700 mb-3">{field.label}</div>
+                        
+                        {/* Champ simple */}
+                        {field.type === 'simple' && (
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:border-indigo-400 transition-colors">
+                              <input 
+                                type="radio" 
+                                name={`choice-${field.field}`}
+                                checked={cherryPickChoices[field.field]?.source === 'A'}
+                                onChange={() => setCherryPickChoices(prev => ({ ...prev, [field.field]: { source: 'A', value: field.valueA } }))}
+                                className="w-4 h-4 text-indigo-600"
+                              />
+                              <span className="flex-1">
+                                <span className="text-xs text-blue-600 font-medium">Personne A</span>
+                                <span className="block text-gray-900">{field.valueA || <span className="text-gray-400 italic">Vide</span>}</span>
+                              </span>
+                              {cherryPickChoices[field.field]?.source === 'A' && field.suggestion?.source === 'A' && (
+                                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Recommandé</span>
+                              )}
+                            </label>
+                            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:border-indigo-400 transition-colors">
+                              <input 
+                                type="radio" 
+                                name={`choice-${field.field}`}
+                                checked={cherryPickChoices[field.field]?.source === 'B'}
+                                onChange={() => setCherryPickChoices(prev => ({ ...prev, [field.field]: { source: 'B', value: field.valueB } }))}
+                                className="w-4 h-4 text-indigo-600"
+                              />
+                              <span className="flex-1">
+                                <span className="text-xs text-purple-600 font-medium">Personne B</span>
+                                <span className="block text-gray-900">{field.valueB || <span className="text-gray-400 italic">Vide</span>}</span>
+                              </span>
+                              {cherryPickChoices[field.field]?.source === 'B' && field.suggestion?.source === 'B' && (
+                                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Recommandé</span>
+                              )}
+                            </label>
+                            {field.suggestion?.reason && (
+                              <div className="text-xs text-gray-500 mt-1 ml-7">💡 {field.suggestion.reason}</div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Champ multivalué (noms) */}
+                        {field.type === 'multivalue' && (
+                          <div className="space-y-2">
+                            <div className="text-xs text-gray-500 mb-2">Cochez les valeurs à conserver :</div>
+                            {field.allValues?.map((val, vIdx) => {
+                              const isChecked = cherryPickChoices[field.field]?.selected?.includes(val);
+                              const isFromA = field.valuesA?.includes(val);
+                              const isFromB = field.valuesB?.includes(val);
+                              return (
+                                <label key={vIdx} className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:border-indigo-400 transition-colors">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      const currentSelected = cherryPickChoices[field.field]?.selected || [];
+                                      const newSelected = e.target.checked 
+                                        ? [...currentSelected, val]
+                                        : currentSelected.filter(v => v !== val);
+                                      setCherryPickChoices(prev => ({ ...prev, [field.field]: { source: 'merge', selected: newSelected } }));
+                                    }}
+                                    className="w-4 h-4 text-indigo-600 rounded"
+                                  />
+                                  <span className="flex-1 text-gray-900">{val}</span>
+                                  <span className="text-xs">
+                                    {isFromA && <span className="text-blue-600 bg-blue-100 px-2 py-0.5 rounded mr-1">A</span>}
+                                    {isFromB && <span className="text-purple-600 bg-purple-100 px-2 py-0.5 rounded">B</span>}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                        
+                        {/* Champ relation */}
+                        {field.type === 'relation' && (
+                          <div className="space-y-2">
+                            <div className="text-xs text-gray-500 mb-2">Cochez les personnes à conserver :</div>
+                            {field.allPersons?.map((person, pIdx) => {
+                              const isChecked = cherryPickChoices[field.field]?.selected?.includes(person.id);
+                              return (
+                                <label key={pIdx} className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:border-indigo-400 transition-colors">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      const currentSelected = cherryPickChoices[field.field]?.selected || [];
+                                      const newSelected = e.target.checked 
+                                        ? [...currentSelected, person.id]
+                                        : currentSelected.filter(v => v !== person.id);
+                                      setCherryPickChoices(prev => ({ ...prev, [field.field]: { source: 'merge', selected: newSelected } }));
+                                    }}
+                                    className="w-4 h-4 text-indigo-600 rounded"
+                                  />
+                                  <span className="flex-1">
+                                    <span className="text-gray-900">{person.name}</span>
+                                    <span className="text-xs text-gray-500 ml-2">({person.id})</span>
+                                  </span>
+                                  <span className="text-xs">
+                                    {person.fromA && <span className="text-blue-600 bg-blue-100 px-2 py-0.5 rounded mr-1">A</span>}
+                                    {person.fromB && <span className="text-purple-600 bg-purple-100 px-2 py-0.5 rounded">B</span>}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Champs identiques (informatif) */}
+              {cherryPickData.identical?.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Champs identiques (conservés automatiquement)
+                  </h3>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="grid grid-cols-2 gap-3">
+                      {cherryPickData.identical.filter(f => f.value).map((field, idx) => (
+                        <div key={idx} className="text-sm">
+                          <span className="text-gray-500">{field.label}:</span>
+                          <span className="ml-2 text-gray-900 font-medium">
+                            {Array.isArray(field.value) 
+                              ? (field.type === 'relation' 
+                                  ? field.value.map(p => p.name || p.id).join(', ')
+                                  : field.value.join(', '))
+                              : field.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Pied de page */}
+            <div className="sticky bottom-0 px-6 py-4 bg-gray-100 border-t flex justify-between items-center">
+              <button 
+                onClick={() => { setShowCherryPickModal(false); setCherryPickData(null); }}
+                className="px-6 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={applyCherryPickMerge}
+                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 font-medium flex items-center gap-2 shadow-lg"
+              >
+                <Check className="w-5 h-5" />
+                Appliquer la fusion
+              </button>
             </div>
           </div>
         </div>

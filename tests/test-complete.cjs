@@ -69,7 +69,7 @@ console.log('┌─────────────────────�
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 check(appCode.includes("VERSION = '2.4.0'"), 'VERSION 2.3.0 dans App.jsx');
-check(packageJson.version === '2.4.0', 'Version 2.4.0 dans package.json');
+check(packageJson.version === '2.4.1', 'Version 2.4.1 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -1046,6 +1046,99 @@ check(appCode.includes('v2.4.0') && appCode.includes('Fusion guidée'), 'Changel
 console.log('');
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CATÉGORIE 13 : CHERRY-PICKING v2.4.1 (45 tests)
+// ═══════════════════════════════════════════════════════════════════════════════
+console.log('═══════════════════════════════════════════════════════════════════════════════');
+console.log('  CATÉGORIE 13 : CHERRY-PICKING v2.4.1 (45 tests)');
+console.log('═══════════════════════════════════════════════════════════════════════════════');
+console.log('');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 13.1 Score de propreté (10 tests)                                          │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('cleanlinessScore'), 'Propriété cleanlinessScore');
+check(fusionOrderCode.includes('calculateCleanlinessScore'), 'Fonction calculateCleanlinessScore');
+check(fusionOrderCode.includes('existingDuplicateRelations'), 'Comptage relations déjà doublons');
+check(fusionOrderCode.includes('potentialDuplicatesAfterMerge'), 'Détection potentiels après fusion');
+check(fusionOrderCode.includes('detectPotentialDuplicatesAfterMerge'), 'Fonction détection potentiels');
+check(fusionOrderCode.includes('calculateQuickSimilarity'), 'Calcul similarité rapide');
+check(fusionOrderCode.includes('similarity >= 50'), 'Seuil similarité 50%');
+check(fusionOrderCode.includes('cleanPairs') || fusionOrderCode.includes('riskyPairs'), 'Stats paires propres/risquées');
+check(fusionOrderCode.includes('sortByCleanlinessScore'), 'Tri par propreté');
+check(fusionOrderCode.includes('Fusion propre'), 'Message fusion propre');
+console.log('');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 13.2 Configuration champs (10 tests)                                       │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('FIELD_TYPES'), 'Constante FIELD_TYPES');
+check(fusionOrderCode.includes('SIMPLE') && fusionOrderCode.includes('MULTIVALUE'), 'Types SIMPLE et MULTIVALUE');
+check(fusionOrderCode.includes('RELATION'), 'Type RELATION');
+check(fusionOrderCode.includes('MERGE_FIELDS_CONFIG'), 'Configuration champs fusion');
+check(fusionOrderCode.includes("category: 'dates'"), 'Catégorie dates');
+check(fusionOrderCode.includes("category: 'places'"), 'Catégorie lieux');
+check(fusionOrderCode.includes("category: 'relations'"), 'Catégorie relations');
+check(fusionOrderCode.includes("category: 'identity'"), 'Catégorie identity');
+check(fusionOrderCode.includes("label: 'Date de naissance'"), 'Label date naissance');
+check(fusionOrderCode.includes("label: 'Parents'"), 'Label parents');
+console.log('');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 13.3 Analyse différences (10 tests)                                        │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('analyzeFieldDifferences'), 'Fonction analyzeFieldDifferences');
+check(fusionOrderCode.includes('identical') && fusionOrderCode.includes('different'), 'Listes identical/different');
+check(fusionOrderCode.includes('suggestions'), 'Objet suggestions');
+check(fusionOrderCode.includes('valuesAreEqual'), 'Fonction comparaison valeurs');
+check(fusionOrderCode.includes('suggestBestValue'), 'Fonction suggestion meilleure valeur');
+check(fusionOrderCode.includes('valueA') && fusionOrderCode.includes('valueB'), 'Valeurs A et B');
+check(fusionOrderCode.includes('valuesA') && fusionOrderCode.includes('valuesB'), 'Tableaux valeurs A et B');
+check(fusionOrderCode.includes('allValues') || fusionOrderCode.includes('allPersons'), 'Union des valeurs');
+check(fusionOrderCode.includes('fromA') && fusionOrderCode.includes('fromB'), 'Origine des valeurs');
+check(fusionOrderCode.includes('groupedIdentical') || fusionOrderCode.includes('groupedDifferent'), 'Groupement par catégorie');
+console.log('');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 13.4 Suggestions automatiques (8 tests)                                    │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('Date plus précise'), 'Raison date précise');
+check(fusionOrderCode.includes('Lieu plus complet'), 'Raison lieu complet');
+check(fusionOrderCode.includes('Seule valeur disponible'), 'Raison seule valeur');
+check(fusionOrderCode.includes("source: 'merge'"), 'Source merge pour union');
+check(fusionOrderCode.includes('Fusionner tous les noms'), 'Raison fusion noms');
+check(fusionOrderCode.includes('Fusionner toutes les relations'), 'Raison fusion relations');
+check(fusionOrderCode.includes('Plus détaillé'), 'Raison plus détaillé');
+check(fusionOrderCode.includes('Valeur par défaut'), 'Raison défaut');
+console.log('');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 13.5 Application fusion (7 tests)                                          │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(fusionOrderCode.includes('prepareCherryPickingData'), 'Fonction préparation cherry-picking');
+check(fusionOrderCode.includes('applyMergeChoices'), 'Fonction application choix');
+check(fusionOrderCode.includes('hasConflicts'), 'Flag hasConflicts');
+check(fusionOrderCode.includes('identicalCount') && fusionOrderCode.includes('differentCount'), 'Compteurs champs');
+check(fusionOrderCode.includes("source === 'A'") || fusionOrderCode.includes("source === 'B'"), 'Choix source A/B');
+check(fusionOrderCode.includes("source === 'manual'") || fusionOrderCode.includes('choice.value'), 'Choix manuel');
+check(fusionOrderCode.includes('choice.selected'), 'Sélection multiple');
+console.log('');
+
+console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
+console.log('│ 13.6 Interface Modal Cherry-Picking (10 tests)                             │');
+console.log('└─────────────────────────────────────────────────────────────────────────────┘');
+check(appCode.includes('showCherryPickModal'), 'State showCherryPickModal');
+check(appCode.includes('cherryPickData'), 'State cherryPickData');
+check(appCode.includes('cherryPickChoices'), 'State cherryPickChoices');
+check(appCode.includes('openCherryPickModal'), 'Fonction openCherryPickModal');
+check(appCode.includes('applyCherryPickMerge'), 'Fonction applyCherryPickMerge');
+check(appCode.includes('executeMergeWithData'), 'Fonction executeMergeWithData');
+check(appCode.includes('FUSION DÉTAILLÉE'), 'Titre modal fusion détaillée');
+check(appCode.includes('Champs différents') && appCode.includes('Sélectionnez'), 'Section champs différents');
+check(appCode.includes('Champs identiques') && appCode.includes('conservés'), 'Section champs identiques');
+check(appCode.includes('Appliquer la fusion'), 'Bouton appliquer fusion');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // RÉSUMÉ FINAL
 // ═══════════════════════════════════════════════════════════════════════════════
 console.log('═══════════════════════════════════════════════════════════════════════════════');
@@ -1053,7 +1146,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 557;
+const expectedTotal = 612;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -1074,12 +1167,13 @@ console.log('     9. Conflits v2.2.0 ......... 36 tests');
 console.log('    10. Scoring/Normalisation ... 47 tests');
 console.log('    11. Module fusion v2.3.0+ .... 45 tests');
 console.log('    12. Fusion guidée v2.4.0 .... 30 tests');
+console.log('    13. Cherry-picking v2.4.1 ... 55 tests');
 console.log('');
 
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.4.0 validée (tests statiques)');
+  console.log('  ✅ Version 2.4.1 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);

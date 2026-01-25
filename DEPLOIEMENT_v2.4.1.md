@@ -64,14 +64,23 @@ git push origin main
 ### netlify.toml
 ```toml
 [build]
-  command = "npm run build"
+  command = "npm ci && npm run test:all && npm run build"
   publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 ```
+
+Netlify exécutera :
+1. `npm ci` - Installation des dépendances
+2. `npm run test:static` - 612 tests statiques
+3. `npm run test` - 225 tests Vitest
+4. `npm run build` - Build production
 
 ### Variables d'environnement
 Aucune requise pour v2.4.1.

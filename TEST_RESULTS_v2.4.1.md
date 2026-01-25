@@ -5,8 +5,8 @@
 | Type | Tests | Statut |
 |------|-------|--------|
 | Tests statiques | 612 | ✅ 100% |
-| Tests Vitest | 225 | ✅ 100% |
-| **Total** | **837** | **✅ 100%** |
+| Tests Vitest | 224 | ✅ 100% |
+| **Total** | **836** | **✅ 100%** |
 
 ## Tests Statiques (612 tests)
 
@@ -97,11 +97,11 @@
 - ✅ Section champs identiques
 - ✅ Bouton appliquer fusion
 
-## Tests Vitest (225 tests)
+## Tests Vitest (224 tests)
 
 | Fichier | Tests |
 |---------|-------|
-| fusionOrder.test.mjs | 85 |
+| fusionOrder.test.mjs | 60 |
 | mergeConflicts.test.mjs | 45 |
 | placeNormalization.test.mjs | 35 |
 | qualityScore.test.mjs | 30 |

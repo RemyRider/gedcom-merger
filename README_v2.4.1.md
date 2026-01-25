@@ -39,7 +39,7 @@ npm run test:static
 # Tests Vitest (225 tests)
 npm run test
 
-# Tous les tests (837 tests)
+# Tous les tests (836 tests)
 npm run test:all
 ```
 

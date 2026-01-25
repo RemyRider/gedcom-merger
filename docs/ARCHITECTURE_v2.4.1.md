@@ -155,4 +155,4 @@ Exemple :
 | Autres | 482 |
 | **Total statiques** | **612** |
 | Tests Vitest | 225 |
-| **Grand total** | **837** |
+| **Grand total** | **836** |

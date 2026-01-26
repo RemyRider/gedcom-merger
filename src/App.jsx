@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Users, AlertCircle, Download, Trash2, CheckCircle, Sparkles, FileText, Brain, ChevronDown, ChevronUp, RefreshCw, Shield, AlertTriangle, ArrowRight, Link, Edit3, Check } from 'lucide-react';
-import { detectRelatedDuplicates, needsGuidedFusion, calculateEnrichedQuality, FUSION_LEVEL_LABELS, prepareCherryPickingData, applyMergeChoices, analyzeFieldDifferences, sortByCleanlinessScore, buildDependencyGraph, FIELD_TYPES, MERGE_FIELDS_CONFIG } from './utils/fusionOrder.mjs';
+import { detectRelatedDuplicates, needsGuidedFusion, calculateEnrichedQuality, FUSION_LEVEL_LABELS, prepareCherryPickingData, applyMergeChoices, analyzeFieldDifferences, sortByCleanlinessScore, buildDependencyGraph, createPairId, FIELD_TYPES, MERGE_FIELDS_CONFIG } from './utils/fusionOrder.mjs';
 
 const GedcomDuplicateMerger = () => {
   const [file, setFile] = useState(null);

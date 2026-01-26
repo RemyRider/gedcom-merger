@@ -4,21 +4,20 @@
 
 ### Amélioré
 - **Tri global par facilité de fusion** : Partout, les paires avec moins de contraintes sont proposées en premier
-  - **Doublons (onglet Paires)** : Triés par cleanlinessScore décroissant
-  - **Clusters** : Triés par score de facilité moyen de leurs paires
+  - **Logique corrigée** : Les individus SANS relations en doublon (ni parents, ni conjoints, ni enfants) apparaissent EN PREMIER
+  - **Doublons (onglet Paires)** : Triés par cleanlinessScore décroissant + badge 🧹
+  - **Clusters** : Triés par score de facilité moyen + badge 🧹
   - **Modal fusion guidée** : Relations liées triées par facilité
+  - Badge "Recommandé" sur la première paire (la plus facile)
 - **Workflow fusion guidée** : Clic sur "Fusionner" ouvre le modal cherry-picking
   - Le modal de fusion guidée se ferme automatiquement
   - Retour automatique au modal après la fusion avec mise à jour
-- **UX améliorée** : 
-  - Badge "Recommandé" sur la première paire (la plus facile)
-  - Badge "Propreté: X%" pour chaque paire
-  - Surbrillance de la paire recommandée
-  - Animation pulse sur le bouton Fusionner recommandé
 
 ### Corrigé
+- **Logique de dépendances** : Les PARENTS en doublon sont maintenant pris en compte
+  - Avant : seuls enfants et conjoints comptaient comme dépendances
+  - Maintenant : parents + conjoints + enfants = dépendances complètes
 - **Bug modal "Relations en doublon"** : affichait le nombre (212) au lieu des sections
-  - Condition JSX mal parenthésée : `length || 0 > 0` → `(length || 0) > 0`
 
 ## [2.4.1] - 2026-01-17
 

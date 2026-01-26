@@ -238,7 +238,9 @@ export const buildDependencyGraph = (duplicates, individuals) => {
     const spouseDuplicates = findDuplicatesAmongIds(allSpouses, duplicatePairsMap, idToPairsMap);
     const childDuplicates = findDuplicatesAmongIds(allChildren, duplicatePairsMap, idToPairsMap);
     
-    const blockingDependencies = [...new Set([...childDuplicates, ...spouseDuplicates])];
+    // v2.4.2: TOUTES les relations en doublon sont des dépendances (parents inclus)
+    // Les individus sans aucune relation en doublon sont prioritaires
+    const blockingDependencies = [...new Set([...parentDuplicates, ...spouseDuplicates, ...childDuplicates])];
     
     graph.set(pairId, {
       pairId, pair,

@@ -1,6 +1,11 @@
 # Changelog - GEDCOM Merger
 
-## [2.4.2] - 2026-01-25
+## [2.4.2] - 2026-01-28
+
+### Ajouté
+- **Bouton "Terminer et télécharger"** : Apparaît après avoir fait des fusions
+  - Visible en bas à droite quand des fusions ont été effectuées
+  - Permet de télécharger le fichier GEDCOM nettoyé à tout moment
 
 ### Amélioré
 - **Tri global par facilité de fusion** : Partout, les paires avec moins de contraintes sont proposées en premier
@@ -8,16 +13,19 @@
   - **Doublons (onglet Paires)** : Triés par cleanlinessScore décroissant + badge 🧹
   - **Clusters** : Triés par score de facilité moyen + badge 🧹
   - **Modal fusion guidée** : Relations liées triées par facilité
-  - Badge "Recommandé" sur la première paire (la plus facile)
-- **Workflow fusion guidée** : Clic sur "Fusionner" ouvre le modal cherry-picking
-  - Le modal de fusion guidée se ferme automatiquement
-  - Retour automatique au modal après la fusion avec mise à jour
+  - Badge "Recommandé" (jaune) vs "Sélectionné" (vert) distincts
+- **UX sélection/désélection** :
+  - Bouton toggle : "Sélectionner" (vert) ↔ "✕ Désélect." (rouge)
+  - Clusters désélectionnables (toggle)
+  - Couleurs distinctes : Recommandé = jaune/ambre, Sélectionné = vert/indigo
 
 ### Corrigé
 - **Logique de dépendances** : Les PARENTS en doublon sont maintenant pris en compte
-  - Avant : seuls enfants et conjoints comptaient comme dépendances
-  - Maintenant : parents + conjoints + enfants = dépendances complètes
 - **Bug modal "Relations en doublon"** : affichait le nombre (212) au lieu des sections
+- **Bug fusion multiple** : 
+  - Seule la première paire fusionnait → maintenant enchaîne toutes les paires sélectionnées
+  - Paire restait dans la liste après fusion → filtrage fiable avec `createPairId`
+  - Retire aussi les doublons impliquant la personne supprimée
 
 ## [2.4.1] - 2026-01-17
 

@@ -2993,23 +2993,41 @@ const GedcomDuplicateMerger = () => {
     
     setIndividuals(updatedIndividuals);
     
-    // Mettre à jour les doublons
+    // v2.4.2: Créer l'ID de la paire fusionnée pour filtrage fiable
+    const fusedPairId = pair.id || createPairId(p1.id, p2.id);
+    
+    // Mettre à jour les doublons - retirer la paire fusionnée ET les doublons impliquant removeId
     const newDuplicates = duplicates
-      .filter(d => d.id !== pair.id)
+      .filter(d => {
+        // Retirer la paire fusionnée
+        if (d.id === fusedPairId) return false;
+        // Retirer les doublons impliquant la personne supprimée (elle n'existe plus)
+        if (d.person1.id === removeId || d.person2.id === removeId) return false;
+        return true;
+      })
       .map(d => ({
         ...d,
+        // Mettre à jour les références vers la personne conservée
         person1: d.person1.id === removeId ? updatedIndividuals.find(i => i.id === keepId) || d.person1 : d.person1,
         person2: d.person2.id === removeId ? updatedIndividuals.find(i => i.id === keepId) || d.person2 : d.person2
       }))
       .filter(d => d.person1.id !== d.person2.id);
     
+    console.log(`Fusion: ${p1.id} + ${p2.id} → garde ${keepId}, supprime ${removeId}. Doublons: ${duplicates.length} → ${newDuplicates.length}`);
+    
     setDuplicates(newDuplicates);
-    setSelectedPairs(new Set());
     setMergeHistory(prev => [...prev, { action: 'merge', keepId, removeId, timestamp: new Date() }]);
+    
+    // v2.4.2: Calculer les paires restantes en utilisant l'ID fiable
+    const remainingSelected = new Set([...selectedPairs].filter(id => id !== fusedPairId));
+    console.log(`Paires restantes à traiter: ${remainingSelected.size}`);
     
     // v2.4.2: Vérifier si on doit revenir au modal de fusion guidée
     if (guidedFusionContext?.pendingReturn && guidedFusionContext?.originalPair) {
       const completedPairId = guidedFusionContext.completedPairId;
+      
+      // Stocker les paires restantes dans le contexte
+      setSelectedPairs(remainingSelected);
       
       // Recalculer les doublons liés avec les données mises à jour
       setTimeout(() => {
@@ -3037,15 +3055,25 @@ const GedcomDuplicateMerger = () => {
       return;
     }
     
-    // Continuer avec les autres paires sélectionnées (comportement normal)
-    const remainingSelected = new Set([...selectedPairs].filter(id => id !== pair.id));
+    // Continuer avec les autres paires sélectionnées
     if (remainingSelected.size > 0) {
       const nextPair = newDuplicates.find(p => remainingSelected.has(p.id));
+      console.log(`Prochaine paire trouvée: ${nextPair?.id || 'aucune'}`);
       if (nextPair) {
-        setSelectedPairs(new Set([nextPair.id]));
-        setTimeout(() => openCherryPickModal(nextPair), 300);
+        setSelectedPairs(remainingSelected);
+        // Utiliser un délai plus long pour laisser React mettre à jour les états
+        setTimeout(() => {
+          openCherryPickModal(nextPair);
+        }, 500);
+        return;
+      } else {
+        console.log('Paires restantes non trouvées dans newDuplicates, nettoyage de la sélection');
       }
     }
+    
+    // Toutes les paires traitées - vider la sélection
+    setSelectedPairs(new Set());
+    console.log('Toutes les fusions terminées');
   };
 
   // v2.4.0: Fusionner directement en ignorant les doublons liés
@@ -3879,6 +3907,27 @@ const GedcomDuplicateMerger = () => {
               <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-50">
                 {selectedPairs.size > 0 && <button onClick={handleMerge} className="px-6 py-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 font-medium flex items-center gap-2"><Users className="w-5 h-5" />Fusionner {selectedPairs.size} doublon(s)</button>}
                 {selectedToDelete.size > 0 && <button onClick={handleDeleteToDelete} className="px-6 py-3 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 font-medium flex items-center gap-2"><Trash2 className="w-5 h-5" />Supprimer {selectedToDelete.size} individu(s)</button>}
+              </div>
+            )}
+            
+            {/* v2.4.2: Bouton Terminer et télécharger - visible si des fusions ont été faites */}
+            {mergeHistory.length > 0 && selectedPairs.size === 0 && selectedToDelete.size === 0 && (
+              <div className="fixed bottom-6 right-6 z-50">
+                <button 
+                  onClick={() => {
+                    setValidationResults({
+                      totalIndividuals: individuals.length + mergeHistory.filter(h => h.action === 'merge').length,
+                      mergedCount: mergeHistory.filter(h => h.action === 'merge').length,
+                      deletedCount: mergeHistory.filter(h => h.action === 'delete').length,
+                      remainingCount: individuals.length
+                    });
+                    setStep('merged');
+                  }}
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 font-medium flex items-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Terminer et télécharger ({mergeHistory.length} fusion(s))
+                </button>
               </div>
             )}
 

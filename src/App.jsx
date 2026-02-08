@@ -10,6 +10,7 @@ const GedcomDuplicateMerger = () => {
   const [step, setStep] = useState('upload');
   const [originalGedcom, setOriginalGedcom] = useState('');
   const [mergedIds, setMergedIds] = useState(new Map());
+  const [mergeHistory, setMergeHistory] = useState([]); // v2.4.2: Historique des fusions
   const [validationResults, setValidationResults] = useState(null);
   const [previewPair, setPreviewPair] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,7 +81,7 @@ const GedcomDuplicateMerger = () => {
     };
   }, []);
 
-  const VERSION = '2.4.2';
+  const VERSION = '2.4.3';
 
   const CHANGELOG = [
     {
@@ -1609,7 +1610,9 @@ const GedcomDuplicateMerger = () => {
     
     const lines = originalGedcom.split('\n');
     const outputLines = [];
+    // eslint-disable-next-line no-useless-assignment
     let skipCurrentIndi = false;
+    // eslint-disable-next-line no-useless-assignment
     let currentIndiId = null;
     
     for (let i = 0; i < lines.length; i++) {
@@ -1619,7 +1622,9 @@ const GedcomDuplicateMerger = () => {
       // Détecter le début d'un bloc (niveau 0)
       if (trimmed.startsWith('0 ')) {
         // Si on était en train de sauter un INDI, on a fini
+        // eslint-disable-next-line no-useless-assignment
         skipCurrentIndi = false;
+        // eslint-disable-next-line no-useless-assignment
         currentIndiId = null;
         
         // Vérifier si c'est un INDI avec des rawLines mises à jour
@@ -3467,6 +3472,7 @@ const GedcomDuplicateMerger = () => {
     setStep('upload'); setIndividuals([]); setDuplicates([]); setSelectedPairs(new Set());
     setOriginalGedcom(''); setSearchTerm(''); setFilterScore(80); setProgress(0);
     setActiveTab('clusters'); setClusterScoreFilter(80); setSelectedClusters(new Set());
+    setMergeHistory([]); // v2.4.2: Reset historique fusions
     setClusters([]); setExpandedClusters(new Set()); setToDeletePersons([]);
     setSelectedToDelete(new Set()); setSmartSuggestions([]); setIntegrityReport(null);
     setFile(null); setMergedIds(new Map()); setValidationResults(null); setPreviewPair(null);

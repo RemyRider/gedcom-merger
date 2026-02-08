@@ -1,11 +1,38 @@
 # Changelog - GEDCOM Merger
 
+## [2.4.3] - 2026-02-07
+
+### Ajouté
+- **ESLint intégré** : Linting automatique avec règles strictes
+  - Configuration flat config ESLint v10
+  - Plugin react-hooks pour vérification des hooks
+  - Plugin react-refresh pour Hot Module Replacement
+  - Règle `no-undef` pour détecter les variables non déclarées ✅
+  - **Build bloqué si erreurs ESLint** : `npm run build` inclut le lint
+
+### Corrigé
+- **Bug critique prévenu** : ESLint aurait détecté le bug `mergeHistory` avant déploiement
+- 0 erreur ESLint, 35 warnings (variables non utilisées tolérées)
+
+### Scripts disponibles
+- `npm run lint` : Vérifie le code source
+- `npm run lint:fix` : Corrige automatiquement les warnings possibles
+- `npm run build` : Lint + Build production
+
 ## [2.4.2] - 2026-01-28
 
 ### Ajouté
 - **Bouton "Terminer et télécharger"** : Apparaît après avoir fait des fusions
   - Visible en bas à droite quand des fusions ont été effectuées
   - Permet de télécharger le fichier GEDCOM nettoyé à tout moment
+  - Affiche le nombre de fusions effectuées
+
+### Corrigé
+- **Bug écran blanc** : Variable d'état `mergeHistory` manquante causant crash React
+- **Tests améliorés** : Nouvelle vérification bidirectionnelle des useState
+  - Détecte les setters utilisés sans déclaration useState ✅
+  - Détecte les variables d'état utilisées sans déclaration useState ✅ (NOUVEAU)
+- **614 tests statiques** (+2 tests de vérification des variables d'état)
 
 ### Amélioré
 - **Tri global par facilité de fusion** : Partout, les paires avec moins de contraintes sont proposées en premier

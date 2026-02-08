@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUITE DE TESTS GEDCOM MERGER v2.4.2
+// SUITE DE TESTS GEDCOM MERGER v2.4.3
 // 482 TESTS STATIQUES - Organisés par CATÉGORIE et VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -11,6 +11,92 @@ const check = (condition, testName) => {
   totalTests++;
   if (condition) { passedTests++; console.log(`  ✅ ${testName}`); }
   else { failedTests++; console.log(`  ❌ ${testName}`); }
+};
+
+// v2.4.2: Fonction pour vérifier les useState déclarés vs utilisés
+const checkUseStateDeclarations = (code) => {
+  const issues = [];
+  
+  // Extraire tous les setters utilisés (setXxx)
+  const usedSetters = new Set();
+  const setterRegex = /\bset[A-Z][a-zA-Z]*\b/g;
+  let match;
+  while ((match = setterRegex.exec(code)) !== null) {
+    const setter = match[0];
+    // Ignorer setTimeout, setInterval, etc.
+    if (!['setTimeout', 'setInterval', 'setImmediate'].includes(setter)) {
+      usedSetters.add(setter);
+    }
+  }
+  
+  // Extraire les déclarations useState complètes (variable ET setter)
+  const declaredSetters = new Set();
+  const declaredStates = new Set();
+  const useStateRegex = /const\s*\[\s*(\w+)\s*,\s*(set[A-Z][a-zA-Z]*)\s*\]\s*=\s*useState/g;
+  while ((match = useStateRegex.exec(code)) !== null) {
+    declaredStates.add(match[1]);   // La variable d'état (ex: mergeHistory)
+    declaredSetters.add(match[2]);  // Le setter (ex: setMergeHistory)
+  }
+  
+  // Vérifier que tous les setters utilisés sont déclarés
+  usedSetters.forEach(setter => {
+    if (!declaredSetters.has(setter)) {
+      issues.push(`${setter} utilisé mais non déclaré avec useState`);
+    }
+  });
+  
+  // v2.4.2 FIX: Vérifier aussi les variables d'état utilisées
+  // Chercher les patterns: variableState.xxx ou variableState === ou variableState && etc.
+  declaredSetters.forEach(setter => {
+    // Extraire le nom de la variable à partir du setter (setMergeHistory -> mergeHistory)
+    const stateName = setter.replace(/^set/, '').replace(/^./, c => c.toLowerCase());
+    if (declaredStates.has(stateName)) return; // OK, déclaré
+    
+    // Vérifier si cette variable est utilisée dans le code
+    const stateUsageRegex = new RegExp(`\\b${stateName}\\b`, 'g');
+    if (stateUsageRegex.test(code)) {
+      issues.push(`${stateName} (state) utilisé mais non déclaré avec useState`);
+    }
+  });
+  
+  return issues;
+};
+
+// v2.4.2: Vérification bidirectionnelle - variables d'état utilisées sans déclaration
+const checkStateVariablesUsed = (code) => {
+  const issues = [];
+  
+  // Extraire toutes les déclarations useState
+  const declaredStates = new Map(); // stateName -> setterName
+  const useStateRegex = /const\s*\[\s*(\w+)\s*,\s*(set[A-Z][a-zA-Z]*)\s*\]\s*=\s*useState/g;
+  let match;
+  while ((match = useStateRegex.exec(code)) !== null) {
+    declaredStates.set(match[1], match[2]);
+  }
+  
+  // Liste des variables d'état connues qui pourraient être utilisées sans déclaration
+  // Basée sur les setters trouvés dans le code
+  const setterRegex = /\bset([A-Z][a-zA-Z]*)\b/g;
+  const potentialStates = new Set();
+  while ((match = setterRegex.exec(code)) !== null) {
+    const stateName = match[1].replace(/^./, c => c.toLowerCase());
+    if (!['timeout', 'interval', 'immediate'].includes(stateName)) {
+      potentialStates.add(stateName);
+    }
+  }
+  
+  // Vérifier que chaque variable potentielle est bien déclarée
+  potentialStates.forEach(stateName => {
+    if (!declaredStates.has(stateName)) {
+      // Vérifier si elle est utilisée (pas juste le setter)
+      const usageRegex = new RegExp(`\\b${stateName}\\.(length|size|map|filter|forEach|find)|\\b${stateName}\\s*[=!<>&|]|\\(${stateName}\\)|\\[${stateName}\\]`, 'g');
+      if (usageRegex.test(code)) {
+        issues.push(`${stateName} utilisé comme state mais jamais déclaré (setter set${stateName.charAt(0).toUpperCase() + stateName.slice(1)} existe)`);
+      }
+    }
+  });
+  
+  return issues;
 };
 
 // Charger les fichiers
@@ -34,8 +120,8 @@ try { architectureMd = fs.readFileSync('./docs/ARCHITECTURE_v2.4.0.md', 'utf8');
 
 console.log('');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
-console.log('                      SUITE DE TESTS GEDCOM MERGER v2.4.2');
-console.log('                         557 TESTS STATIQUES AU TOTAL');
+console.log('                      SUITE DE TESTS GEDCOM MERGER v2.4.3');
+console.log('                         613 TESTS STATIQUES AU TOTAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
@@ -48,9 +134,9 @@ console.log('║              CATÉGORIE 1: FONDAMENTAUX (61 tests)             
 console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 console.log('');
 
-// --- 1.1 Syntaxe et structure (10 tests) ---
+// --- 1.1 Syntaxe et structure (11 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
-console.log('│ 1.1 Syntaxe et structure (10 tests)                                        │');
+console.log('│ 1.1 Syntaxe et structure (11 tests)                                        │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
 check(appCode.includes('import React'), 'Import React présent');
 check(appCode.includes("from 'react'"), 'Import depuis react');
@@ -62,14 +148,28 @@ check((appCode.match(/\(/g) || []).length === (appCode.match(/\)/g) || []).lengt
 check((appCode.match(/\{/g) || []).length === (appCode.match(/\}/g) || []).length, 'Accolades équilibrées');
 check(appCode.includes('const ['), 'Déclarations useState');
 check(appCode.includes('className='), 'Attributs className JSX');
+
+// v2.4.2: Vérification cohérence useState
+const useStateIssues = checkUseStateDeclarations(appCode);
+check(useStateIssues.length === 0, `Tous les setters useState déclarés (${useStateIssues.length} erreurs)`);
+if (useStateIssues.length > 0) {
+  useStateIssues.forEach(issue => console.log(`     ⚠️  ${issue}`));
+}
+
+// v2.4.2: Test bidirectionnel - variables d'état utilisées sans déclaration
+const stateVarIssues = checkStateVariablesUsed(appCode);
+check(stateVarIssues.length === 0, `Toutes les variables d'état déclarées (${stateVarIssues.length} erreurs)`);
+if (stateVarIssues.length > 0) {
+  stateVarIssues.forEach(issue => console.log(`     ⚠️  ${issue}`));
+}
 console.log('');
 
 // --- 1.2 Versions et cohérence (10 tests) ---
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 1.2 Versions et cohérence (10 tests)                                       │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(appCode.includes("VERSION = '2.4.2'"), 'VERSION 2.4.2 dans App.jsx');
-check(packageJson.version === '2.4.2', 'Version 2.4.2 dans package.json');
+check(appCode.includes("VERSION = '2.4.3'"), 'VERSION 2.4.3 dans App.jsx');
+check(packageJson.version === '2.4.3', 'Version 2.4.3 dans package.json');
 check(indexHtml.includes('2.0.0') || indexHtml.includes('Fusionneur'), 'Version dans index.html');
 check(changelogMd.includes('2.0.0'), 'Version 2.0.0 dans CHANGELOG.md');
 check(changelogMd.includes('2.1.0') || appCode.includes("'2.1.0'"), 'Version 2.1.0 référencée');
@@ -586,10 +686,10 @@ console.log('');
 console.log('┌─────────────────────────────────────────────────────────────────────────────┐');
 console.log('│ 7.3 Documentation (20 tests)                                               │');
 console.log('└─────────────────────────────────────────────────────────────────────────────┘');
-check(fs.existsSync('./README_v2.4.0.md'), 'README.md existe');
+check(fs.existsSync('./README.md') || fs.existsSync('./README_v2.4.3.md'), 'README.md existe');
 check(fs.existsSync('./CHANGELOG.md'), 'CHANGELOG.md existe');
-check(fs.existsSync('./DEPLOIEMENT_v2.4.0.md'), 'DEPLOIEMENT.md existe');
-check(fs.existsSync('./docs/ARCHITECTURE_v2.4.0.md') || true, 'ARCHITECTURE.md existe');
+check(fs.existsSync('./DEPLOIEMENT.md') || fs.existsSync('./DEPLOIEMENT_v2.4.3.md'), 'DEPLOIEMENT.md existe');
+check(fs.existsSync('./docs/ARCHITECTURE_v2.4.2.md') || fs.existsSync('./docs/ARCHITECTURE.md'), 'ARCHITECTURE.md existe');
 check(readmeMd.includes('GEDCOM') || readmeMd.includes('gedcom'), 'README: GEDCOM');
 check(readmeMd.includes('npm'), 'README: npm');
 check(readmeMd.includes('Netlify') || readmeMd.includes('netlify'), 'README: Netlify');
@@ -1146,7 +1246,7 @@ console.log('                              RÉSUMÉ FINAL');
 console.log('═══════════════════════════════════════════════════════════════════════════════');
 console.log('');
 
-const expectedTotal = 612;
+const expectedTotal = 613;
 
 console.log(`  📊 Tests exécutés: ${totalTests}`);
 console.log(`  ✅ Réussis: ${passedTests}`);
@@ -1173,7 +1273,7 @@ console.log('');
 if (failedTests === 0 && totalTests >= expectedTotal) {
   console.log(`  🎉 SUCCÈS TOTAL: ${passedTests}/${totalTests} tests passés (100%)`);
   console.log('');
-  console.log('  ✅ Version 2.4.2 validée (tests statiques)');
+  console.log('  ✅ Version 2.4.3 validée (tests statiques)');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════════════════════');
   process.exit(0);
